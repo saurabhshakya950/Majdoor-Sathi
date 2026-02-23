@@ -15,7 +15,7 @@ const LabourBottomNav = () => {
                 const userRequests = JSON.parse(localStorage.getItem('labour_user_requests') || '[]');
                 // Get contractor requests
                 const contractorRequests = JSON.parse(localStorage.getItem('labour_contractor_requests') || '[]');
-                
+
                 const total = userRequests.length + contractorRequests.length;
                 setRequestCount(total);
             } catch (error) {
@@ -28,7 +28,7 @@ const LabourBottomNav = () => {
 
         // Listen for storage changes
         window.addEventListener('storage', calculateRequests);
-        
+
         return () => window.removeEventListener('storage', calculateRequests);
     }, []);
 
@@ -40,12 +40,12 @@ const LabourBottomNav = () => {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-40">
+        <nav className="fixed bottom-0 left-0 right-0 bg-black px-4 py-2 z-40">
             <div className="flex justify-around items-center max-w-md mx-auto">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    
+
                     return (
                         <button
                             key={item.path}
@@ -53,10 +53,9 @@ const LabourBottomNav = () => {
                             className="flex flex-col items-center gap-1 py-1 px-3 transition-colors relative"
                         >
                             <div className="relative">
-                                <Icon 
-                                    className={`w-6 h-6 ${
-                                        isActive ? 'text-yellow-500' : 'text-gray-400'
-                                    }`}
+                                <Icon
+                                    className={`w-6 h-6 ${isActive ? 'text-yellow-400' : 'text-white'
+                                        }`}
                                 />
                                 {item.badge > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -64,10 +63,9 @@ const LabourBottomNav = () => {
                                     </span>
                                 )}
                             </div>
-                            <span 
-                                className={`text-xs font-medium ${
-                                    isActive ? 'text-yellow-500' : 'text-gray-500'
-                                }`}
+                            <span
+                                className={`text-xs font-medium ${isActive ? 'text-yellow-400' : 'text-white'
+                                    }`}
                             >
                                 {item.label}
                             </span>

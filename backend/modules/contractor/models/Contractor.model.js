@@ -8,6 +8,18 @@ const contractorSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
+    firstName: {
+        type: String,
+        trim: true
+    },
+    middleName: {
+        type: String,
+        trim: true
+    },
+    lastName: {
+        type: String,
+        trim: true
+    },
     businessType: {
         type: String,
         enum: [

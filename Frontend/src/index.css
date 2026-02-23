@@ -27,6 +27,7 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Prevent header shift during navigation */
@@ -50,15 +51,16 @@ h1, h2, h3, h4, h5, h6, p, span {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Prevent scrollbar layout shift */
+/* Prevent scrollbar layout shift on non-fullscreen pages */
 html {
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-gutter: stable;
 }
 
 /* Page transition smoothness */
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   isolation: isolate;
 }
 

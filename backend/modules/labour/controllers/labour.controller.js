@@ -54,22 +54,18 @@ export const createLabourProfile = async (req, res) => {
             console.log('✅ Found user by mobile:', userId);
         }
 
-        // Update User model with personal details
+        // Update User model with basic details only if needed (don't sync names to avoid leakage)
         const user = await User.findById(userId);
         if (user) {
-            // Update User model fields
-            if (firstName) user.firstName = firstName;
-            if (middleName) user.middleName = middleName;
-            if (lastName) user.lastName = lastName;
-            if (gender) user.gender = gender;
-            if (city) user.city = city;
-            if (state) user.state = state;
+            // Only update userType if not set
             if (!user.userType) user.userType = 'Labour';
             
+            // Sync city/state as general location info is usually shared
+            if (city) user.city = city;
+            if (state) user.state = state;
+            
             await user.save();
-            console.log('✅ User model updated with personal details:', {
-                firstName: user.firstName,
-                lastName: user.lastName,
+            console.log('✅ User model updated (Type/Location):', {
                 city: user.city,
                 userType: user.userType
             });
@@ -343,7 +339,9 @@ export const getLabourProfile = async (req, res) => {
             success: true,
             data: { 
                 labour,
-                user: labour.user // Include user data separately for easier access
+                user: labour.user,
+                // Prioritize labour profile name, then user model name, fallback to 'Labour'
+                displayName: labour.firstName || (labour.user && labour.user.firstName) || 'Labour'
             }
         });
     } catch (error) {
@@ -677,59 +675,74 @@ export const updateHireRequestStatus = async (req, res) => {
         // ✅ CREATE CHAT AUTOMATICALLY when status is accepted
         if (status === 'accepted') {
             console.log('✅ Status is accepted, creating chat...');
+            
+            try {
+                // Import chat controller
+                const { createChatFromRequest } = await import('../../../controllers/chat.controller.js');
 
-            // Import chat controller
-            const { createChatFromRequest } = await import('../../../controllers/chat.controller.js');
+                // Get requester details (base user record)
+                let requester;
+                let requesterType = hireRequest.requesterModel;
+                let requesterName;
 
-            // Get requester details
-            let requester;
-            let requesterType = hireRequest.requesterModel;
-
-            if (requesterType === 'User') {
-                requester = await User.findById(hireRequest.requesterId);
-            } else if (requesterType === 'Contractor') {
-                const contractorProfile = await Contractor.findOne({ user: hireRequest.requesterId }).populate('user');
-                requester = contractorProfile?.user;
-            }
-
-            if (!requester) {
-                console.log('❌ Requester not found');
-                return res.status(404).json({
-                    success: false,
-                    message: 'Requester not found'
-                });
-            }
-
-            // Prepare chat data
-            const chatData = {
-                participant1: {
-                    userId: labour.user._id,
-                    userType: 'Labour',
-                    name: `${labour.user.firstName} ${labour.user.lastName}`,
-                    profilePhoto: labour.user.profilePhoto || '',
-                    mobileNumber: labour.user.mobileNumber
-                },
-                participant2: {
-                    userId: requester._id,
-                    userType: requesterType,
-                    name: `${requester.firstName} ${requester.lastName}`,
-                    profilePhoto: requester.profilePhoto || '',
-                    mobileNumber: requester.mobileNumber
-                },
-                relatedRequest: {
-                    requestId: hireRequest._id,
-                    requestType: 'HireRequest'
+                if (requesterType === 'User') {
+                    requester = await User.findById(hireRequest.requesterId);
+                    requesterName = `${requester?.firstName || ''} ${requester?.lastName || ''}`.trim() || 'User';
+                } else if (requesterType === 'Contractor') {
+                    // For Contractor, get BOTH the Contractor profile (for name) and base user (for phone/photo)
+                    const contractorProfile = await Contractor.findOne({ user: hireRequest.requesterId });
+                    requester = await User.findById(hireRequest.requesterId);
+                    // Use role-specific name from Contractor profile (identity isolation)
+                    const cFirstName = (contractorProfile && contractorProfile.firstName) || requester?.firstName || 'Contractor';
+                    const cLastName = (contractorProfile && contractorProfile.lastName) || requester?.lastName || '';
+                    requesterName = `${cFirstName} ${cLastName}`.trim();
                 }
-            };
 
-            console.log('📦 Chat Data:', JSON.stringify(chatData, null, 2));
+                if (!requester) {
+                    console.log('❌ Requester not found');
+                    // Non-blocking: log and continue without chat
+                    console.error('⚠️ Requester not found, skipping chat creation');
+                } else {
+                    // Get labour name from Labour model (role-specific identity)
+                    const labourFirstName = labour.firstName || labour.user.firstName || 'Labour';
+                    const labourLastName = labour.lastName || labour.user.lastName || '';
+                    const labourName = `${labourFirstName} ${labourLastName}`.trim();
 
-            // Create chat
-            const chat = await createChatFromRequest(chatData);
+                    // Prepare chat data
+                    const chatData = {
+                        participant1: {
+                            userId: labour.user._id,
+                            userType: 'Labour',
+                            name: labourName,
+                            profilePhoto: labour.user.profilePhoto || '',
+                            mobileNumber: labour.user.mobileNumber
+                        },
+                        participant2: {
+                            userId: requester._id,
+                            userType: requesterType,
+                            name: requesterName,
+                            profilePhoto: requester.profilePhoto || '',
+                            mobileNumber: requester.mobileNumber
+                        },
+                        relatedRequest: {
+                            requestId: hireRequest._id,
+                            requestType: 'HireRequest'  // ✅ Matches Chat.model.js enum
+                        }
+                    };
 
-            // Link chat to hire request
-            hireRequest.chatId = chat._id;
-            console.log('✅ Chat created and linked:', chat._id);
+                    console.log('📦 Chat Data:', JSON.stringify(chatData, null, 2));
+
+                    // Create chat
+                    const chat = await createChatFromRequest(chatData);
+
+                    // Link chat to hire request
+                    hireRequest.chatId = chat._id;
+                    console.log('✅ Chat created and linked:', chat._id);
+                }
+            } catch (chatError) {
+                // Log error but don't block the acceptance — chat can be created later
+                console.error('⚠️ Chat creation failed (non-blocking):', chatError.message);
+            }
         }
 
         await hireRequest.save();

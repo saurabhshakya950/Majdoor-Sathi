@@ -45,40 +45,26 @@ const ContractorHeader = memo(() => {
                 const data = await response.json();
                 console.log('Contractor profile API response:', data);
 
-                if (data.success && data.data.contractor) {
+                if (data.success && data.data) {
                     const contractor = data.data.contractor;
-                    console.log('Contractor object:', contractor);
-                    
-                    let firstName = null;
-                    
-                    // Check for firstName in different possible locations
-                    if (contractor.firstName) {
-                        firstName = contractor.firstName;
-                        console.log('Found firstName directly:', firstName);
-                    } else if (contractor.user && contractor.user.firstName) {
-                        firstName = contractor.user.firstName;
-                        console.log('Found firstName in user:', firstName);
-                    } else if (contractor.userId && contractor.userId.firstName) {
-                        firstName = contractor.userId.firstName;
-                        console.log('Found firstName in userId:', firstName);
-                    }
+                    const displayName = data.data.displayName;
 
-                    if (firstName) {
-                        setContractorName(firstName);
-                        
+                    if (displayName) {
+                        setContractorName(displayName);
+
                         // Update localStorage for next time
                         try {
                             const existingProfile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
-                            existingProfile.firstName = firstName;
+                            existingProfile.firstName = displayName;
                             localStorage.setItem('contractor_profile', JSON.stringify(existingProfile));
                         } catch (error) {
                             console.error('Error updating localStorage:', error);
                         }
                     } else {
-                        // If no firstName, show mobile number or "Contractor"
+                        // If no name, show mobile number or "Contractor"
                         const mobileNumber = localStorage.getItem('mobile_number');
                         setContractorName(mobileNumber ? `Contractor ${mobileNumber.slice(-4)}` : 'Contractor');
-                        console.log('No firstName found in contractor profile');
+                        console.log('No name found in contractor profile');
                     }
                 }
             } catch (error) {
@@ -148,12 +134,12 @@ const ContractorHeader = memo(() => {
                 {/* Left Side - Logo and Welcome Text */}
                 <div className="flex items-center gap-2">
                     {/* Logo */}
-                    <img 
-                        src={logo} 
-                        alt="Majdoor Sathi" 
+                    <img
+                        src={logo}
+                        alt="Majdoor Sathi"
                         className="h-16 w-auto object-contain"
                     />
-                    
+
                     {/* Welcome Text and Name */}
                     <div>
                         <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>

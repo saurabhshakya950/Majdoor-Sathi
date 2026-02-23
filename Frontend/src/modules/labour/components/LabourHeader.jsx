@@ -47,19 +47,16 @@ const LabourHeader = memo(() => {
 
                 if (data.success && data.data) {
                     const labour = data.data.labour;
-                    const user = data.data.user;
-                    
-                    // Get firstName from labour or user
-                    const firstName = labour.firstName || user?.firstName;
-                    
-                    if (firstName) {
-                        setLabourName(firstName);
-                        console.log('✅ Name set:', firstName);
-                        
+                    const displayName = data.data.displayName;
+
+                    if (displayName) {
+                        setLabourName(displayName);
+                        console.log('✅ Name set:', displayName);
+
                         // Update localStorage for next time
                         try {
                             const existingProfile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
-                            existingProfile.firstName = firstName;
+                            existingProfile.firstName = displayName;
                             localStorage.setItem('labour_profile', JSON.stringify(existingProfile));
                         } catch (error) {
                             console.error('Error updating localStorage:', error);
@@ -68,7 +65,7 @@ const LabourHeader = memo(() => {
                         // Fallback to mobile number
                         const mobileNumber = localStorage.getItem('mobile_number');
                         setLabourName(mobileNumber ? `Labour ${mobileNumber.slice(-4)}` : 'Labour');
-                        console.log('⚠️ No firstName found, using fallback');
+                        console.log('⚠️ No name found, using fallback');
                     }
                 }
             } catch (error) {
@@ -139,12 +136,12 @@ const LabourHeader = memo(() => {
                 {/* Left Side - Logo and Welcome Text (compact, no extra space) */}
                 <div className="flex items-center gap-2">
                     {/* Logo - Exact size, no extra width */}
-                    <img 
-                        src={logo} 
-                        alt="Majdoor Sathi" 
+                    <img
+                        src={logo}
+                        alt="Majdoor Sathi"
                         className="h-16 w-auto object-contain"
                     />
-                    
+
                     {/* Welcome Text and Name - Right next to logo */}
                     <div>
                         <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>

@@ -20,7 +20,7 @@ const PersonalDetailsForm = ({ onSave }) => {
 
     useEffect(() => {
         const contractorProfile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
-        
+
         setFormData({
             firstName: contractorProfile.firstName || '',
             middleName: contractorProfile.middleName || '',
@@ -52,7 +52,7 @@ const PersonalDetailsForm = ({ onSave }) => {
 
             // Check if user has access token
             const token = localStorage.getItem('access_token');
-            
+
             if (!token) {
                 // No token - save to localStorage (fallback)
                 console.log('No access token found, saving to localStorage');
@@ -69,7 +69,7 @@ const PersonalDetailsForm = ({ onSave }) => {
 
             // Has token - save to backend with Cloudinary
             console.log('📤 Updating contractor profile with backend API...');
-            
+
             const updateData = {
                 firstName: formData.firstName,
                 middleName: formData.middleName,
@@ -87,24 +87,31 @@ const PersonalDetailsForm = ({ onSave }) => {
             }
 
             const response = await userAPI.updateProfile(updateData);
-            
+
             console.log('✅ Profile updated:', response);
 
             // Update localStorage with response data
-            if (response.success && response.data.user) {
-                const updatedUser = response.data.user;
+            if (response.success) {
                 const contractorProfile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
+
+                // Use response.data.roleSpecificName if available, fallback to formData.firstName
+                const updatedFirstName = response.data.roleSpecificName || formData.firstName;
+
                 localStorage.setItem('contractor_profile', JSON.stringify({
                     ...contractorProfile,
-                    firstName: updatedUser.firstName,
-                    middleName: updatedUser.middleName,
-                    lastName: updatedUser.lastName,
-                    gender: updatedUser.gender,
-                    state: updatedUser.state,
-                    city: updatedUser.city,
-                    address: updatedUser.address,
-                    profileImage: updatedUser.profilePhoto || formData.profileImage
+                    firstName: updatedFirstName,
+                    middleName: formData.middleName,
+                    lastName: formData.lastName,
+                    gender: formData.gender,
+                    state: formData.state,
+                    city: formData.city,
+                    address: formData.address,
+                    profileImage: (response.data.user && response.data.user.profilePhoto) || formData.profileImage
                 }));
+
+                // Dispatch event to notify ContractorHeader to re-fetch/update
+                window.dispatchEvent(new Event('profileUpdated'));
+                console.log('🔔 Dispatched profileUpdated event');
             }
 
             toast.success('Personal details updated successfully');
@@ -123,7 +130,7 @@ const PersonalDetailsForm = ({ onSave }) => {
 
     return (
         <div className="p-4">
-            <ProfilePhotoUpload 
+            <ProfilePhotoUpload
                 profileImage={formData.profileImage}
                 onImageChange={handleImageChange}
             />

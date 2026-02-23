@@ -15,7 +15,7 @@ const UserBottomNav = () => {
                 const contractorRequests = JSON.parse(localStorage.getItem('user_contractor_requests') || '[]');
                 // Get worker requests  
                 const workerRequests = JSON.parse(localStorage.getItem('user_worker_requests') || '[]');
-                
+
                 const total = contractorRequests.length + workerRequests.length;
                 setRequestCount(total);
             } catch (error) {
@@ -28,7 +28,7 @@ const UserBottomNav = () => {
 
         // Listen for storage changes
         window.addEventListener('storage', calculateRequests);
-        
+
         return () => window.removeEventListener('storage', calculateRequests);
     }, []);
 
@@ -41,29 +41,28 @@ const UserBottomNav = () => {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-black shadow-lg z-40">
             <div className="flex justify-around items-center h-16 px-2">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    
+
                     return (
                         <button
                             key={item.path}
                             onClick={() => navigate(item.path)}
-                            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors relative ${
-                                isActive ? 'text-yellow-500' : 'text-gray-500'
-                            }`}
+                            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors relative ${isActive ? 'text-yellow-400' : 'text-white'
+                                }`}
                         >
                             <div className="relative">
-                                <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-yellow-500' : 'text-gray-500'}`} />
+                                <Icon className={`w-6 h-6 mb-1 ${isActive ? 'text-yellow-400' : 'text-white'}`} />
                                 {item.badge > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                                         {item.badge > 9 ? '9+' : item.badge}
                                     </span>
                                 )}
                             </div>
-                            <span className={`text-xs font-medium ${isActive ? 'text-yellow-500' : 'text-gray-600'}`}>
+                            <span className={`text-xs font-medium ${isActive ? 'text-yellow-400' : 'text-white'}`}>
                                 {item.label}
                             </span>
                         </button>

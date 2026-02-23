@@ -16,6 +16,11 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
     try {
+        console.log('\n🟡 ===== UPDATE PROFILE (GENERAL) =====');
+        console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
+        console.log('👤 User ID:', req.user._id);
+        console.log('🏷️ User Type:', req.user.userType);
+
         const allowedUpdates = ['firstName', 'middleName', 'lastName', 'city', 'state', 'address', 'profilePhoto', 'userType', 'gender', 'dob', 'aadharNumber'];
         const updates = {};
 
@@ -25,7 +30,7 @@ export const updateProfile = async (req, res, next) => {
             }
         });
 
-        // Handle profile photo upload to Cloudinary
+        // 1. Handle profile photo upload to Cloudinary
         if (updates.profilePhoto && updates.profilePhoto.startsWith('data:image')) {
             try {
                 const user = await User.findById(req.user._id);
@@ -38,6 +43,7 @@ export const updateProfile = async (req, res, next) => {
                 // Upload new photo to Cloudinary
                 const cloudinaryUrl = await uploadToCloudinary(updates.profilePhoto, 'rajghar/profiles');
                 updates.profilePhoto = cloudinaryUrl;
+                console.log('📸 Profile photo uploaded to Cloudinary:', cloudinaryUrl);
             } catch (error) {
                 console.error('Profile photo upload error:', error);
                 return res.status(500).json({
@@ -48,18 +54,72 @@ export const updateProfile = async (req, res, next) => {
             }
         }
 
+        // 2. Identify role for identity isolation
+        const userType = req.user.userType;
+        const isContractor = userType === 'Contractor';
+        const isLabour = userType === 'Labour';
+
+        // Prepare separate updates for User model and role model
+        // To maintain Role-Based Identity Isolation, we don't sync names to the User model for Contractors/Labourers
+        const userModelUpdates = { ...updates };
+        const roleModelUpdates = { ...updates };
+
+        if (isContractor || isLabour) {
+            console.log(`🛡️ Role-Based Identity Isolation: Preventing name sync to User model for ${userType}`);
+            delete userModelUpdates.firstName;
+            delete userModelUpdates.middleName;
+            delete userModelUpdates.lastName;
+        }
+
+        // 3. Update User model (Location, Type, Gender, etc.)
         const user = await User.findByIdAndUpdate(
             req.user._id,
-            updates,
+            userModelUpdates,
             { new: true, runValidators: true }
         ).select('-refreshToken -__v');
+
+        // 4. Update Role-Specific model (Names, etc.)
+        if (isContractor) {
+            try {
+                const Contractor = (await import('../../contractor/models/Contractor.model.js')).default;
+                const contractor = await Contractor.findOneAndUpdate(
+                    { user: req.user._id },
+                    roleModelUpdates,
+                    { new: true, upsert: true }
+                );
+                console.log('✅ Contractor role model updated:', contractor._id);
+            } catch (err) {
+                console.error('Error updating Contractor role model:', err.message);
+            }
+        } else if (isLabour) {
+            try {
+                const Labour = (await import('../../labour/models/Labour.model.js')).default;
+                const labour = await Labour.findOneAndUpdate(
+                    { user: req.user._id },
+                    roleModelUpdates,
+                    { new: true, upsert: true }
+                );
+                console.log('✅ Labour role model updated:', labour._id);
+            } catch (err) {
+                console.error('Error updating Labour role model:', err.message);
+            }
+        }
+
+        console.log('✅ Profile update successful');
+        console.log('=============================\n');
 
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
-            data: { user }
+            data: { 
+                user,
+                // Include role-specific name if applicable for frontend immediate update
+                roleSpecificName: updates.firstName 
+            }
         });
     } catch (error) {
+        console.error('❌ UPDATE PROFILE ERROR:', error.message);
+        console.log('=============================\n');
         next(error);
     }
 };

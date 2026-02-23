@@ -70,7 +70,7 @@ const LabourPersonalDetails = () => {
         try {
             // Check if user has access token
             const token = localStorage.getItem('access_token');
-            
+
             if (!token) {
                 // No token - save to localStorage (fallback)
                 console.log('No access token found, saving to localStorage');
@@ -95,7 +95,7 @@ const LabourPersonalDetails = () => {
 
             // Has token - save to backend with Cloudinary
             console.log('📤 Updating labour profile with backend API...');
-            
+
             const updateData = {
                 firstName: formData.firstName,
                 middleName: formData.middleName,
@@ -114,30 +114,33 @@ const LabourPersonalDetails = () => {
             }
 
             const response = await userAPI.updateProfile(updateData);
-            
+
             console.log('✅ Profile updated:', response);
 
             // Update localStorage with response data
-            if (response.success && response.data.user) {
-                const updatedUser = response.data.user;
+            if (response.success) {
                 const existingProfile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
+
+                // Use response.data.roleSpecificName if available, fallback to formData.firstName
+                const updatedFirstName = response.data.roleSpecificName || formData.firstName;
+
                 localStorage.setItem('labour_profile', JSON.stringify({
                     ...existingProfile,
-                    photo: updatedUser.profilePhoto || formData.profileImage,
-                    firstName: updatedUser.firstName,
-                    middleName: updatedUser.middleName,
-                    lastName: updatedUser.lastName,
-                    gender: updatedUser.gender,
-                    dob: updatedUser.dob,
-                    state: updatedUser.state,
-                    city: updatedUser.city,
-                    address: updatedUser.address
+                    photo: (response.data.user && response.data.user.profilePhoto) || formData.profileImage,
+                    firstName: updatedFirstName,
+                    middleName: formData.middleName,
+                    lastName: formData.lastName,
+                    gender: formData.gender,
+                    dob: formData.dob,
+                    state: formData.state,
+                    city: formData.city,
+                    address: formData.address
                 }));
             }
-            
+
             // Dispatch event to update header
             window.dispatchEvent(new Event('profileUpdated'));
-            
+
             toast.success('Changes saved successfully!');
         } catch (error) {
             console.error('❌ Error updating profile:', error);
@@ -153,7 +156,7 @@ const LabourPersonalDetails = () => {
                 </button>
                 <h1 className="text-xl font-bold">Personal details</h1>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 pb-20">
                 {/* Profile Photo */}
                 <div className="flex items-center gap-4 mb-6">
@@ -311,7 +314,7 @@ const LabourPersonalDetails = () => {
                     Save changes
                 </button>
             </div>
-            
+
             <LabourBottomNav />
         </div>
     );

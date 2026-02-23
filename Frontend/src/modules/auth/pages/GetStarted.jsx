@@ -67,7 +67,7 @@ const GetStarted = () => {
     }, [backgroundImages.length]);
 
     return (
-        <div className="h-screen flex flex-col relative bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden">
+        <div className="flex flex-col relative bg-gradient-to-br from-gray-900 to-gray-800 overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Background Image Carousel Section with Overlay */}
             <div className="flex-1 relative">
                 {/* Image Slides */}
@@ -76,12 +76,11 @@ const GetStarted = () => {
                         key={index}
                         src={image.url}
                         alt={image.alt}
-                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                            index === currentSlide ? 'opacity-100' : 'opacity-0'
-                        }`}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
+                            }`}
                     />
                 ))}
-                
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60"></div>
 
@@ -103,7 +102,7 @@ const GetStarted = () => {
             <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-500 p-6 pt-8 pb-10 rounded-t-[2.5rem] -mt-12 relative z-10 shadow-2xl">
                 {/* Decorative Element */}
                 <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-12 h-1.5 bg-white/30 rounded-full"></div>
-                
+
                 <div className="flex flex-col items-center text-center">
                     {/* Slogan */}
                     <h1 className="text-xl md:text-2xl font-bold text-white mb-6 leading-tight">
@@ -125,11 +124,10 @@ const GetStarted = () => {
                             <button
                                 key={index}
                                 onClick={() => setCurrentSlide(index)}
-                                className={`h-2 rounded-full transition-all duration-300 ${
-                                    index === currentSlide 
-                                        ? 'bg-white w-8' 
+                                className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide
+                                        ? 'bg-white w-8'
                                         : 'bg-white/50 w-2 hover:bg-white/75'
-                                }`}
+                                    }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />
                         ))}
