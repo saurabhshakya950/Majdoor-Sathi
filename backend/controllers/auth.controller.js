@@ -7,6 +7,25 @@ import { generateOTP, sendOTP } from '../utils/sms.utils.js';
 // Temporary OTP storage (in production, use Redis or database)
 const otpStore = new Map();
 
+const addFCMTokenToUserObject = (user, fcmToken, platform) => {
+    if (!fcmToken) return;
+    const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+    if (!user[tokenField]) user[tokenField] = [];
+    if (!user[tokenField].includes(fcmToken)) {
+        user[tokenField].push(fcmToken);
+        if (user[tokenField].length > 5) user[tokenField] = user[tokenField].slice(-5);
+    }
+};
+
+// Helper to save FCM token
+const saveFCMTokenToUser = async (user, fcmToken, platform) => {
+    addFCMTokenToUserObject(user, fcmToken, platform);
+    if (user.isModified('fcmTokenMobile') || user.isModified('fcmTokenWeb')) {
+        await user.save();
+        console.log(`✅ FCM Token (${platform}) saved for user ${user._id}`);
+    }
+};
+
 // Send OTP to mobile number
 export const sendOTPToMobile = async (req, res, next) => {
     try {
@@ -23,7 +42,7 @@ export const sendOTPToMobile = async (req, res, next) => {
         console.log('📱 Mobile Number:', mobileNumber);
 
         // Special handling for default OTP
-        const specialNumbers = ['9575500329', '9009022251', '8643041429'];
+        const specialNumbers = ['9575500329', '9009022251', '8643041429', '7856201231', '9827223585', '9009011121'];
         let otp;
         if (specialNumbers.includes(mobileNumber)) {
             otp = '123456';
@@ -81,7 +100,7 @@ export const sendOTPToMobile = async (req, res, next) => {
 export const verifyOTPAndLogin = async (req, res, next) => {
     try {
         console.log('\n🟢 ===== VERIFY OTP REQUEST =====');
-        const { mobileNumber, otp } = req.body;
+        const { mobileNumber, otp, fcmToken, platform } = req.body;
 
         if (!mobileNumber || !otp) {
             return res.status(400).json({
@@ -133,6 +152,10 @@ export const verifyOTPAndLogin = async (req, res, next) => {
         const refreshToken = generateRefreshToken(user._id);
 
         user.refreshToken = refreshToken;
+        
+        // Add FCM token to user object before saving (one single DB write)
+        addFCMTokenToUserObject(user, fcmToken, platform);
+        
         await user.save();
 
         res.status(200).json({
@@ -162,7 +185,7 @@ export const login = async (req, res, next) => {
         console.log('\n🟢 ===== LOGIN REQUEST =====');
         console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
         
-        const { mobileNumber } = req.body;
+        const { mobileNumber, fcmToken, platform } = req.body;
         console.log('📱 Mobile Number:', mobileNumber);
 
         let user = await User.findOne({ mobileNumber });
@@ -183,6 +206,10 @@ export const login = async (req, res, next) => {
         const refreshToken = generateRefreshToken(user._id);
 
         user.refreshToken = refreshToken;
+        
+        // Add FCM token to user object before saving (one single DB write)
+        addFCMTokenToUserObject(user, fcmToken, platform);
+        
         await user.save();
 
         console.log('✅ Login successful for:', mobileNumber);
@@ -228,7 +255,9 @@ export const register = async (req, res, next) => {
             address,
             aadharNumber,
             labourDetails,
-            businessDetails
+            businessDetails,
+            fcmToken,
+            platform
         } = req.body;
 
         console.log('📱 Mobile Number:', mobileNumber);
@@ -319,6 +348,10 @@ export const register = async (req, res, next) => {
         const refreshToken = generateRefreshToken(user._id);
 
         user.refreshToken = refreshToken;
+        
+        // Add FCM token to user object before saving (one single DB write)
+        addFCMTokenToUserObject(user, fcmToken, platform);
+        
         await user.save();
 
         console.log('🎫 Tokens generated successfully');
@@ -394,3 +427,31 @@ export const refreshToken = async (req, res, next) => {
         next(error);
     }
 };
+
+// @desc    Save FCM token
+// @route   POST /api/auth/fcm-token
+// @access  Private
+export const saveFCMToken = async (req, res, next) => {
+    try {
+        const { fcmToken, platform } = req.body;
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        await saveFCMTokenToUser(user, fcmToken, platform);
+
+        res.status(200).json({
+            success: true,
+            message: 'FCM token saved successfully'
+        });
+    } catch (error) {
+        console.error('❌ SAVE FCM TOKEN ERROR:', error.message);
+        next(error);
+    }
+};
+

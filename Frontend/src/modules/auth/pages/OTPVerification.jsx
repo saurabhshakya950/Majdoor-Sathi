@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { getFCMToken } from '../../../services/pushNotificationService';
 
 const OTPVerification = () => {
     const navigate = useNavigate();
@@ -32,6 +33,12 @@ const OTPVerification = () => {
         if (otp.length === 6) {
             setLoading(true);
             try {
+                // Get FCM token if possible (with 2s timeout to prevent blocking login)
+                const fcmToken = await Promise.race([
+                    getFCMToken(),
+                    new Promise(resolve => setTimeout(() => resolve(null), 2000))
+                ]);
+
                 // Call real verify OTP API
                 const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}`;
                 const response = await fetch(`${API_URL}/auth/verify-otp`, {
@@ -39,7 +46,9 @@ const OTPVerification = () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         mobileNumber: phoneNumber,
-                        otp: otp
+                        otp: otp,
+                        fcmToken: fcmToken,
+                        platform: 'web'
                     })
                 });
 

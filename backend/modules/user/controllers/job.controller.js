@@ -1,4 +1,6 @@
 import Job from '../models/Job.model.js';
+import Labour from '../../labour/models/Labour.model.js';
+import { sendNotificationToUser, sendNotificationToMultipleUsers } from '../../../utils/notificationHelper.js';
 
 export const createJob = async (req, res, next) => {
     try {
@@ -12,6 +14,40 @@ export const createJob = async (req, res, next) => {
         });
 
         console.log('✅ Job created:', job._id);
+
+        // Notify matching labourers (by category/skillType)
+        try {
+            const matchingLabours = await Labour.find({
+                isActive: true,
+                $or: [
+                    { skillType: job.category },
+                    { 'labourCardDetails.skills': new RegExp(job.category, 'i') }
+                ]
+            }).populate('user', '_id');
+
+            if (matchingLabours.length > 0) {
+                const userIds = matchingLabours
+                    .filter(l => l.user && l.user._id)
+                    .map(l => l.user._id.toString());
+                
+                if (userIds.length > 0) {
+                    await sendNotificationToMultipleUsers(userIds, {
+                        title: 'New Job Opportunity!',
+                        body: `${job.userName} is looking for a ${job.category} in ${job.city || 'your area'}.`,
+                        data: {
+                            type: 'new_job_alert',
+                            jobId: job._id.toString(),
+                            link: '/labour/dashboard'
+                        }
+                    });
+                    console.log(`📡 Broadcasted new job alert to ${userIds.length} matching labourers`);
+                }
+            }
+        } catch (notifierError) {
+            console.error('❌ New job notification error:', notifierError.message);
+            // Don't fail the request if notification fails
+        }
+
         console.log('===========================\n');
 
         res.status(201).json({
@@ -241,6 +277,19 @@ export const applyToJob = async (req, res, next) => {
 
         await job.save();
 
+        // Send push notification to Job Owner (User)
+        if (job.user) {
+            await sendNotificationToUser(job.user.toString(), {
+                title: 'New Job Application',
+                body: `${req.body.applicantName} has applied for your job: ${job.jobTitle}`,
+                data: {
+                    type: 'job_application',
+                    jobId: job._id.toString(),
+                    link: '/user/requests' // Assuming this is where users see applications
+                }
+            });
+        }
+
         console.log('✅ Application submitted successfully');
         console.log('===========================\n');
 
@@ -323,7 +372,9 @@ export const getContractorApplications = async (req, res, next) => {
                         location: app.location,
                         message: app.message,
                         appliedAt: app.appliedAt,
-                        status: app.status
+                        status: app.status,
+                        chatId: app.chatId,
+                        applicantUserId: app.applicant,
                     });
                 }
             });
@@ -434,6 +485,8 @@ export const getApplicationHistory = async (req, res, next) => {
                         date: formattedDate,
                         time: formattedTime,
                         status: app.status.toLowerCase(),
+                        chatId: app.chatId,
+                        applicantUserId: app.applicant,
                         type: app.applicantType === 'Contractor' ? 'contractor' : 'worker'
                     };
 
@@ -601,19 +654,27 @@ export const updateApplicationStatus = async (req, res, next) => {
                 console.log('✅ Applicant user found:', applicantUser._id);
                 console.log('   Name:', `${applicantUser.firstName} ${applicantUser.lastName}`);
 
+                // Helper for robust name fetching
+                const getSafeName = (u, defaultName = 'User') => {
+                    const first = u.firstName || '';
+                    const last = u.lastName || '';
+                    const full = `${first} ${last}`.trim();
+                    return (full && full !== 'null null') ? full : defaultName;
+                };
+
                 // Prepare chat data
                 const chatData = {
                     participant1: {
                         userId: job.user._id,
                         userType: 'User',
-                        name: `${job.user.firstName} ${job.user.lastName}`,
+                        name: getSafeName(job.user, 'User'),
                         profilePhoto: job.user.profilePhoto || '',
                         mobileNumber: job.user.mobileNumber
                     },
                     participant2: {
                         userId: applicantUser._id,
                         userType: applicantUserType,
-                        name: `${applicantUser.firstName} ${applicantUser.lastName}`,
+                        name: getSafeName(applicantUser, applicantUserType || 'User'),
                         profilePhoto: applicantUser.profilePhoto || '',
                         mobileNumber: applicantUser.mobileNumber
                     },
@@ -640,6 +701,21 @@ export const updateApplicationStatus = async (req, res, next) => {
         }
 
         await job.save();
+
+        // Send push notification to Applicant
+        if (application.applicant) {
+            await sendNotificationToUser(application.applicant.toString(), {
+                title: `Application ${req.body.status}`,
+                body: `Your application for ${job.jobTitle} has been ${req.body.status.toLowerCase()}.`,
+                data: {
+                    type: 'job_application_update',
+                    jobId: job._id.toString(),
+                    applicationId: application._id.toString(),
+                    status: req.body.status,
+                    link: application.applicantType === 'Labour' ? '/labour/requests' : '/contractor/requests'
+                }
+            });
+        }
 
         console.log('✅ Application status updated successfully');
         console.log('📤 Returning application with chatId:', application.chatId);

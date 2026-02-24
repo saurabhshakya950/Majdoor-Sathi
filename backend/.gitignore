@@ -32,3 +32,6 @@ uploads/
 # Test files
 test-*.ps1
 *.http
+
+# firebase config
+majdoor-aa733-firebase-adminsdk-fbsvc-af716dcd7d.json

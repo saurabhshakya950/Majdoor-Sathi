@@ -45,7 +45,9 @@ const WorkersRequest = () => {
                                     minute: '2-digit'
                                 }),
                                 type: app.applicantType.toLowerCase(),
-                                status: app.status
+                                status: app.status,
+                                chatId: app.chatId,
+                                applicantUserId: app.applicant
                             });
                         });
                     }

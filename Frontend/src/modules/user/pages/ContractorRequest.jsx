@@ -52,7 +52,9 @@ const ContractorRequest = () => {
                         minute: '2-digit',
                         hour12: true
                     }),
-                    status: app.status
+                    status: app.status,
+                    chatId: app.chatId,
+                    applicantUserId: app.applicantUserId
                 }));
 
                 setRequests(formattedRequests);

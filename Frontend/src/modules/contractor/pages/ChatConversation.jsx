@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, Image as ImageIcon, MoreVertical, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, Trash2 } from 'lucide-react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { chatAPI } from '../../../services/api';
 import socketService from '../../../services/socket';
@@ -8,10 +8,10 @@ const ChatConversation = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id: chatId } = useParams();
-    const fileInputRef = useRef(null);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
-    
+    const inputRef = useRef(null);
+
     const [chat, setChat] = useState(location.state?.chat || null);
     const [message, setMessage] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -50,7 +50,7 @@ const ChatConversation = () => {
             socketService.onReceiveMessage((newMessage) => {
                 if (newMessage.chatId === chatId) {
                     console.log('📨 New message received:', newMessage);
-                    
+
                     // ✅ Avoid duplicate messages - only add if not already in state
                     setMessages(prev => {
                         const messageExists = prev.some(msg => msg._id === newMessage._id);
@@ -59,7 +59,7 @@ const ChatConversation = () => {
                         }
                         return [...prev, newMessage];
                     });
-                    
+
                     // Mark as read
                     chatAPI.markAsRead(chatId);
                 }
@@ -121,13 +121,13 @@ const ChatConversation = () => {
 
             // Send via API
             const response = await chatAPI.sendMessage(chatId, messageData);
-            
+
             if (response.success) {
                 const newMessage = response.data.message;
-                
+
                 // ✅ Add message to local state immediately
                 setMessages(prev => [...prev, newMessage]);
-                
+
                 // Emit via Socket.io for real-time delivery to other user
                 socketService.sendMessage({
                     ...newMessage,
@@ -139,6 +139,7 @@ const ChatConversation = () => {
             }
         } catch (error) {
             console.error('Failed to send message:', error);
+            alert('Failed to send message. Please try again.');
         }
     }, [message, chatId]);
 
@@ -189,11 +190,11 @@ const ChatConversation = () => {
                 <button onClick={() => navigate('/contractor/chat')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-700" />
                 </button>
-                
+
                 {/* Avatar */}
                 {otherParticipant?.profilePhoto ? (
-                    <img 
-                        src={otherParticipant.profilePhoto} 
+                    <img
+                        src={otherParticipant.profilePhoto}
                         alt={otherParticipant.name}
                         className="w-10 h-10 rounded-full object-cover shadow-md"
                     />
@@ -207,20 +208,20 @@ const ChatConversation = () => {
                     <h2 className="font-semibold text-gray-900">{otherParticipant?.name || 'User'}</h2>
                     <p className="text-xs text-gray-500">{otherParticipant?.mobileNumber || ''}</p>
                 </div>
-                
+
                 <div className="relative">
                     <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <MoreVertical className="w-5 h-5 text-gray-700" />
                     </button>
                     {showMenu && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                            <button 
-                                onClick={() => { 
-                                    if (window.confirm('Clear chat history?')) { 
-                                        setMessages([]); 
-                                        setShowMenu(false); 
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Clear chat history?')) {
+                                        setMessages([]);
+                                        setShowMenu(false);
                                     }
-                                }} 
+                                }}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-3 text-gray-700"
                             >
                                 <Trash2 className="w-4 h-4" />
@@ -258,7 +259,17 @@ const ChatConversation = () => {
                 <div className="bg-white border-t border-gray-200 p-3">
                     <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin' }}>
                         {emojis.map((emoji, i) => (
-                            <button key={i} onClick={() => setMessage(prev => prev + emoji)} className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors flex-shrink-0">
+                            <button
+                                key={i}
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setMessage(prev => prev + emoji);
+                                    setTimeout(() => inputRef.current?.focus(), 0);
+                                }}
+                                className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors flex-shrink-0"
+                            >
                                 {emoji}
                             </button>
                         ))}
@@ -269,22 +280,19 @@ const ChatConversation = () => {
             {/* Input */}
             <div className="bg-white border-t border-gray-200 p-4">
                 <div className="flex items-center gap-2">
-                    <input type="file" ref={fileInputRef} accept="image/*" className="hidden" />
-                    <button onClick={() => fileInputRef.current?.click()} className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-                        <ImageIcon className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <input 
-                        type="text" 
-                        value={message} 
-                        onChange={(e) => setMessage(e.target.value)} 
-                        onKeyPress={handleKeyPress} 
-                        placeholder="Type a message..." 
-                        className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type a message..."
+                        className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                     />
                     <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-xl">😊</button>
-                    <button 
-                        onClick={handleSendMessage} 
-                        disabled={!message.trim()} 
+                    <button
+                        onClick={handleSendMessage}
+                        disabled={!message.trim()}
                         className={`p-3 rounded-full transition-all shadow-md ${message.trim() ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                     >
                         <Send className="w-5 h-5" />

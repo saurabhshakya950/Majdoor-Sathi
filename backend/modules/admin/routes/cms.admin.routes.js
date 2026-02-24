@@ -6,6 +6,10 @@ import {
     updateCMSSection
 } from '../controllers/cms.admin.controller.js';
 import { protectAdmin } from '../middleware/admin.auth.middleware.js';
+import {
+    validateUpdateCMSContent,
+    validateUpdateCMSSection
+} from '../middleware/admin.validation.middleware.js';
 
 const router = express.Router();
 
@@ -14,7 +18,7 @@ router.get('/:section', getCMSContentBySection);
 
 // Protected routes
 router.get('/', protectAdmin, getAllCMSContent);
-router.put('/', protectAdmin, updateCMSContent);
-router.put('/:section', protectAdmin, updateCMSSection);
+router.put('/', protectAdmin, validateUpdateCMSContent, updateCMSContent);
+router.put('/:section', protectAdmin, validateUpdateCMSSection, updateCMSSection);
 
 export default router;

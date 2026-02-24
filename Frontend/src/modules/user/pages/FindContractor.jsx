@@ -145,6 +145,7 @@ const FindContractor = () => {
 
                 const dbJobs = activeJobs.map(job => ({
                     id: job._id,
+                    userId: job.user, // Add the contractor's user ID
                     contractorName: job.contractorName,
                     phoneNumber: job.phoneNumber,
                     contactNo: job.phoneNumber,

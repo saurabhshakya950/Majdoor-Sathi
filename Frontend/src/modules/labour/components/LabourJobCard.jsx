@@ -5,88 +5,87 @@ import { memo } from 'react';
 
 const LabourJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = {}, index = 0 }) => {
     const navigate = useNavigate();
-    
+
     // Check if this job has been applied to and get its status
     const applicationData = appliedJobs[job.id];
     const isApplied = !!applicationData;
     const applicationStatus = applicationData?.status;
     const chatId = applicationData?.chatId;
-    
+
     const handleChatClick = async () => {
         console.log('🔵 Chat button clicked (Labour Panel - User Job)');
         console.log('Current chatId:', chatId);
         console.log('Job ID:', job.id);
         console.log('Job User Name:', job.userName);
         console.log('Application Data:', applicationData);
-        
+
         try {
             // Import API modules
             const { jobAPI, chatAPI } = await import('../../../services/api');
-            
+
             // ALWAYS check for existing chats first (most reliable method)
             console.log('🔍 Checking for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
             console.log('📊 User Chats Response:', chatsResponse);
-            
+
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
-                console.log('📋 Available chats:', chatsResponse.data.chats.map(c => ({
-                    id: c._id,
-                    name: c.otherParticipant?.name
-                })));
-                
-                // Find chat with this user by name (case-insensitive, trimmed)
+                // Find chat with this user by ID (most accurate)
                 const existingChat = chatsResponse.data.chats.find(chat => {
-                    const otherName = (chat.otherParticipant?.name || '').toLowerCase().trim();
-                    const jobUserName = (job.userName || '').toLowerCase().trim();
-                    console.log(`Comparing: "${otherName}" === "${jobUserName}"`);
-                    return otherName === jobUserName;
+                    const otherId = chat.otherParticipant?.userId?.toString();
+                    const jobOwnerId = (job.userId || '').toString();
+                    return otherId === jobOwnerId;
                 });
-                
+
                 if (existingChat) {
-                    console.log('✅ Found existing chat with user:', existingChat._id);
+                    console.log('✅ Found existing chat by ID:', existingChat._id);
                     navigate(`/labour/chat/${existingChat._id}`);
                     return;
                 }
-                
-                console.log('⚠️ No existing chat found with this user name');
-            } else {
-                console.log('⚠️ No chats available or API failed');
-            }
-            
-            // If chatId is available in application data, use it
-            if (chatId) {
-                console.log('✅ ChatId available in application data, navigating to:', `/labour/chat/${chatId}`);
-                navigate(`/labour/chat/${chatId}`);
-                return;
-            }
-            
-            // Fetch latest application status to get chatId
-            console.log('🔄 Fetching latest application status...');
-            const response = await jobAPI.getMyApplications();
-            console.log('📊 Applications Response:', response);
-            
-            if (response.success && response.data.applications) {
-                const updatedApplication = response.data.applications[job.id];
-                console.log('📋 Updated Application for job:', updatedApplication);
-                
-                if (updatedApplication?.chatId) {
-                    console.log('✅ ChatId found in updated application, navigating to:', `/labour/chat/${updatedApplication.chatId}`);
-                    navigate(`/labour/chat/${updatedApplication.chatId}`);
+
+                // Fallback: Find by name (if ID mismatch or missing)
+                const existingChatByName = chatsResponse.data.chats.find(chat => {
+                    const otherName = (chat.otherParticipant?.name || '').toLowerCase().trim();
+                    const jobUserName = (job.userName || '').toLowerCase().trim();
+                    return otherName === jobUserName && jobUserName !== '';
+                });
+
+                if (existingChatByName) {
+                    console.log('✅ Found existing chat by name:', existingChatByName._id);
+                    navigate(`/labour/chat/${existingChatByName._id}`);
                     return;
                 }
+
+                console.log('⚠️ No existing chat found with this user');
             }
-            
+
+            // If no chat found via list, OR if chatId is null, INITIALIZE it
+            console.log('🚀 Initializing new chat with user...');
+            const initResponse = await chatAPI.initializeChat({
+                participant2Id: job.userId,
+                participant2Type: 'User',
+                participant2Name: job.userName,
+                participant2Phone: job.mobileNumber || '',
+                requestId: applicationData?.applicationId || job.id,
+                requestType: 'JobApplication'
+            });
+
+            if (initResponse.success && initResponse.data.chat) {
+                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                navigate(`/labour/chat/${initResponse.data.chat._id}`);
+                return;
+            }
+
             // If still no chat found, navigate to chat list page
             console.log('❌ No chat available through any method, redirecting to chat list');
             navigate('/labour/chat');
-            
+
         } catch (error) {
             console.error('❌ Failed to open chat:', error);
             // On error, still try to navigate to chat list
             navigate('/labour/chat');
         }
     };
-    
+
     const handleApplyClick = () => {
         if (job.status !== 'Open') {
             // Show toast message for closed job
@@ -96,7 +95,7 @@ const LabourJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = {}, 
             });
             return;
         }
-        
+
         if (isApplied) {
             toast.info('You have already applied for this job.', {
                 duration: 2000,
@@ -104,14 +103,14 @@ const LabourJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = {}, 
             });
             return;
         }
-        
+
         onApplyNow(job.id);
     };
 
     // Determine button style and text based on status
     let buttonClass = '';
     let buttonText = 'Apply Now';
-    
+
     if (applicationStatus === 'Accepted') {
         buttonClass = 'bg-green-500 text-white cursor-default';
         buttonText = '✓ Approved';
@@ -145,11 +144,10 @@ const LabourJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = {}, 
                         </div>
                     </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-                    job.status === 'Open' 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-gray-100 text-gray-700'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${job.status === 'Open'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-700'
+                    }`}>
                     {job.status}
                 </span>
             </div>
@@ -173,8 +171,8 @@ const LabourJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = {}, 
                 <div className="flex items-center gap-1 text-yellow-600 font-medium">
                     <IndianRupee className="w-4 h-4" />
                     <span>
-                        {job.budgetType === 'Negotiable' 
-                            ? 'Negotiable' 
+                        {job.budgetType === 'Negotiable'
+                            ? 'Negotiable'
                             : `₹${job.budgetAmount}`}
                     </span>
                 </div>

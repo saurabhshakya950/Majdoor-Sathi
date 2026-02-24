@@ -79,6 +79,7 @@ const FindUser = () => {
                     // Transform API data to match component expectations
                     const transformedJobs = response.data.jobs.map(job => ({
                         id: job._id,
+                        userId: job.user, // Add the user ID who posted the job
                         userName: job.userName,
                         city: job.city,
                         address: job.address,

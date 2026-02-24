@@ -3,6 +3,7 @@ import User from '../../user/models/User.model.js';
 import Labour from '../../labour/models/Labour.model.js';
 import Contractor from '../../contractor/models/Contractor.model.js';
 import Notification from '../../../models/Notification.model.js';
+import { sendNotificationToMultipleUsers, broadcastNotification } from '../../../utils/notificationHelper.js';
 
 // @desc    Get all broadcasts
 // @route   GET /api/admin/broadcasts
@@ -273,19 +274,17 @@ export const deleteBroadcast = async (req, res) => {
 // @access  Private
 export const sendBroadcast = async (req, res) => {
     try {
-        const broadcast = await Broadcast.findById(req.params.id);
-
+        // Atomically mark as sending to prevent duplicate executions from concurrent requests
+        const broadcast = await Broadcast.findOneAndUpdate(
+            { _id: req.params.id, status: { $ne: 'SENT' } },
+            { $set: { status: 'SENDING' } },
+            { new: true }
+        );
+        
         if (!broadcast) {
-            return res.status(404).json({
-                success: false,
-                message: 'Broadcast not found'
-            });
-        }
-
-        if (broadcast.status === 'SENT') {
             return res.status(400).json({
                 success: false,
-                message: 'Broadcast has already been sent'
+                message: 'Broadcast not found or already sent/sending'
             });
         }
 
@@ -358,6 +357,32 @@ export const sendBroadcast = async (req, res) => {
         });
 
         await Promise.all(notificationPromises);
+
+        // Send Push Notifications
+        const userIds = recipients.map(r => r.userId.toString());
+        const uniqueUserIds = [...new Set(userIds)];
+        
+        // Use broadcastNotification if it's for everyone, otherwise target specific IDs
+        if (broadcast.targetAudience === 'ALL') {
+            await broadcastNotification({
+                title: broadcast.title,
+                body: broadcast.message,
+                data: {
+                    type: 'BROADCAST',
+                    broadcastId: broadcast._id.toString()
+                },
+                broadcastId: broadcast._id.toString()
+            });
+        } else {
+            await sendNotificationToMultipleUsers(uniqueUserIds, {
+                title: broadcast.title,
+                body: broadcast.message,
+                data: {
+                    type: 'BROADCAST',
+                    broadcastId: broadcast._id.toString()
+                }
+            });
+        }
 
         // Update broadcast status
         broadcast.status = 'SENT';

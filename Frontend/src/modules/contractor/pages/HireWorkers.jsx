@@ -107,6 +107,7 @@ const HireWorkers = () => {
                 // Transform API data
                 const dbCards = response.data.labours.map(labour => ({
                     id: labour._id,
+                    userId: labour.user?._id || labour.user,
                     fullName: labour.labourCardDetails?.fullName || '',
                     primarySkill: labour.skillType,
                     rating: labour.rating || 0,
@@ -427,12 +428,37 @@ const HireWorkers = () => {
                                                     ✓ Approved
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        const chatId = chatIds[card.id];
-                                                        if (chatId) {
-                                                            navigate(`/contractor/chat/${chatId}`);
-                                                        } else {
-                                                            alert('Chat is being created. Please refresh the page.');
+                                                    onClick={async () => {
+                                                        const directChatId = chatIds[card.id];
+                                                        if (directChatId) {
+                                                            navigate(`/contractor/chat/${directChatId}`);
+                                                            return;
+                                                        }
+
+                                                        // Fallback: Initialize new chat
+                                                        try {
+                                                            const { chatAPI } = await import('../../../services/api');
+                                                            console.log('🚀 Initializing new chat with worker...');
+                                                            const initResponse = await chatAPI.initializeChat({
+                                                                participant2Id: card.userId,
+                                                                participant2Type: 'Labour',
+                                                                participant2Name: card.fullName,
+                                                                participant2Photo: '', // Add phot if available
+                                                                participant2Phone: card.mobileNumber || '',
+                                                                requestId: card.id,
+                                                                requestType: 'HireRequest'
+                                                            });
+
+                                                            if (initResponse.success && initResponse.data.chat) {
+                                                                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                                                                navigate(`/contractor/chat/${initResponse.data.chat._id}`);
+                                                                return;
+                                                            }
+
+                                                            alert('Failed to initialize chat. Please try again.');
+                                                        } catch (err) {
+                                                            console.error('Failed to initialize chat:', err);
+                                                            navigate('/contractor/chat');
                                                         }
                                                     }}
                                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all active:scale-95"

@@ -4,86 +4,85 @@ import { memo } from 'react';
 
 const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, hiredStatus, hiredRequests = {} }) => {
     const navigate = useNavigate();
-    
+
     // Get hire request details including chatId
     const hireRequest = hiredRequests[card.id];
     const chatId = hireRequest?.chatId;
-    
+
     const handleChatClick = async () => {
         console.log('🔵 Chat button clicked (User Panel)');
         console.log('Current chatId:', chatId);
         console.log('Card ID:', card.id);
         console.log('Card Contractor Name:', card.contractorName);
         console.log('Hire Request:', hireRequest);
-        
+
         try {
             // Import API modules
             const { contractorAPI, chatAPI } = await import('../../../services/api');
-            
+
             // ALWAYS check for existing chats first (most reliable method)
             console.log('🔍 Checking for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
             console.log('📊 User Chats Response:', chatsResponse);
-            
+
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
-                console.log('📋 Available chats:', chatsResponse.data.chats.map(c => ({
-                    id: c._id,
-                    name: c.otherParticipant?.name
-                })));
-                
-                // Find chat with this contractor by name (case-insensitive, trimmed)
+                // Find chat with this contractor by ID (most accurate)
                 const existingChat = chatsResponse.data.chats.find(chat => {
-                    const otherName = (chat.otherParticipant?.name || '').toLowerCase().trim();
-                    const cardName = (card.contractorName || '').toLowerCase().trim();
-                    console.log(`Comparing: "${otherName}" === "${cardName}"`);
-                    return otherName === cardName;
+                    const otherId = chat.otherParticipant?.userId?.toString();
+                    const contractorUserId = (card.userId || '').toString();
+                    return otherId === contractorUserId;
                 });
-                
+
                 if (existingChat) {
-                    console.log('✅ Found existing chat with contractor:', existingChat._id);
+                    console.log('✅ Found existing chat by ID:', existingChat._id);
                     navigate(`/user/chat/${existingChat._id}`);
                     return;
                 }
-                
-                console.log('⚠️ No existing chat found with this contractor name');
-            } else {
-                console.log('⚠️ No chats available or API failed');
-            }
-            
-            // If chatId is available in hire request, use it
-            if (chatId) {
-                console.log('✅ ChatId available in hire request, navigating to:', `/user/chat/${chatId}`);
-                navigate(`/user/chat/${chatId}`);
-                return;
-            }
-            
-            // Fetch latest hire request status to get chatId
-            console.log('🔄 Fetching latest hire request status...');
-            const response = await contractorAPI.getSentContractorHireRequests();
-            console.log('📊 Hire Requests Response:', response);
-            
-            if (response.success && response.data.hireRequests) {
-                const updatedRequest = response.data.hireRequests.find(req => req.contractorId === card.id);
-                console.log('📋 Updated Request for card:', updatedRequest);
-                
-                if (updatedRequest?.chatId) {
-                    console.log('✅ ChatId found in updated request, navigating to:', `/user/chat/${updatedRequest.chatId}`);
-                    navigate(`/user/chat/${updatedRequest.chatId}`);
+
+                // Fallback: Find by name (if ID mismatch or missing)
+                const existingChatByName = chatsResponse.data.chats.find(chat => {
+                    const otherName = (chat.otherParticipant?.name || '').toLowerCase().trim();
+                    const cardName = (card.contractorName || '').toLowerCase().trim();
+                    return otherName === cardName && cardName !== '';
+                });
+
+                if (existingChatByName) {
+                    console.log('✅ Found existing chat by name:', existingChatByName._id);
+                    navigate(`/user/chat/${existingChatByName._id}`);
                     return;
                 }
+
+                console.log('⚠️ No existing chat found with this contractor');
             }
-            
+
+            // If no chat found via list, INITIALIZE it
+            console.log('🚀 Initializing new chat with contractor...');
+            const initResponse = await chatAPI.initializeChat({
+                participant2Id: card.userId,
+                participant2Type: 'Contractor',
+                participant2Name: card.contractorName,
+                participant2Phone: card.mobileNumber || '',
+                requestId: card.id,
+                requestType: 'JobApplication'
+            });
+
+            if (initResponse.success && initResponse.data.chat) {
+                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                navigate(`/user/chat/${initResponse.data.chat._id}`);
+                return;
+            }
+
             // If still no chat found, navigate to chat list page
             console.log('❌ No chat available through any method, redirecting to chat list');
             navigate('/user/chat');
-            
+
         } catch (error) {
             console.error('❌ Failed to open chat:', error);
             // On error, still try to navigate to chat list
             navigate('/user/chat');
         }
     };
-    
+
     return (
         <div className="premium-card card-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
             {/* Header with Contractor Info and Status Badge */}
@@ -102,11 +101,10 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                         </div>
                     </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    card.availabilityStatus === 'Available' 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-gray-100 text-gray-700'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${card.availabilityStatus === 'Available'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-700'
+                    }`}>
                     {card.availabilityStatus === 'Available' ? 'Open' : 'Closed'}
                 </span>
             </div>
@@ -180,19 +178,18 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                     <button
                         onClick={() => onApplyNow(card.id)}
                         disabled={hiredStatus}
-                        className={`flex-1 font-bold py-2.5 rounded-lg transition-all active:scale-95 ${
-                            hiredStatus === 'declined'
-                                ? 'bg-gray-500 text-white cursor-not-allowed'
-                                : hiredStatus === 'pending'
+                        className={`flex-1 font-bold py-2.5 rounded-lg transition-all active:scale-95 ${hiredStatus === 'declined'
+                            ? 'bg-gray-500 text-white cursor-not-allowed'
+                            : hiredStatus === 'pending'
                                 ? 'bg-red-500 text-white cursor-not-allowed'
                                 : 'btn-primary'
-                        }`}
+                            }`}
                     >
                         {hiredStatus === 'declined'
                             ? 'Not Approved'
                             : hiredStatus === 'pending'
-                            ? 'Request Sent'
-                            : 'Hire Contractor'}
+                                ? 'Request Sent'
+                                : 'Hire Contractor'}
                     </button>
                 </div>
             )}

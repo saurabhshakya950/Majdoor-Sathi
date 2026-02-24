@@ -11,6 +11,13 @@ import {
 } from '../controllers/verification.admin.controller.js';
 import { protectAdmin, isSuperAdmin } from '../middleware/admin.auth.middleware.js';
 import { protect } from '../../../middleware/auth.middleware.js';
+import {
+    validateCreateVerification,
+    validateSubmitVerification,
+    validateRejectVerification,
+    validateObjectIdParam,
+    validatePagination
+} from '../middleware/admin.validation.middleware.js';
 
 const router = express.Router();
 
@@ -18,18 +25,18 @@ const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
 // Public route for users to submit verification (requires user authentication)
-router.post('/submit', protect, submitVerificationRequest);
+router.post('/submit', protect, validateSubmitVerification, submitVerificationRequest);
 
 // All routes below are protected and require SUPER_ADMIN role
 router.use(protectAdmin, isSuperAdmin);
 
 router.route('/requests')
-    .get(getAllVerificationRequests)
-    .post(createVerificationRequest);
+    .get(validatePagination, getAllVerificationRequests)
+    .post(validateCreateVerification, createVerificationRequest);
 
-router.get('/requests/:id', getVerificationRequestById);
-router.put('/requests/:id/approve', approveVerificationRequest);
-router.put('/requests/:id/reject', rejectVerificationRequest);
+router.get('/requests/:id', validateObjectIdParam('id'), getVerificationRequestById);
+router.put('/requests/:id/approve', validateObjectIdParam('id'), approveVerificationRequest);
+router.put('/requests/:id/reject', validateObjectIdParam('id'), validateRejectVerification, rejectVerificationRequest);
 
 router.post('/upload-document', upload.single('file'), uploadVerificationDocument);
 

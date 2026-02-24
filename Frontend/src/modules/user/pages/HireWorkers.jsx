@@ -457,12 +457,52 @@ const HireWorkers = () => {
                                                     ✓ Approved
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        const chatId = chatIds[card.id];
-                                                        if (chatId) {
-                                                            navigate(`/user/chat/${chatId}`);
-                                                        } else {
-                                                            alert('Chat is being created. Please refresh the page.');
+                                                    onClick={async () => {
+                                                        const directChatId = chatIds[card.id];
+                                                        if (directChatId) {
+                                                            navigate(`/user/chat/${directChatId}`);
+                                                            return;
+                                                        }
+
+                                                        // Fallback: Check for existing chats via API
+                                                        try {
+                                                            const { chatAPI } = await import('../../../services/api');
+                                                            const chatsResponse = await chatAPI.getUserChats();
+
+                                                            if (chatsResponse.success && chatsResponse.data.chats) {
+                                                                // Find by worker's userId (most accurate)
+                                                                const existingChat = chatsResponse.data.chats.find(chat =>
+                                                                    chat.otherParticipant?.userId?.toString() === (card.userId || '').toString()
+                                                                );
+
+                                                                if (existingChat) {
+                                                                    navigate(`/user/chat/${existingChat._id}`);
+                                                                    return;
+                                                                }
+                                                            }
+
+                                                            // Fallback: Initialize new chat
+                                                            console.log('🚀 Initializing new chat with worker...');
+                                                            const initResponse = await chatAPI.initializeChat({
+                                                                participant2Id: card.userId,
+                                                                participant2Type: 'Labour',
+                                                                participant2Name: card.fullName,
+                                                                participant2Phone: card.mobileNumber || '',
+                                                                requestId: card.id,
+                                                                requestType: 'JobApplication'
+                                                            });
+
+                                                            if (initResponse.success && initResponse.data.chat) {
+                                                                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                                                                navigate(`/user/chat/${initResponse.data.chat._id}`);
+                                                                return;
+                                                            }
+
+                                                            console.log('❌ Failed to initialize chat');
+                                                            navigate('/user/chat');
+                                                        } catch (err) {
+                                                            console.error('Failed to find chat:', err);
+                                                            navigate('/user/chat');
                                                         }
                                                     }}
                                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all active:scale-95"

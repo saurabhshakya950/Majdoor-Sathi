@@ -33,7 +33,7 @@ const chatSchema = new mongoose.Schema({
         requestType: {
             type: String,
             required: true,
-            enum: ['HireRequest', 'ContractorHireRequest']
+            enum: ['HireRequest', 'ContractorHireRequest', 'JobApplication']
         }
     },
     lastMessage: {

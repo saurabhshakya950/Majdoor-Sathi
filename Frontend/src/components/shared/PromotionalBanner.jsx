@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { broadcastAPI } from '../../services/api';
+// import { broadcastAPI } from '../../services/api';
 
 const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -12,26 +12,12 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
     const autoPlayRef = useRef(null);
     const sliderRef = useRef(null);
 
-    // Fetch admin broadcasts
+    // Fetching admin broadcasts removed as per user request
+    // Admin broadcasts should only appear in notifications, not as banners
     useEffect(() => {
-        fetchActiveBroadcasts();
-    }, [targetAudience]);
-
-    const fetchActiveBroadcasts = async () => {
-        try {
-            setLoading(true);
-            const response = await broadcastAPI.getActiveBroadcasts(targetAudience);
-            if (response.data.success && response.data.data.broadcasts.length > 0) {
-                setAdminBroadcasts(response.data.data.broadcasts);
-            }
-        } catch (error) {
-            // Silently handle error - just use default banners
-            console.log('Broadcasts not available, using default banners');
-            setAdminBroadcasts([]); // Use empty array to show default banners
-        } finally {
-            setLoading(false);
-        }
-    };
+        setAdminBroadcasts([]);
+        setLoading(false);
+    }, []);
 
     // Default banner data - Construction materials theme with realistic images
     const defaultBanners = [
@@ -85,24 +71,8 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
         }
     ];
 
-    // Convert admin broadcasts to banner format
-    const adminBannersFormatted = adminBroadcasts.map((broadcast, index) => ({
-        id: `admin-${broadcast._id}`,
-        title: broadcast.title,
-        subtitle: '',
-        description: broadcast.message,
-        price: '',
-        unit: '',
-        discount: '',
-        badge: broadcast.priority === 'URGENT' ? '🚨 Urgent' : broadcast.priority === 'HIGH' ? '⚡ Important' : '📢 Announcement',
-        bgImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80&auto=format&fit=crop',
-        bgGradient: broadcast.priority === 'URGENT' ? 'from-red-800 via-red-700 to-red-900' : 
-                     broadcast.priority === 'HIGH' ? 'from-orange-800 via-orange-700 to-orange-900' :
-                     'from-blue-800 via-blue-700 to-blue-900',
-        icon: '📢',
-        secondaryIcon: '🔔',
-        isAdminBroadcast: true
-    }));
+    // Admin banners mapping removed - broadcasts now only for notifications
+    const adminBannersFormatted = [];
 
     // Combine admin broadcasts with default banners
     const banners = adminBannersFormatted.length > 0 ? [...adminBannersFormatted, ...defaultBanners] : defaultBanners;
@@ -155,7 +125,7 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
 
     const handleTouchEnd = () => {
         if (!touchStart || !touchEnd) return;
-        
+
         const distance = touchStart - touchEnd;
         const isLeftSwipe = distance > 50;
         const isRightSwipe = distance < -50;
@@ -182,7 +152,7 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
 
     return (
         <div className="w-full px-4 py-4 bg-gray-50 overflow-hidden">
-            <div 
+            <div
                 ref={sliderRef}
                 className="relative w-full h-60 sm:h-64 md:h-64 rounded-2xl overflow-hidden shadow-2xl group"
                 onMouseEnter={handleMouseEnter}
@@ -192,7 +162,7 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                 onTouchEnd={handleTouchEnd}
             >
                 {/* Slider Container */}
-                <div 
+                <div
                     className="flex h-full w-full transition-transform duration-600 ease-in-out"
                     style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
@@ -214,7 +184,7 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                                         e.target.style.display = 'none';
                                     }}
                                 />
-                                
+
                                 {/* Dark overlay for text readability - subtle but effective */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/60"></div>
 
@@ -224,12 +194,11 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                                 {/* Content Container */}
                                 <div className="relative h-full flex flex-col sm:flex-row items-start justify-between px-5 sm:px-6 md:px-8 py-5 sm:py-6">
                                     {/* Left Side - Text Content */}
-                                    <div 
-                                        className={`flex-1 w-full sm:w-auto transition-all duration-700 ${
-                                            currentSlide === index 
-                                                ? 'opacity-100 translate-y-0' 
-                                                : 'opacity-0 translate-y-4'
-                                        }`}
+                                    <div
+                                        className={`flex-1 w-full sm:w-auto transition-all duration-700 ${currentSlide === index
+                                            ? 'opacity-100 translate-y-0'
+                                            : 'opacity-0 translate-y-4'
+                                            }`}
                                     >
                                         {/* Offer Badge */}
                                         <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-2 animate-pulse">
@@ -268,12 +237,11 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                                     </div>
 
                                     {/* Right Side - Visual Elements (Hidden on mobile) */}
-                                    <div 
-                                        className={`hidden md:flex flex-col items-center justify-center gap-4 transition-all duration-700 delay-200 ${
-                                            currentSlide === index 
-                                                ? 'opacity-100 translate-x-0' 
-                                                : 'opacity-0 translate-x-4'
-                                        }`}
+                                    <div
+                                        className={`hidden md:flex flex-col items-center justify-center gap-4 transition-all duration-700 delay-200 ${currentSlide === index
+                                            ? 'opacity-100 translate-x-0'
+                                            : 'opacity-0 translate-x-4'
+                                            }`}
                                     >
                                         <div className="w-24 h-24 bg-yellow-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-yellow-500/40 shadow-xl">
                                             <span className="text-6xl">{banner.icon}</span>
@@ -318,11 +286,10 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                             key={index}
                             onClick={() => goToSlide(index)}
                             disabled={isAnimating}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                                index === currentSlide 
-                                    ? 'w-8 bg-yellow-400' 
-                                    : 'w-1.5 bg-white/50 hover:bg-white/80'
-                            }`}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${index === currentSlide
+                                ? 'w-8 bg-yellow-400'
+                                : 'w-1.5 bg-white/50 hover:bg-white/80'
+                                }`}
                             aria-label={`Go to slide ${index + 1}`}
                         />
                     ))}

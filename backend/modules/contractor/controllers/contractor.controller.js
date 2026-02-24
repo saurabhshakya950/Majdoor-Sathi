@@ -1,6 +1,9 @@
 import Contractor from '../models/Contractor.model.js';
 import ContractorJob from '../models/ContractorJob.model.js';
 import User from '../../user/models/User.model.js';
+import Labour from '../../labour/models/Labour.model.js';
+import { sendNotificationToUser, sendNotificationToMultipleUsers } from '../../../utils/notificationHelper.js';
+import ContractorHireRequest from '../models/ContractorHireRequest.model.js';
 
 // @desc    Create contractor profile (during registration)
 // @route   POST /api/contractor/profile
@@ -296,6 +299,41 @@ export const createContractorJob = async (req, res, next) => {
 
         console.log('✅ Contractor job created:', contractorJob._id);
         console.log('🎯 Saved with Target Audience:', contractorJob.targetAudience);
+
+        // Notify matching labourers if audience includes 'Labour'
+        if (contractorJob.targetAudience === 'Labour' || contractorJob.targetAudience === 'Both') {
+            try {
+                const matchingLabours = await Labour.find({
+                    isActive: true,
+                    $or: [
+                        { skillType: contractorJob.labourSkill },
+                        { 'labourCardDetails.skills': new RegExp(contractorJob.labourSkill, 'i') }
+                    ]
+                }).populate('user', '_id');
+
+                if (matchingLabours.length > 0) {
+                    const userIds = matchingLabours
+                        .filter(l => l.user && l.user._id)
+                        .map(l => l.user._id.toString());
+                    
+                    if (userIds.length > 0) {
+                        await sendNotificationToMultipleUsers(userIds, {
+                            title: 'New Requirement from Contractor!',
+                            body: `${contractorJob.contractorName} is looking for a ${contractorJob.labourSkill} in ${contractorJob.city}`,
+                            data: {
+                                type: 'new_contractor_job',
+                                jobId: contractorJob._id.toString(),
+                                link: '/labour/dashboard'
+                            }
+                        });
+                        console.log(`📡 Broadcasted contractor job alert to ${userIds.length} matching labourers`);
+                    }
+                }
+            } catch (notifierError) {
+                console.error('❌ Contractor job notification error:', notifierError.message);
+            }
+        }
+
         console.log('===========================\n');
 
         res.status(201).json({
@@ -542,8 +580,6 @@ export const getContractorVerificationStatus = async (req, res, next) => {
 
 // ==================== CONTRACTOR HIRE REQUEST FUNCTIONS ====================
 
-import ContractorHireRequest from '../models/ContractorHireRequest.model.js';
-
 // @desc    Create contractor hire request (User hires Contractor)
 // @route   POST /api/contractor/hire-request
 // @access  Private
@@ -606,18 +642,38 @@ export const createContractorHireRequest = async (req, res) => {
         }
 
         // Create hire request with both contractor ID and contractorJob ID
+        const getSafeName = (u, defaultName = 'User') => {
+            const first = u.firstName || '';
+            const last = u.lastName || '';
+            const full = `${first || ''} ${last || ''}`.trim();
+            return (full && full !== 'null null') ? full : defaultName;
+        };
+
         const hireRequest = await ContractorHireRequest.create({
             contractorId: contractorWithUser._id,
             contractorJobId: contractorJob._id,
-            contractorName: `${contractorWithUser.user.firstName} ${contractorWithUser.user.lastName}`,
+            contractorName: getSafeName(contractorWithUser.user, 'Contractor'),
             contractorPhone: contractorWithUser.user.mobileNumber,
             contractorBusiness: contractorWithUser.businessName || 'N/A',
             contractorCity: contractorWithUser.user.city || 'N/A',
             requesterId: userId,
-            requesterName: `${requester.firstName} ${requester.lastName}`,
+            requesterName: getSafeName(requester, 'User'),
             requesterPhone: requester.mobileNumber,
             requesterLocation: requester.city || 'N/A'
         });
+
+        // Send push notification to Contractor
+        if (contractorWithUser.user && contractorWithUser.user._id) {
+            await sendNotificationToUser(contractorWithUser.user._id.toString(), {
+                title: 'New Hire Request',
+                body: `${requester.firstName} ${requester.lastName} wants to hire you for a project.`,
+                data: {
+                    type: 'contractor_hire_request',
+                    id: hireRequest._id.toString(),
+                    link: '/contractor/requests'
+                }
+            });
+        }
 
         console.log('✅ Hire request created:', hireRequest._id);
         console.log('===========================\n');
@@ -794,18 +850,25 @@ export const updateContractorHireRequestStatus = async (req, res) => {
             }
 
             // Prepare chat data
+            const getSafeName = (u, defaultName = 'User') => {
+                const first = u.firstName || '';
+                const last = u.lastName || '';
+                const full = `${first || ''} ${last || ''}`.trim();
+                return (full && full !== 'null null') ? full : defaultName;
+            };
+
             const chatData = {
                 participant1: {
                     userId: contractor.user._id,
                     userType: 'Contractor',
-                    name: `${contractor.user.firstName} ${contractor.user.lastName}`,
+                    name: getSafeName(contractor.user, 'Contractor'),
                     profilePhoto: contractor.user.profilePhoto || '',
                     mobileNumber: contractor.user.mobileNumber
                 },
                 participant2: {
                     userId: requester._id,
                     userType: 'User',
-                    name: `${requester.firstName} ${requester.lastName}`,
+                    name: getSafeName(requester, 'User'),
                     profilePhoto: requester.profilePhoto || '',
                     mobileNumber: requester.mobileNumber
                 },
@@ -826,6 +889,20 @@ export const updateContractorHireRequestStatus = async (req, res) => {
         }
 
         await hireRequest.save();
+
+        // Send push notification to Requester (User)
+        if (hireRequest.requesterId) {
+            await sendNotificationToUser(hireRequest.requesterId.toString(), {
+                title: `Hire Request ${status === 'accepted' ? 'Accepted' : 'Declined'}`,
+                body: `${contractor.user.firstName} ${contractor.user.lastName} has ${status} your hire request.`,
+                data: {
+                    type: 'contractor_hire_request_update',
+                    requestId: hireRequest._id.toString(),
+                    status: status,
+                    link: '/user/requests'
+                }
+            });
+        }
 
         console.log('✅ Contractor hire request updated successfully');
         console.log('===========================\n');
@@ -888,7 +965,6 @@ export const deleteContractorHireRequest = async (req, res) => {
 
 // ==================== CONTRACTOR JOB APPLICATION FUNCTIONS ====================
 
-import Labour from '../../labour/models/Labour.model.js';
 
 // @desc    Apply to contractor job (Labour applies to contractor's job)
 // @route   POST /api/contractor/jobs/:id/apply
@@ -944,6 +1020,19 @@ export const applyToContractorJob = async (req, res, next) => {
         });
 
         await job.save();
+
+        // Send push notification to Contractor (Job Owner)
+        if (job.user) {
+            await sendNotificationToUser(job.user.toString(), {
+                title: 'New Job Application',
+                body: `${labour.user.firstName} ${labour.user.lastName} has applied for your requirement: ${job.labourSkill}`,
+                data: {
+                    type: 'contractor_job_application',
+                    jobId: job._id.toString(),
+                    link: '/contractor/requests'
+                }
+            });
+        }
 
         console.log('✅ Application submitted successfully');
         console.log('===========================\n');
@@ -1200,6 +1289,21 @@ export const updateContractorJobApplicationStatus = async (req, res, next) => {
         }
 
         await job.save();
+
+        // Send push notification to Applicant (Labour)
+        if (application.labour && application.labour.user) {
+            await sendNotificationToUser(application.labour.user._id.toString(), {
+                title: `Application ${req.body.status}`,
+                body: `Your application for ${job.labourSkill} has been ${req.body.status.toLowerCase()}.`,
+                data: {
+                    type: 'contractor_job_application_update',
+                    jobId: job._id.toString(),
+                    applicationId: application._id.toString(),
+                    status: req.body.status,
+                    link: '/labour/requests'
+                }
+            });
+        }
 
         console.log('✅ Application status updated');
         console.log('📤 Returning application with chatId:', application.chatId);

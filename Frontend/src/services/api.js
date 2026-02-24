@@ -510,6 +510,12 @@ export const chatAPI = {
         const response = await api.get('/chat/chats');
         return response.data;
     },
+    
+    // Initialize or get existing chat
+    initializeChat: async (chatData) => {
+        const response = await api.post('/chat/initialize', chatData);
+        return response.data;
+    },
 
     // Get specific chat details
     getChatById: async (chatId) => {

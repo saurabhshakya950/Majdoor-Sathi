@@ -2,6 +2,7 @@ import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import {
     getUserChats,
+    initializeChat,
     getChatById,
     getChatMessages,
     sendMessage,
@@ -16,6 +17,7 @@ router.use(protect);
 
 // Chat routes
 router.get('/chats', getUserChats);
+router.post('/initialize', initializeChat);
 router.get('/chats/:chatId', getChatById);
 router.get('/chats/:chatId/messages', getChatMessages);
 router.post('/chats/:chatId/messages', sendMessage);

@@ -10,6 +10,12 @@ import {
     getContractorFeedbacks
 } from '../controllers/contractor.admin.controller.js';
 import { protectAdmin, isContractorAdmin } from '../middleware/admin.auth.middleware.js';
+import {
+    validateCreateContractor,
+    validateUpdateContractor,
+    validateObjectIdParam,
+    validatePagination
+} from '../middleware/admin.validation.middleware.js';
 
 const router = express.Router();
 
@@ -17,16 +23,16 @@ const router = express.Router();
 router.use(protectAdmin, isContractorAdmin);
 
 router.route('/')
-    .get(getAllContractors)
-    .post(createContractor);
+    .get(validatePagination, getAllContractors)
+    .post(validateCreateContractor, createContractor);
 
 router.route('/:id')
-    .get(getContractorById)
-    .put(updateContractor)
-    .delete(deleteContractor);
+    .get(validateObjectIdParam('id'), getContractorById)
+    .put(validateObjectIdParam('id'), validateUpdateContractor, updateContractor)
+    .delete(validateObjectIdParam('id'), deleteContractor);
 
-router.get('/:id/user-requests', getContractorUserRequests);
-router.get('/:id/labour-requests', getContractorLabourRequests);
-router.get('/:id/feedbacks', getContractorFeedbacks);
+router.get('/:id/user-requests', validateObjectIdParam('id'), getContractorUserRequests);
+router.get('/:id/labour-requests', validateObjectIdParam('id'), getContractorLabourRequests);
+router.get('/:id/feedbacks', validateObjectIdParam('id'), getContractorFeedbacks);
 
 export default router;

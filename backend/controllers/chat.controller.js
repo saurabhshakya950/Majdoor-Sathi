@@ -3,6 +3,7 @@ import Message from '../models/Message.model.js';
 import User from '../modules/user/models/User.model.js';
 import Labour from '../modules/labour/models/Labour.model.js';
 import Contractor from '../modules/contractor/models/Contractor.model.js';
+import { sendNotificationToUser } from '../utils/notificationHelper.js';
 
 // @desc    Create chat from hire request (called automatically on accept)
 // @route   Internal function
@@ -99,6 +100,143 @@ export const createChatFromRequest = async (requestData) => {
     }
 };
 
+// @desc    Initialize or Get Chat (WhatsApp-like start)
+// @route   POST /api/chat/initialize
+// @access  Private
+export const initializeChat = async (req, res) => {
+    try {
+        const { 
+            participant2Id, 
+            participant2Type, 
+            participant2Name, 
+            participant2Photo, 
+            participant2Phone,
+            requestId,
+            requestType 
+        } = req.body;
+        const userId = req.user._id;
+
+        console.log('\n🟢 ===== INITIALIZE CHAT =====');
+        console.log('User ID:', userId);
+        console.log('Participant 2 ID:', participant2Id);
+
+        // 1. Check for existing chat between these two
+        let chat = await Chat.findOne({
+            $and: [
+                { 'participants.userId': userId },
+                { 'participants.userId': participant2Id }
+            ],
+            isActive: true
+        });
+
+        if (chat) {
+            console.log('✅ Found existing chat:', chat._id);
+            return res.status(200).json({
+                success: true,
+                data: { chat }
+            });
+        }
+
+        // 2. Create new chat if not found
+        console.log('📝 Creating new chat...');
+
+        // Robust name fetching for sender
+        const getParticipantName = async (u) => {
+            if (!u) return 'User';
+            const firstName = u.firstName || '';
+            const lastName = u.lastName || '';
+            let fullName = `${firstName} ${lastName}`.trim();
+            
+            if (!fullName || fullName === 'null null' || fullName === 'Contractor' || fullName === 'Labour') {
+                // Try to get from role-specific profile if it's a User object
+                // If it's already a Labour/Contractor object, use its name fields
+                if (u.userType === 'Labour' || (u.hasOwnProperty('skillType') && !u.hasOwnProperty('businessName'))) {
+                    const labour = u.hasOwnProperty('skillType') ? u : await Labour.findOne({ user: u._id });
+                    if (labour) {
+                        fullName = `${labour.firstName || ''} ${labour.lastName || ''}`.trim() || labour.labourCardDetails?.fullName;
+                    }
+                } else if (u.userType === 'Contractor' || u.hasOwnProperty('businessName')) {
+                    const contractor = u.hasOwnProperty('businessName') ? u : await Contractor.findOne({ user: u._id });
+                    if (contractor) {
+                        fullName = `${contractor.firstName || ''} ${contractor.lastName || ''}`.trim() || contractor.businessName;
+                    }
+                }
+                
+                // Final fallback to User model if still empty
+                if (!fullName || fullName === 'null null') {
+                    const user = await User.findById(u._id || u.user);
+                    if (user) {
+                        fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+                    }
+                }
+            }
+            
+            // Clean up unwanted strings
+            if (fullName === 'null null') fullName = '';
+            
+            return fullName || u.userType || 'User';
+        };
+
+        const senderName = await getParticipantName(req.user);
+        
+        // Robust name fetching for participant 2 if name is invalid
+        let finalParticipant2Name = (participant2Name || '').toString().trim();
+        if (!finalParticipant2Name || finalParticipant2Name === 'null null') {
+            const p2User = await User.findById(participant2Id);
+            if (p2User) {
+                finalParticipant2Name = await getParticipantName(p2User);
+            } else {
+                finalParticipant2Name = participant2Type || 'User';
+            }
+        }
+        
+        const chatData = {
+            participants: [
+                {
+                    userId: userId,
+                    userType: req.user.userType || 'User',
+                    name: senderName,
+                    profilePhoto: req.user.profilePhoto || '',
+                    mobileNumber: req.user.mobileNumber
+                },
+                {
+                    userId: participant2Id,
+                    userType: participant2Type,
+                    name: finalParticipant2Name,
+                    profilePhoto: participant2Photo || '',
+                    mobileNumber: participant2Phone
+                }
+            ],
+            unreadCount: {
+                [userId.toString()]: 0,
+                [participant2Id.toString()]: 0
+            },
+            isActive: true
+        };
+
+        if (requestId && requestType) {
+            chatData.relatedRequest = { requestId, requestType };
+        }
+
+        chat = await Chat.create(chatData);
+
+        console.log('✅ New chat created:', chat._id);
+        console.log('===========================\n');
+
+        res.status(201).json({
+            success: true,
+            data: { chat }
+        });
+    } catch (error) {
+        console.error('❌ INITIALIZE CHAT ERROR:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to initialize chat',
+            error: error.message
+        });
+    }
+};
+
 // @desc    Get all chats for logged-in user
 // @route   GET /api/chat/chats
 // @access  Private
@@ -113,18 +251,53 @@ export const getUserChats = async (req, res) => {
         }).sort({ 'lastMessage.timestamp': -1, createdAt: -1 });
 
         // Format chats for frontend
-        const formattedChats = chats.map(chat => {
+        const formattedChats = await Promise.all(chats.map(async (chat) => {
             // Find the other participant
             const otherParticipant = chat.participants.find(
                 p => p.userId.toString() !== userId.toString()
             );
+
+            let displayName = otherParticipant.name;
+
+            // Robust name resolution for existing bad data
+            if (!displayName || displayName === 'null null' || displayName === otherParticipant.userType || displayName === 'User') {
+                // Try User model first
+                const user = await User.findById(otherParticipant.userId);
+                if (user) {
+                    const first = user.firstName || '';
+                    const last = user.lastName || '';
+                    displayName = `${first} ${last}`.trim();
+                }
+
+                // If still bad, try role-specific profiles
+                if (!displayName || displayName === 'null null' || displayName === '') {
+                    if (otherParticipant.userType === 'Labour') {
+                        const labour = await Labour.findOne({ user: otherParticipant.userId });
+                        if (labour) displayName = `${labour.firstName || ''} ${labour.lastName || ''}`.trim() || labour.labourCardDetails?.fullName;
+                    } else if (otherParticipant.userType === 'Contractor') {
+                        const contractor = await Contractor.findOne({ user: otherParticipant.userId });
+                        if (contractor) displayName = `${contractor.firstName || ''} ${contractor.lastName || ''}`.trim() || contractor.businessName;
+                    }
+                }
+
+                // Final cleanup and fallback
+                displayName = (displayName && displayName !== 'null null') ? displayName : (otherParticipant.userType || 'User');
+
+                // Lazy-update the database so we don't have to fetch again
+                if (displayName && displayName !== otherParticipant.name) {
+                    Chat.updateOne(
+                        { _id: chat._id, 'participants.userId': otherParticipant.userId },
+                        { '$set': { 'participants.$.name': displayName } }
+                    ).catch(err => console.error('Lazy update name error:', err));
+                }
+            }
 
             return {
                 _id: chat._id,
                 otherParticipant: {
                     userId: otherParticipant.userId,
                     userType: otherParticipant.userType,
-                    name: otherParticipant.name,
+                    name: displayName,
                     profilePhoto: otherParticipant.profilePhoto,
                     mobileNumber: otherParticipant.mobileNumber
                 },
@@ -133,7 +306,7 @@ export const getUserChats = async (req, res) => {
                 unreadCount: chat.unreadCount.get(userId.toString()) || 0,
                 createdAt: chat.createdAt
             };
-        });
+        }));
 
         res.status(200).json({
             success: true,
@@ -190,6 +363,33 @@ export const getChatById = async (req, res) => {
             p => p.userId.toString() !== userId.toString()
         );
 
+        let otherName = otherParticipant.name;
+        // Resolve bad name in details view
+        if (!otherName || otherName === 'null null' || otherName === otherParticipant.userType || otherName === 'User') {
+            const user = await User.findById(otherParticipant.userId);
+            if (user) otherName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+            
+            if (!otherName || otherName === 'null null' || otherName === '') {
+                if (otherParticipant.userType === 'Labour') {
+                    const labour = await Labour.findOne({ user: otherParticipant.userId });
+                    if (labour) otherName = `${labour.firstName || ''} ${labour.lastName || ''}`.trim() || labour.labourCardDetails?.fullName;
+                } else if (otherParticipant.userType === 'Contractor') {
+                    const contractor = await Contractor.findOne({ user: otherParticipant.userId });
+                    if (contractor) otherName = `${contractor.firstName || ''} ${contractor.lastName || ''}`.trim() || contractor.businessName;
+                }
+            }
+            
+            otherName = (otherName && otherName !== 'null null') ? otherName : (otherParticipant.userType || 'User');
+
+            // Lazy update
+            if (otherName !== otherParticipant.name) {
+                Chat.updateOne(
+                    { _id: chat._id, 'participants.userId': otherParticipant.userId },
+                    { '$set': { 'participants.$.name': otherName } }
+                ).catch(e => console.error(e));
+            }
+        }
+
         console.log('✅ Chat found');
         console.log('===========================\n');
 
@@ -198,8 +398,17 @@ export const getChatById = async (req, res) => {
             data: {
                 chat: {
                     _id: chat._id,
-                    otherParticipant,
-                    participants: chat.participants,
+                    otherParticipant: {
+                        ...otherParticipant.toObject(),
+                        name: otherName
+                    },
+                    participants: chat.participants.map(p => {
+                        const isOther = p.userId.toString() === otherParticipant.userId.toString();
+                        return {
+                            ...p.toObject(),
+                            name: isOther ? otherName : p.name
+                        };
+                    }),
                     createdAt: chat.createdAt
                 }
             }
@@ -347,6 +556,23 @@ export const sendMessage = async (req, res) => {
         chat.unreadCount.set(receiver.userId.toString(), receiverUnreadCount + 1);
 
         await chat.save();
+
+        // Send Push Notification to receiver
+        if (receiver && receiver.userId) {
+            const senderDisplayName = (sender.name || '').toString().trim();
+            const notificationTitle = `New message from ${senderDisplayName && senderDisplayName !== 'null null' ? senderDisplayName : 'someone'}`;
+            
+            await sendNotificationToUser(receiver.userId.toString(), {
+                title: notificationTitle,
+                body: messageType === 'image' ? 'Sent an image' : content,
+                data: {
+                    type: 'chat_message',
+                    chatId: chatId.toString(),
+                    senderId: userId.toString(),
+                    link: `/chat/${chatId}` // Assuming this is the link structure
+                }
+            });
+        }
 
         console.log('✅ Message sent successfully');
         console.log('===========================\n');

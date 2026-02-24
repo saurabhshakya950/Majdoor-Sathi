@@ -1,14 +1,86 @@
-import { MapPin, Phone, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { MapPin, Phone, Calendar, Clock, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ContractorRequestCard = memo(({ request, onAccept, onDecline, index = 0, showButtons = true, showStatus = false }) => {
     // Safety checks for required fields
+    const navigate = useNavigate();
     const contractorName = request.contractorName || request.applicantName || 'Unknown';
     const location = request.location || 'Not specified';
     const phoneNumber = request.phoneNumber || 'N/A';
     const jobTitle = request.jobTitle || 'Job Application';
     const date = request.date || 'N/A';
     const time = request.time || 'N/A';
+
+    const handleChatClick = async () => {
+        console.log('🔵 Chat button clicked (ContractorRequestCard)');
+
+        try {
+            const { chatAPI } = await import('../../../services/api');
+
+            // Prefer direct chatId if available
+            if (request.chatId) {
+                console.log('✅ Using direct chatId from request');
+                navigate(`/user/chat/${request.chatId}`);
+                return;
+            }
+
+            // Fallback: Search for existing chats
+            console.log('🔍 Searching for existing chats...');
+            const chatsResponse = await chatAPI.getUserChats();
+
+            if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
+                // Find by applicantUserId (most accurate)
+                const existingChat = chatsResponse.data.chats.find(chat => {
+                    const otherId = chat.otherParticipant?.userId?.toString();
+                    const applicantId = (request.applicantUserId || '').toString();
+                    return otherId === applicantId && applicantId !== '';
+                });
+
+                if (existingChat) {
+                    console.log('✅ Found existing chat by applicant ID');
+                    navigate(`/user/chat/${existingChat._id}`);
+                    return;
+                }
+
+                // Fallback: Find by name
+                const existingChatByName = chatsResponse.data.chats.find(chat => {
+                    const otherName = (chat.otherParticipant?.name || '').toLowerCase().trim();
+                    const cardName = contractorName.toLowerCase().trim();
+                    return otherName === cardName && cardName !== '';
+                });
+
+                if (existingChatByName) {
+                    console.log('✅ Found existing chat by name');
+                    navigate(`/user/chat/${existingChatByName._id}`);
+                    return;
+                }
+            }
+
+            // Fallback: Initialize new chat
+            console.log('🚀 Initializing new chat with contractor...');
+            const initResponse = await chatAPI.initializeChat({
+                participant2Id: request.applicantUserId,
+                participant2Type: 'Contractor',
+                participant2Name: contractorName,
+                participant2Phone: phoneNumber,
+                requestId: request.applicationId || request.id,
+                requestType: 'JobApplication'
+            });
+
+            if (initResponse.success && initResponse.data.chat) {
+                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                navigate(`/user/chat/${initResponse.data.chat._id}`);
+                return;
+            }
+
+            console.log('❌ No chat found, navigating to chat list');
+            navigate('/user/chat');
+        } catch (error) {
+            console.error('❌ Failed to open chat:', error);
+            navigate('/user/chat');
+        }
+    };
 
     return (
         <div className="premium-card card-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
@@ -28,11 +100,10 @@ const ContractorRequestCard = memo(({ request, onAccept, onDecline, index = 0, s
                 </div>
                 {/* Status Badge for History */}
                 {showStatus && (
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
-                        request.status === 'accepted' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
-                    }`}>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${request.status === 'accepted'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                        }`}>
                         {request.status === 'accepted' ? (
                             <>
                                 <CheckCircle className="w-3 h-3" />
@@ -54,7 +125,7 @@ const ContractorRequestCard = memo(({ request, onAccept, onDecline, index = 0, s
                     <Phone className="w-4 h-4 text-gray-500" />
                     <span className="text-sm font-medium">{phoneNumber}</span>
                 </div>
-                
+
                 {/* Date and Time */}
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
@@ -79,17 +150,28 @@ const ContractorRequestCard = memo(({ request, onAccept, onDecline, index = 0, s
                 <div className="flex gap-3">
                     <button
                         onClick={() => onDecline(request.id)}
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg transition-all duration-200 ease-out hover:shadow-lg active:scale-95"
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg transition-all duration-200 ease-out hover:shadow-lg active:scale-95 text-sm"
                     >
                         Decline
                     </button>
                     <button
                         onClick={() => onAccept(request.id)}
-                        className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-lg transition-all duration-200 ease-out hover:shadow-lg active:scale-95"
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-lg transition-all duration-200 ease-out hover:shadow-lg active:scale-95 text-sm"
                     >
                         Accept
                     </button>
                 </div>
+            )}
+
+            {/* Chat Button for History or Accepted Status */}
+            {request.status === 'accepted' && (
+                <button
+                    onClick={handleChatClick}
+                    className="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
+                >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Chat with Contractor</span>
+                </button>
             )}
         </div>
     );

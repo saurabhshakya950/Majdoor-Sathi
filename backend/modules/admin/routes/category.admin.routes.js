@@ -7,6 +7,11 @@ import {
     deleteCategory
 } from '../controllers/category.admin.controller.js';
 import { protectAdmin, isLabourAdmin } from '../middleware/admin.auth.middleware.js';
+import {
+    validateCreateCategory,
+    validateUpdateCategory,
+    validateObjectIdParam
+} from '../middleware/admin.validation.middleware.js';
 
 const router = express.Router();
 
@@ -15,11 +20,11 @@ router.use(protectAdmin, isLabourAdmin);
 
 router.route('/')
     .get(getAllCategories)
-    .post(createCategory);
+    .post(validateCreateCategory, createCategory);
 
 router.route('/:id')
-    .get(getCategoryById)
-    .put(updateCategory)
-    .delete(deleteCategory);
+    .get(validateObjectIdParam('id'), getCategoryById)
+    .put(validateObjectIdParam('id'), validateUpdateCategory, updateCategory)
+    .delete(validateObjectIdParam('id'), deleteCategory);
 
 export default router;

@@ -3,6 +3,7 @@ import HireRequest from '../models/HireRequest.model.js';
 import User from '../../user/models/User.model.js';
 import Contractor from '../../contractor/models/Contractor.model.js';
 import { uploadToCloudinary, uploadMultipleToCloudinary, deleteFromCloudinary } from '../../../utils/cloudinary.utils.js';
+import { sendNotificationToUser } from '../../../utils/notificationHelper.js';
 
 // @desc    Create labour profile during registration
 // @route   POST /api/labour/create-profile
@@ -528,6 +529,19 @@ export const createHireRequest = async (req, res) => {
             requesterLocation: requester.city || 'N/A'
         });
 
+        // Send push notification to Labour
+        if (labour.user && labour.user._id) {
+            await sendNotificationToUser(labour.user._id.toString(), {
+                title: 'New Hire Request',
+                body: `${requester.firstName} ${requester.lastName} wants to hire you for ${labour.skillType || 'General'} work.`,
+                data: {
+                    type: 'hire_request',
+                    id: hireRequest._id.toString(),
+                    link: '/labour/requests'
+                }
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Hire request created successfully',
@@ -695,7 +709,8 @@ export const updateHireRequestStatus = async (req, res) => {
                     // Use role-specific name from Contractor profile (identity isolation)
                     const cFirstName = (contractorProfile && contractorProfile.firstName) || requester?.firstName || 'Contractor';
                     const cLastName = (contractorProfile && contractorProfile.lastName) || requester?.lastName || '';
-                    requesterName = `${cFirstName} ${cLastName}`.trim();
+                    requesterName = `${cFirstName || ''} ${cLastName || ''}`.trim() || 'Contractor';
+                    if (requesterName === 'null null') requesterName = 'Contractor';
                 }
 
                 if (!requester) {
@@ -706,7 +721,8 @@ export const updateHireRequestStatus = async (req, res) => {
                     // Get labour name from Labour model (role-specific identity)
                     const labourFirstName = labour.firstName || labour.user.firstName || 'Labour';
                     const labourLastName = labour.lastName || labour.user.lastName || '';
-                    const labourName = `${labourFirstName} ${labourLastName}`.trim();
+                    let labourName = `${labourFirstName || ''} ${labourLastName || ''}`.trim() || 'Labour';
+                    if (labourName === 'null null') labourName = 'Labour';
 
                     // Prepare chat data
                     const chatData = {
@@ -746,6 +762,20 @@ export const updateHireRequestStatus = async (req, res) => {
         }
 
         await hireRequest.save();
+
+        // Send push notification to Requester (User/Contractor)
+        if (hireRequest.requesterId) {
+            await sendNotificationToUser(hireRequest.requesterId.toString(), {
+                title: `Hire Request ${status === 'accepted' ? 'Accepted' : 'Declined'}`,
+                body: `${labour.user.firstName} ${labour.user.lastName} has ${status} your hire request.`,
+                data: {
+                    type: 'hire_request_update',
+                    requestId: hireRequest._id.toString(),
+                    status: status,
+                    link: hireRequest.requesterModel === 'User' ? '/user/requests' : '/contractor/requests'
+                }
+            });
+        }
 
         console.log('✅ Hire request updated successfully');
         console.log('===========================\n');

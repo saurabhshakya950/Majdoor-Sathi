@@ -57,7 +57,7 @@ const BroadcastManagement = () => {
     const handleOpenModal = (mode, broadcast = null) => {
         setModalMode(mode);
         setSelectedBroadcast(broadcast);
-        
+
         if (mode === 'edit' && broadcast) {
             setFormData({
                 title: broadcast.title,
@@ -77,7 +77,7 @@ const BroadcastManagement = () => {
                 expiresAt: ''
             });
         }
-        
+
         setShowModal(true);
     };
 
@@ -96,7 +96,7 @@ const BroadcastManagement = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.title || !formData.message) {
             toast.error('Title and message are required');
             return;
@@ -104,7 +104,7 @@ const BroadcastManagement = () => {
 
         try {
             setLoading(true);
-            
+
             const submitData = {
                 ...formData,
                 scheduledAt: formData.scheduledAt || null,
@@ -178,12 +178,13 @@ const BroadcastManagement = () => {
         const badges = {
             DRAFT: { color: 'gray', icon: <Edit size={14} />, text: 'Draft' },
             SCHEDULED: { color: 'blue', icon: <Clock size={14} />, text: 'Scheduled' },
+            SENDING: { color: 'orange', icon: <Clock size={14} />, text: 'Sending...' },
             SENT: { color: 'green', icon: <CheckCircle size={14} />, text: 'Sent' },
             FAILED: { color: 'red', icon: <XCircle size={14} />, text: 'Failed' }
         };
-        
+
         const badge = badges[status] || badges.DRAFT;
-        
+
         return (
             <span className={`status-badge status-${badge.color}`}>
                 {badge.icon} {badge.text}
@@ -198,7 +199,7 @@ const BroadcastManagement = () => {
             HIGH: 'orange',
             URGENT: 'red'
         };
-        
+
         return (
             <span className={`priority-badge priority-${colors[priority]}`}>
                 {priority}
@@ -213,9 +214,9 @@ const BroadcastManagement = () => {
             LABOUR: { icon: <Users size={14} />, text: 'Labour' },
             CONTRACTORS: { icon: <Users size={14} />, text: 'Contractors' }
         };
-        
+
         const badge = badges[audience] || badges.ALL;
-        
+
         return (
             <span className="audience-badge">
                 {badge.icon} {badge.text}
@@ -282,8 +283,8 @@ const BroadcastManagement = () => {
                 <div className="filters-wrapper">
                     <div className="filter-group">
                         <label className="filter-label">Status</label>
-                        <select 
-                            value={filterStatus} 
+                        <select
+                            value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                             className="broadcast-filter-select"
                         >
@@ -297,8 +298,8 @@ const BroadcastManagement = () => {
 
                     <div className="filter-group">
                         <label className="filter-label">Audience</label>
-                        <select 
-                            value={filterAudience} 
+                        <select
+                            value={filterAudience}
                             onChange={(e) => setFilterAudience(e.target.value)}
                             className="broadcast-filter-select"
                         >
@@ -343,23 +344,24 @@ const BroadcastManagement = () => {
                                             {getAudienceBadge(broadcast.targetAudience)}
                                         </div>
                                     </div>
-                                    {broadcast.status !== 'SENT' && (
+                                    {broadcast.status !== 'SENT' && broadcast.status !== 'SENDING' && (
                                         <div className="broadcast-card-actions">
-                                            <button 
+                                            <button
                                                 className="action-btn send-btn"
                                                 onClick={() => handleSend(broadcast._id)}
                                                 title="Send Now"
+                                                disabled={loading}
                                             >
                                                 <Send size={18} />
                                             </button>
-                                            <button 
+                                            <button
                                                 className="action-btn edit-btn"
                                                 onClick={() => handleOpenModal('edit', broadcast)}
                                                 title="Edit"
                                             >
                                                 <Edit size={18} />
                                             </button>
-                                            <button 
+                                            <button
                                                 className="action-btn delete-btn"
                                                 onClick={() => handleDelete(broadcast._id)}
                                                 title="Delete"
@@ -369,9 +371,9 @@ const BroadcastManagement = () => {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 <p className="broadcast-message-text">{broadcast.message}</p>
-                                
+
                                 <div className="broadcast-card-footer">
                                     <div className="broadcast-info-row">
                                         <div className="info-item">
@@ -421,7 +423,7 @@ const BroadcastManagement = () => {
                                 &times;
                             </button>
                         </div>
-                        
+
                         <form onSubmit={handleSubmit} className="broadcast-modal-form">
                             <div className="broadcast-form-group">
                                 <label className="broadcast-form-label">
