@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL 
 // Create axios instance with default config
 const adminApi = axios.create({
     baseURL: `${API_URL}/admin`,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }

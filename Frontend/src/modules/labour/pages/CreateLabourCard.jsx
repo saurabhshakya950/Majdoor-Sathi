@@ -123,7 +123,7 @@ const CreateLabourCard = () => {
 
             // Check if user has access token
             const token = localStorage.getItem('access_token');
-            
+
             if (!token) {
                 // No token - save to localStorage (fallback)
                 console.log('No access token found, saving to localStorage');
@@ -132,11 +132,11 @@ const CreateLabourCard = () => {
                     ...formData,
                     createdAt: new Date().toISOString()
                 };
-                
+
                 const existingCards = JSON.parse(localStorage.getItem('labour_cards') || '[]');
                 existingCards.push(newCard);
                 localStorage.setItem('labour_cards', JSON.stringify(existingCards));
-                
+
                 toast.success('Labour card created successfully!');
                 navigate('/labour/my-card');
                 return;
@@ -144,11 +144,11 @@ const CreateLabourCard = () => {
 
             // Has token - save to backend
             const response = await labourAPI.createLabourCard(cardData);
-            
+
             console.log('Labour card created:', response);
 
             toast.success('Labour card created successfully!');
-            
+
             // Navigate to my card
             navigate('/labour/my-card');
         } catch (error) {
@@ -167,13 +167,13 @@ const CreateLabourCard = () => {
                 </button>
                 <h1 className="text-xl font-bold">Create Labour Card</h1>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 pb-20">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Card Photo Upload */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Card Photo</h2>
-                        
+
                         <div className="flex flex-col items-center">
                             <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden mb-3 border-2 border-gray-200">
                                 {formData.cardPhoto ? (
@@ -182,7 +182,7 @@ const CreateLabourCard = () => {
                                     <User className="w-16 h-16 text-gray-400" />
                                 )}
                             </div>
-                            
+
                             <input
                                 type="file"
                                 ref={photoInputRef}
@@ -190,7 +190,7 @@ const CreateLabourCard = () => {
                                 className="hidden"
                                 accept="image/*"
                             />
-                            
+
                             <button
                                 type="button"
                                 onClick={handlePhotoUpload}
@@ -206,7 +206,7 @@ const CreateLabourCard = () => {
                     {/* Header Section */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Header Information</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Full Name *
@@ -226,21 +226,15 @@ const CreateLabourCard = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Primary Skill *
                             </label>
-                            <select
+                            <input
+                                type="text"
                                 name="primarySkill"
                                 value={formData.primarySkill}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                                placeholder="e.g. Plumber, Mason, Welder"
                                 required
-                            >
-                                <option value="">Select Skill</option>
-                                <option value="Plumber">Plumber</option>
-                                <option value="Electrician">Electrician</option>
-                                <option value="Mason">Mason</option>
-                                <option value="Carpenter">Carpenter</option>
-                                <option value="Painter">Painter</option>
-                                <option value="Welder">Welder</option>
-                            </select>
+                            />
                         </div>
 
                         <div className="mb-4">
@@ -253,9 +247,8 @@ const CreateLabourCard = () => {
                                         key={star}
                                         type="button"
                                         onClick={() => handleRating(star)}
-                                        className={`text-3xl ${
-                                            star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'
-                                        }`}
+                                        className={`text-3xl ${star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'
+                                            }`}
                                     >
                                         ★
                                     </button>
@@ -267,7 +260,7 @@ const CreateLabourCard = () => {
                     {/* Basic Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Gender *
@@ -343,7 +336,7 @@ const CreateLabourCard = () => {
                     </button>
                 </form>
             </div>
-            
+
             <LabourBottomNav />
         </div>
     );

@@ -830,6 +830,12 @@ export const validateCreateCategory = (req, res, next) => {
         }
     }
 
+    if (req.body.subCategories !== undefined) {
+        if (!Array.isArray(req.body.subCategories)) {
+            errors.push('subCategories must be an array');
+        }
+    }
+
     if (errors.length > 0) {
         return validationError(res, errors[0], errors);
     }
@@ -844,7 +850,7 @@ export const validateUpdateCategory = (req, res, next) => {
     const { name, image, isActive } = req.body;
     const errors = [];
 
-    const hasAtLeastOneField = ['name', 'image', 'isActive'].some((f) => req.body[f] !== undefined);
+    const hasAtLeastOneField = ['name', 'image', 'isActive', 'subCategories'].some((f) => req.body[f] !== undefined);
     if (!hasAtLeastOneField) {
         errors.push('At least one field must be provided to update');
     }
@@ -860,6 +866,12 @@ export const validateUpdateCategory = (req, res, next) => {
     if (image !== undefined && isNonEmpty(image)) {
         if (!image.startsWith('data:image') && !image.startsWith('http')) {
             errors.push('Image must be a valid base64 encoded image or a URL starting with http');
+        }
+    }
+
+    if (req.body.subCategories !== undefined) {
+        if (!Array.isArray(req.body.subCategories)) {
+            errors.push('subCategories must be an array');
         }
     }
 

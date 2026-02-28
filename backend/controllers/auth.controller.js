@@ -434,7 +434,17 @@ export const refreshToken = async (req, res, next) => {
 export const saveFCMToken = async (req, res, next) => {
     try {
         const { fcmToken, platform } = req.body;
-        const user = await User.findById(req.user._id);
+
+        // Validate inputs
+        if (!fcmToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'FCM token is required'
+            });
+        }
+
+        // req.user is already set by protect middleware, no need to fetch again
+        const user = req.user;
 
         if (!user) {
             return res.status(404).json({
@@ -443,7 +453,19 @@ export const saveFCMToken = async (req, res, next) => {
             });
         }
 
-        await saveFCMTokenToUser(user, fcmToken, platform);
+        // Add token only if not already present (idempotent)
+        const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+        if (!user[tokenField]) user[tokenField] = [];
+
+        const alreadyExists = user[tokenField].includes(fcmToken);
+        if (!alreadyExists) {
+            user[tokenField].push(fcmToken);
+            // Keep only last 5 tokens per platform
+            if (user[tokenField].length > 5) {
+                user[tokenField] = user[tokenField].slice(-5);
+            }
+            await user.save();
+        }
 
         res.status(200).json({
             success: true,
@@ -451,7 +473,11 @@ export const saveFCMToken = async (req, res, next) => {
         });
     } catch (error) {
         console.error('❌ SAVE FCM TOKEN ERROR:', error.message);
-        next(error);
+        // Return 200 to prevent frontend errors — FCM token saving is non-critical
+        res.status(200).json({
+            success: false,
+            message: 'Could not save FCM token, will retry later'
+        });
     }
 };
 

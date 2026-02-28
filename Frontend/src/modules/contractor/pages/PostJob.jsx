@@ -21,17 +21,47 @@ const PostJob = () => {
         profileStatus: 'Active'
     });
 
-    // Auto-fill contractor information
+    const [skillsList, setSkillsList] = useState([]);
+    const [skillsLoading, setSkillsLoading] = useState(true);
+
+    // Auto-fill contractor information and fetch dynamic skills
     useEffect(() => {
-        const profile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
-        console.log('Contractor Profile:', profile); // Debug
-        setFormData(prev => ({
-            ...prev,
-            contractorName: profile.firstName || profile.name || 'Contractor',
-            phoneNumber: profile.phoneNumber || profile.mobile || profile.phone || '',
-            city: profile.city || '',
-            address: profile.address || ''
-        }));
+        const fetchInitialData = async () => {
+            try {
+                // Load profile
+                const profile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
+                setFormData(prev => ({
+                    ...prev,
+                    contractorName: profile.firstName || profile.name || 'Contractor',
+                    phoneNumber: profile.phoneNumber || profile.mobile || profile.phone || '',
+                    city: profile.city || '',
+                    address: profile.address || ''
+                }));
+
+                // Fetch dynamic skills
+                setSkillsLoading(true);
+                const response = await categoryAPI.getAll();
+                if (response.data.success && response.data.data.categories) {
+                    // Flatten all sub-categories into a single list of skill names
+                    const flattenedSkills = response.data.data.categories.flatMap(cat =>
+                        cat.subCategories && cat.subCategories.length > 0
+                            ? cat.subCategories.map(sub => sub.name)
+                            : [cat.name]
+                    );
+                    // Remove duplicates and sort
+                    const uniqueSkills = [...new Set(flattenedSkills)].sort();
+                    setSkillsList(uniqueSkills);
+                }
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                // Fallback to basic skills if API fails
+                setSkillsList(['Construction', 'Interior', 'Painting', 'Plumbing', 'Electrical', 'Other']);
+            } finally {
+                setSkillsLoading(false);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
     const handleChange = (e) => {
@@ -68,17 +98,17 @@ const PostJob = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            
+
             if (token) {
                 // Save to database with targetAudience: 'Labour'
                 const jobData = {
                     ...formData,
                     targetAudience: 'Labour' // This card is for Labour only
                 };
-                
+
                 console.log('Creating contractor job for Labour:', jobData);
                 const response = await contractorAPI.createContractorJob(jobData);
-                
+
                 if (response.success) {
                     console.log('Contractor job created:', response);
                     alert('Job posted successfully!');
@@ -112,7 +142,7 @@ const PostJob = () => {
                 const existingCards = JSON.parse(localStorage.getItem('contractor_cards_for_labour') || '[]');
                 existingCards.push(newCard);
                 localStorage.setItem('contractor_cards_for_labour', JSON.stringify(existingCards));
-                
+
                 alert('Job posted successfully!');
                 navigate('/contractor/my-projects');
             }
@@ -125,13 +155,13 @@ const PostJob = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <ContractorPageHeader title="Create Contractor Card" backPath="/contractor/hire-workers" />
-            
+
             <div className="p-4 pb-20">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Contractor Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Contractor Information</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Contractor Name *
@@ -198,7 +228,7 @@ const PostJob = () => {
                     {/* Business Details */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Business Type *
@@ -243,12 +273,10 @@ const PostJob = () => {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                                 required
                             >
-                                <option value="">Select Skill</option>
-                                <option value="Construction">Construction</option>
-                                <option value="Interior">Interior</option>
-                                <option value="Painting">Painting</option>
-                                <option value="Plumbing">Plumbing</option>
-                                <option value="Electrical">Electrical</option>
+                                <option value="">{skillsLoading ? 'Loading Skills...' : 'Select Skill'}</option>
+                                {skillsList.map(skill => (
+                                    <option key={skill} value={skill}>{skill}</option>
+                                ))}
                             </select>
                         </div>
 
@@ -271,7 +299,7 @@ const PostJob = () => {
                     {/* Work Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Work Information</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Work Duration / Type *
@@ -294,7 +322,7 @@ const PostJob = () => {
                     {/* Budget */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Budget Type *
@@ -354,11 +382,10 @@ const PostJob = () => {
                                     onClick={() => setFormData(prev => ({ ...prev, rating: star }))}
                                     className="transition-transform hover:scale-110"
                                 >
-                                    <span className={`text-4xl ${
-                                        star <= formData.rating
+                                    <span className={`text-4xl ${star <= formData.rating
                                             ? 'text-yellow-400'
                                             : 'text-gray-300'
-                                    }`}>
+                                        }`}>
                                         ★
                                     </span>
                                 </button>

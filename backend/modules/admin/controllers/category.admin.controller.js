@@ -80,11 +80,56 @@ export const createCategory = async (req, res) => {
         });
 
         if (existingCategory) {
-            console.log('❌ Category already exists:', name);
-            return res.status(400).json({
-                success: false,
-                message: 'Category with this name already exists'
-            });
+            console.log('🔄 Category already exists:', name, '- Appending new sub-categories.');
+            
+            if (!req.body.subCategories || !Array.isArray(req.body.subCategories) || req.body.subCategories.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Category already exists. Please provide sub-categories to add.'
+                });
+            }
+
+            let addedCount = 0;
+            for (const sub of req.body.subCategories) {
+                const subName = sub.name.trim();
+                // Check if subCategory already exists
+                const subExists = existingCategory.subCategories.find(
+                    s => s.name.toLowerCase() === subName.toLowerCase()
+                );
+
+                if (!subExists) {
+                    let subImage = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
+                    if (sub.image) {
+                        if (sub.image.startsWith('data:image')) {
+                            try {
+                                subImage = await uploadToCloudinary(sub.image, 'rajghar/categories/sub');
+                            } catch (err) {
+                                console.error(`❌ Sub-category image upload failed for ${sub.name}:`, err.message);
+                            }
+                        } else if (sub.image.startsWith('http')) {
+                            subImage = sub.image;
+                        }
+                    }
+                    existingCategory.subCategories.push({ name: subName, image: subImage });
+                    addedCount++;
+                }
+            }
+
+            if (addedCount > 0) {
+                await existingCategory.save();
+                console.log(`✅ Appended ${addedCount} new sub-categories to ${name}`);
+                
+                return res.status(200).json({
+                    success: true,
+                    message: `Successfully added ${addedCount} new skill(s) to ${name}`,
+                    data: { category: existingCategory }
+                });
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: 'All provided skills already exist in this category'
+                });
+            }
         }
 
         // Handle category image
@@ -115,9 +160,30 @@ export const createCategory = async (req, res) => {
         }
 
         // Create category
+        let subCategoriesData = [];
+        if (req.body.subCategories && Array.isArray(req.body.subCategories)) {
+            console.log(`📦 Processing ${req.body.subCategories.length} sub-categories...`);
+            for (const sub of req.body.subCategories) {
+                let subImage = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
+                if (sub.image) {
+                    if (sub.image.startsWith('data:image')) {
+                        try {
+                            subImage = await uploadToCloudinary(sub.image, 'rajghar/categories/sub');
+                        } catch (err) {
+                            console.error(`❌ Sub-category image upload failed for ${sub.name}:`, err.message);
+                        }
+                    } else if (sub.image.startsWith('http')) {
+                        subImage = sub.image;
+                    }
+                }
+                subCategoriesData.push({ name: sub.name.trim(), image: subImage });
+            }
+        }
+
         const category = await LabourCategory.create({
             name: name.trim(),
             image: categoryImage,
+            subCategories: subCategoriesData,
             createdBy: req.admin._id
         });
 
@@ -186,6 +252,23 @@ export const updateCategory = async (req, res) => {
         }
         
         if (isActive !== undefined) category.isActive = isActive;
+
+        // Handle sub-categories update
+        if (req.body.subCategories !== undefined && Array.isArray(req.body.subCategories)) {
+            let subCategoriesData = [];
+            for (const sub of req.body.subCategories) {
+                let subImage = sub.image || 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
+                if (sub.image && sub.image.startsWith('data:image')) {
+                    try {
+                        subImage = await uploadToCloudinary(sub.image, 'rajghar/categories/sub');
+                    } catch (err) {
+                        console.error(`❌ Sub-category image upload failed during update:`, err.message);
+                    }
+                }
+                subCategoriesData.push({ name: sub.name.trim(), image: subImage });
+            }
+            category.subCategories = subCategoriesData;
+        }
 
         await category.save();
 

@@ -29,15 +29,7 @@ const LabourWorkDetails = () => {
         });
     }, []);
 
-    const skillTypes = [
-        'Plumber',
-        'Electrician',
-        'Mason',
-        'Carpenter',
-        'Painter',
-        'Welder',
-        'Daily Wager'
-    ];
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -170,17 +162,14 @@ const LabourWorkDetails = () => {
                     </label>
                     <div className="relative">
                         <Hammer className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <select
+                        <input
+                            type="text"
                             name="skillType"
                             value={formData.skillType}
                             onChange={handleChange}
-                            className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none appearance-none"
-                        >
-                            <option value="">Select Skill</option>
-                            {skillTypes.map(skill => (
-                                <option key={skill} value={skill}>{skill}</option>
-                            ))}
-                        </select>
+                            placeholder="e.g. Plumber, Mason, Welder"
+                            className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 outline-none"
+                        />
                     </div>
                 </div>
 
@@ -261,8 +250,8 @@ const LabourWorkDetails = () => {
                                 key={star}
                                 onClick={() => handleRating(star)}
                                 className={`w-10 h-10 cursor-pointer transition-all ${star <= formData.rating
-                                        ? 'fill-yellow-400 text-yellow-400'
-                                        : 'fill-gray-200 text-gray-200'
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'fill-gray-200 text-gray-200'
                                     }`}
                             />
                         ))}
@@ -279,8 +268,8 @@ const LabourWorkDetails = () => {
                         <button
                             onClick={() => setFormData(prev => ({ ...prev, availability: 'Full Time' }))}
                             className={`py-3 rounded-xl font-semibold text-sm transition-all ${formData.availability === 'Full Time'
-                                    ? 'bg-yellow-400 text-gray-900 border-2 border-yellow-400'
-                                    : 'bg-white text-gray-600 border-2 border-gray-200'
+                                ? 'bg-yellow-400 text-gray-900 border-2 border-yellow-400'
+                                : 'bg-white text-gray-600 border-2 border-gray-200'
                                 }`}
                         >
                             Full Time
@@ -288,8 +277,8 @@ const LabourWorkDetails = () => {
                         <button
                             onClick={() => setFormData(prev => ({ ...prev, availability: 'Part Time' }))}
                             className={`py-3 rounded-xl font-semibold text-sm transition-all ${formData.availability === 'Part Time'
-                                    ? 'bg-yellow-400 text-gray-900 border-2 border-yellow-400'
-                                    : 'bg-white text-gray-600 border-2 border-gray-200'
+                                ? 'bg-yellow-400 text-gray-900 border-2 border-yellow-400'
+                                : 'bg-white text-gray-600 border-2 border-gray-200'
                                 }`}
                         >
                             Part Time

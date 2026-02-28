@@ -65,7 +65,7 @@ const CompleteProfile = () => {
                     const birthDate = new Date(value);
                     let age = today.getFullYear() - birthDate.getFullYear();
                     const monthDiff = today.getMonth() - birthDate.getMonth();
-                    
+
                     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                         age--;
                     }
@@ -113,7 +113,7 @@ const CompleteProfile = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         // For aadhar number, only allow digits
         if (name === 'aadharNumber') {
             const digitsOnly = value.replace(/\D/g, '');
@@ -126,7 +126,7 @@ const CompleteProfile = () => {
         }
 
         setFormData(prev => ({ ...prev, [name]: value }));
-        
+
         // Validate on change
         const error = validateField(name, value);
         setErrors(prev => ({ ...prev, [name]: error }));
@@ -151,13 +151,13 @@ const CompleteProfile = () => {
     const handleContinue = async () => {
         // Validate all required fields
         const newErrors = {};
-        
+
         // Validate required fields
         newErrors.firstName = validateField('firstName', formData.firstName);
         newErrors.lastName = validateField('lastName', formData.lastName);
         newErrors.gender = validateField('gender', formData.gender);
         newErrors.dob = validateField('dob', formData.dob);
-        
+
         // Validate optional fields if they have values
         if (formData.middleName) {
             newErrors.middleName = validateField('middleName', formData.middleName);
@@ -241,19 +241,19 @@ const CompleteProfile = () => {
                 localStorage.setItem('user_profile', JSON.stringify(userProfile));
                 console.log('User profile saved:', userProfile);
                 navigate('/user/home', { state: { profile: userProfile } });
-                
+
             } else if (formData.userType === 'Contractor') {
                 // For Contractor - only create contractor profile, NOT user profile
                 // Save to localStorage
                 const existingProfile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
-                const contractorProfile = { 
-                    ...existingProfile, 
+                const contractorProfile = {
+                    ...existingProfile,
                     ...formData,
-                    mobileNumber: mobileNumber 
+                    mobileNumber: mobileNumber
                 };
                 localStorage.setItem('contractor_profile', JSON.stringify(contractorProfile));
                 console.log('Contractor profile saved to localStorage:', contractorProfile);
-                
+
                 // Create contractor profile in database (this will also update User model)
                 try {
                     const contractorResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/profile`, {
@@ -274,7 +274,7 @@ const CompleteProfile = () => {
                             mobileNumber: mobileNumber
                         })
                     });
-                    
+
                     const contractorData = await contractorResponse.json();
                     if (contractorData.success) {
                         console.log('Contractor profile saved to database:', contractorData.data);
@@ -288,13 +288,13 @@ const CompleteProfile = () => {
                     toast.error('Failed to create contractor profile');
                     return;
                 }
-                
+
                 navigate('/contractor/business-details');
-                
+
             } else if (formData.userType === 'Labour') {
                 // For Labour - create labour profile in database
                 console.log('Creating Labour profile...');
-                
+
                 try {
                     const labourResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/create-profile`, {
                         method: 'POST',
@@ -312,12 +312,12 @@ const CompleteProfile = () => {
                             state: formData.state.trim()
                         })
                     });
-                    
+
                     const labourData = await labourResponse.json();
                     if (labourData.success) {
                         console.log('✅ Labour profile created in database:', labourData.data);
                         toast.success('Profile created successfully!');
-                        
+
                         // Navigate to labour details page
                         navigate('/labour/details');
                     } else {

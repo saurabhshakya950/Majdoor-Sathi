@@ -19,7 +19,7 @@ const LegalVerificationSection = () => {
     const fetchVerificationStatus = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            
+
             if (token) {
                 const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/verification-status`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -29,7 +29,7 @@ const LegalVerificationSection = () => {
 
                 if (data.success && data.data.verificationRequest) {
                     const request = data.data.verificationRequest;
-                    
+
                     if (request.status === 'Approved') setVerificationStatus('verified');
                     else if (request.status === 'Rejected') setVerificationStatus('rejected');
                     else if (request.status === 'Pending') setVerificationStatus('submitted');
@@ -41,8 +41,8 @@ const LegalVerificationSection = () => {
                     const verificationData = {
                         aadharNumber: request.aadhaarNumber,
                         photos: [request.aadhaarFrontUrl, request.aadhaarBackUrl],
-                        status: request.status === 'Approved' ? 'verified' : 
-                               request.status === 'Rejected' ? 'rejected' : 'submitted',
+                        status: request.status === 'Approved' ? 'verified' :
+                            request.status === 'Rejected' ? 'rejected' : 'submitted',
                         requestId: request.requestId
                     };
                     localStorage.setItem('contractor_verification', JSON.stringify(verificationData));
@@ -86,7 +86,7 @@ const LegalVerificationSection = () => {
             Promise.all(newPhotos).then(photos => {
                 const updatedPhotos = [...uploadedPhotos, ...photos];
                 setUploadedPhotos(updatedPhotos);
-                
+
                 // Save to localStorage but don't change status
                 const verificationData = JSON.parse(localStorage.getItem('contractor_verification') || '{}');
                 verificationData.photos = updatedPhotos;
@@ -95,7 +95,7 @@ const LegalVerificationSection = () => {
                     verificationData.status = 'pending';
                 }
                 localStorage.setItem('contractor_verification', JSON.stringify(verificationData));
-                
+
                 toast.success('Document uploaded successfully');
             });
         }
@@ -106,10 +106,10 @@ const LegalVerificationSection = () => {
             toast.error('Cannot remove verified documents');
             return;
         }
-        
+
         const updatedPhotos = uploadedPhotos.filter((_, i) => i !== index);
         setUploadedPhotos(updatedPhotos);
-        
+
         // Update localStorage
         if (updatedPhotos.length === 0) {
             // If no photos left, reset verification status to pending
@@ -124,7 +124,7 @@ const LegalVerificationSection = () => {
             verificationData.photos = updatedPhotos;
             localStorage.setItem('contractor_verification', JSON.stringify(verificationData));
         }
-        
+
         toast.success('Document removed');
     };
 
@@ -154,7 +154,7 @@ const LegalVerificationSection = () => {
             const token = localStorage.getItem('access_token');
             const contractorProfile = JSON.parse(localStorage.getItem('contractor_profile') || '{}');
             const mobileNumber = localStorage.getItem('mobile_number');
-            
+
             if (!token) {
                 toast.error('Please login first');
                 return;
@@ -186,27 +186,27 @@ const LegalVerificationSection = () => {
                     submittedAt: new Date().toISOString(),
                     requestId: data.data.verificationRequest.requestId
                 };
-                
+
                 localStorage.setItem('contractor_verification', JSON.stringify(verificationData));
                 setVerificationStatus('submitted');
-                
+
                 toast.success('Submitted for verification! Admin will review your documents.');
             } else {
                 toast.error(data.message || 'Failed to submit verification');
             }
         } catch (error) {
             console.error('Error submitting verification:', error);
-            
+
             const verificationData = {
                 aadharNumber,
                 photos: uploadedPhotos,
                 status: 'submitted',
                 submittedAt: new Date().toISOString()
             };
-            
+
             localStorage.setItem('contractor_verification', JSON.stringify(verificationData));
             setVerificationStatus('submitted');
-            
+
             toast.success('Submitted for verification! Admin will review your documents.');
         } finally {
             setLoading(false);
@@ -355,9 +355,8 @@ const LegalVerificationSection = () => {
             <button
                 onClick={handleSubmitVerification}
                 disabled={verificationStatus === 'submitted' || verificationStatus === 'verified' || loading}
-                className={`w-full py-4 rounded-full text-white font-bold text-lg transition-all shadow-md active:scale-[0.98] ${getButtonStyle()} ${
-                    (verificationStatus === 'submitted' || verificationStatus === 'verified' || loading) ? 'opacity-90 cursor-not-allowed' : ''
-                }`}
+                className={`w-full py-4 rounded-full text-white font-bold text-lg transition-all shadow-md active:scale-[0.98] ${getButtonStyle()} ${(verificationStatus === 'submitted' || verificationStatus === 'verified' || loading) ? 'opacity-90 cursor-not-allowed' : ''
+                    }`}
             >
                 {loading ? 'Submitting...' : getButtonText()}
             </button>

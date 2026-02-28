@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import ContractorBottomNav from '../components/ContractorBottomNav';
 import ContractorHeader from '../components/ContractorHeader';
 import PromotionalBanner from '../../../components/shared/PromotionalBanner';
@@ -12,6 +12,7 @@ const ContractorHome = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAllCategories, setShowAllCategories] = useState(false);
+    const [activeCategory, setActiveCategory] = useState(null);
 
     // Fetch categories from backend
     useEffect(() => {
@@ -39,16 +40,37 @@ const ContractorHome = () => {
         }
     };
 
-    // Filter categories based on search query
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Flatten categories into sub-category items for display
+    const displayItems = categories.flatMap(cat => {
+        if (!cat.subCategories || cat.subCategories.length === 0) {
+            return [{
+                id: cat._id,
+                name: cat.name,
+                image: cat.image,
+                parentId: cat._id,
+                parentName: cat.name
+            }];
+        }
+        return cat.subCategories.map((sub, idx) => ({
+            id: sub._id || `${cat._id}-${idx}`,
+            name: sub.name,
+            image: sub.image,
+            parentId: cat._id,
+            parentName: cat.name
+        }));
+    });
 
-    // Show limited or all categories
-    const displayedCategories = showAllCategories ? filteredCategories : filteredCategories.slice(0, 4);
+    const filteredItems = displayItems.filter(item => {
+        const query = searchQuery.toLowerCase();
+        return item.name.toLowerCase().includes(query) ||
+            item.parentName.toLowerCase().includes(query);
+    });
 
-    const handleCategoryClick = (categoryName) => {
-        navigate('/contractor/hire-workers', { state: { selectedCategory: categoryName } });
+    const displayedItems = showAllCategories ? filteredItems : filteredItems.slice(0, 8);
+
+    const handleCategoryClick = (item) => {
+        // Redirection to hire workers with this specific sub-category/skill
+        navigate('/contractor/hire-workers', { state: { selectedCategory: item.name } });
     };
 
     const handleSeeAllClick = () => {
@@ -82,8 +104,10 @@ const ContractorHome = () => {
                 {/* Categories Section */}
                 <div className="px-4 mt-2 mb-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">Categories</h3>
-                        {filteredCategories.length > 4 && (
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-gray-900">Categories</h3>
+                        </div>
+                        {filteredItems.length > 4 && (
                             <button
                                 onClick={handleSeeAllClick}
                                 className="text-blue-500 font-semibold text-sm hover:text-blue-600 transition-colors"
@@ -97,39 +121,35 @@ const ContractorHome = () => {
                         <div className="bg-white rounded-lg shadow-sm p-6 text-center">
                             <p className="text-gray-600">Loading categories...</p>
                         </div>
-                    ) : filteredCategories.length === 0 ? (
+                    ) : filteredItems.length === 0 ? (
                         <div className="bg-white rounded-lg shadow-sm p-6 text-center">
                             <p className="text-gray-600">No categories found</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-4 gap-4">
-                            {displayedCategories.map((category) => (
+                            {displayedItems.map((item) => (
                                 <button
-                                    key={category._id}
-                                    onClick={() => handleCategoryClick(category.name)}
-                                    className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white shadow-sm hover:shadow-md transition-all active:scale-95"
+                                    key={item._id || item.name}
+                                    onClick={() => handleCategoryClick(item)}
+                                    className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white shadow-sm hover:shadow-md transition-all active:scale-95 border border-transparent hover:border-orange-200"
                                 >
-                                    <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center text-2xl overflow-hidden">
-                                        {(category.image || category.icon) ? (
-                                            (category.image || category.icon).startsWith('http') ? (
-                                                <img
-                                                    src={category.image || category.icon}
-                                                    alt={category.name}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span>{category.image || category.icon}</span>
-                                            )
+                                    <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center text-2xl overflow-hidden shadow-inner border border-orange-200">
+                                        {(item.image || item.icon) ? (
+                                            <img
+                                                src={item.image || item.icon}
+                                                alt={item.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
+                                                }}
+                                            />
                                         ) : (
-                                            <span>🔧</span>
+                                            <span>👷</span>
                                         )}
                                     </div>
-                                    <span className="text-xs text-gray-700 text-center font-medium leading-tight">
-                                        {category.name}
+                                    <span className="text-[10px] text-gray-700 text-center font-bold leading-tight">
+                                        {item.name}
                                     </span>
                                 </button>
                             ))}

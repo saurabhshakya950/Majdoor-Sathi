@@ -64,13 +64,21 @@ export const registerTokenWithBackend = async (token) => {
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken || !token) return;
 
-        await axios.post(`${API_URL}/auth/fcm-token`, 
+        const response = await axios.post(`${API_URL}/auth/fcm-token`, 
             { fcmToken: token, platform: 'web' },
             { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        console.log('FCM Token registered with backend');
+
+        if (response.data?.success) {
+            console.log('FCM Token registered with backend');
+        }
     } catch (error) {
-        console.error('Failed to register FCM token with backend:', error);
+        // 401 means token expired - silently skip, user will re-register on next login
+        if (error.response?.status === 401) {
+            return; // Silent fail - non-critical
+        }
+        // Log other errors but don't crash the app
+        console.warn('FCM token registration skipped:', error.message);
     }
 };
 

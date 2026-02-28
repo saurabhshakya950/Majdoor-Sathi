@@ -5,11 +5,14 @@ import PageHeader from '../components/PageHeader';
 import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
 import FormTextarea from '../components/FormTextarea';
-import { jobAPI } from '../../../services/api';
+import { jobAPI, categoryAPI } from '../../../services/api';
 
 const PostJob = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [categoriesList, setCategoriesList] = useState([]);
+
     const [formData, setFormData] = useState({
         userName: '',
         city: '',
@@ -24,99 +27,56 @@ const PostJob = () => {
         status: 'Open'
     });
 
-    // Auto-fill user information from localStorage
+    // Auto-fill user information and fetch dynamic categories
     useEffect(() => {
-        const profile = JSON.parse(localStorage.getItem('user_profile') || '{}');
-        setFormData(prev => ({
-            ...prev,
-            userName: profile.firstName || 'User',
-            city: profile.city || '',
-            address: profile.address || '',
-            mobileNumber: profile.phoneNumber || profile.mobile || ''
-        }));
-    }, []);
+        const fetchInitialData = async () => {
+            try {
+                // Load profile
+                const profile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+                setFormData(prev => ({
+                    ...prev,
+                    userName: profile.firstName || 'User',
+                    city: profile.city || '',
+                    address: profile.address || '',
+                    mobileNumber: profile.phoneNumber || profile.mobile || ''
+                }));
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+                // Fetch dynamic categories
+                setCategoriesLoading(true);
+                const response = await categoryAPI.getAll();
+                if (response.data.success && response.data.data.categories) {
+                    // Flatten all sub-categories into a single list
+                    const flattened = response.data.data.categories.flatMap(cat =>
+                        cat.subCategories && cat.subCategories.length > 0
+                            ? cat.subCategories.map(sub => ({ value: sub.name, label: sub.name }))
+                            : [{ value: cat.name, label: cat.name }]
+                    );
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Validation
-        if (!formData.jobTitle || !formData.jobDescription || !formData.category || !formData.workDuration) {
-            toast.error('Please fill all required fields');
-            return;
-        }
-
-        if (formData.budgetType === 'Fixed Amount' && !formData.budgetAmount) {
-            toast.error('Please enter budget amount');
-            return;
-        }
-
-        try {
-            setLoading(true);
-
-            // Prepare job data
-            const jobData = {
-                ...formData,
-                budgetAmount: formData.budgetType === 'Fixed Amount' ? Number(formData.budgetAmount) : 0
-            };
-
-            console.log('Creating job:', jobData);
-
-            // Check if user has access token
-            const token = localStorage.getItem('access_token');
-            
-            if (!token) {
-                // No token - save to localStorage (fallback for mock auth)
-                console.log('No access token found, saving to localStorage');
-                const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                const newJob = {
-                    id: jobId,
-                    ...jobData,
-                    createdAt: new Date().toISOString()
-                };
-                
-                const existingJobs = JSON.parse(localStorage.getItem('user_jobs') || '[]');
-                existingJobs.push(newJob);
-                localStorage.setItem('user_jobs', JSON.stringify(existingJobs));
-                
-                toast.success('Job posted successfully!');
-                navigate('/user/home');
-                return;
+                    // Add default option
+                    setCategoriesList([
+                        { value: '', label: 'Select Category' },
+                        ...flattened.sort((a, b) => a.label.localeCompare(b.label))
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                // Fallback to basic categories if API fails
+                setCategoriesList([
+                    { value: '', label: 'Select Category' },
+                    { value: 'Painter', label: 'Painter' },
+                    { value: 'Plumber', label: 'Plumber' },
+                    { value: 'Electrician', label: 'Electrician' },
+                    { value: 'Carpenter', label: 'Carpenter' },
+                    { value: 'Mason', label: 'Mason' },
+                    { value: 'Welder', label: 'Welder' }
+                ]);
+            } finally {
+                setCategoriesLoading(false);
             }
+        };
 
-            // Has token - save to backend
-            const response = await jobAPI.createJob(jobData);
-            
-            console.log('Job created:', response);
-
-            toast.success('Job posted successfully!');
-            
-            // Navigate to User Home
-            navigate('/user/home');
-        } catch (error) {
-            console.error('Error creating job:', error);
-            toast.error(error.response?.data?.message || 'Failed to post job');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const categories = [
-        { value: '', label: 'Select Category' },
-        { value: 'Painter', label: 'Painter' },
-        { value: 'Plumber', label: 'Plumber' },
-        { value: 'Electrician', label: 'Electrician' },
-        { value: 'Carpenter', label: 'Carpenter' },
-        { value: 'Mason', label: 'Mason' },
-        { value: 'Welder', label: 'Welder' }
-    ];
+        fetchInitialData();
+    }, []);
 
     const workDurations = [
         { value: '', label: 'Select Duration' },
@@ -128,13 +88,13 @@ const PostJob = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <PageHeader title="Post a Job" backPath="/user/hire-workers" />
-            
+
             <div className="p-4 pb-20">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">User Information</h2>
-                        
+
                         <FormInput
                             label="User Name"
                             name="userName"
@@ -181,7 +141,7 @@ const PostJob = () => {
                     {/* Job Details */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Details</h2>
-                        
+
                         <FormInput
                             label="Job Title *"
                             name="jobTitle"
@@ -205,13 +165,13 @@ const PostJob = () => {
                     {/* Work Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Work Information</h2>
-                        
+
                         <FormSelect
-                            label="Category / Skill *"
+                            label={categoriesLoading ? "Category / Skill (Loading...)" : "Category / Skill *"}
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
-                            options={categories}
+                            options={categoriesList}
                             required
                         />
 
@@ -228,7 +188,7 @@ const PostJob = () => {
                     {/* Budget */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget</h2>
-                        
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Budget Type *

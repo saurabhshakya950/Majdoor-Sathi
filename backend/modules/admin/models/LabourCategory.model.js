@@ -19,7 +19,18 @@ const labourCategorySchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admin',
         default: null
-    }
+    },
+    subCategories: [{
+        name: {
+            type: String,
+            required: [true, 'Sub-category name is required'],
+            trim: true
+        },
+        image: {
+            type: String,
+            default: 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png'
+        }
+    }]
 }, {
     timestamps: true
 });

@@ -56,14 +56,22 @@ export const adminLogin = async (req, res) => {
         delete adminData.password;
         delete adminData.refreshToken;
 
-        console.log('✅ Admin Login Success:', admin.username, 'Token generated with 30d expiry');
+        console.log('✅ Admin Login Success:', admin.username, 'Token generated and set in HttpOnly cookie');
+
+        // Set token in Cookie
+        res.cookie('adminToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
 
         res.status(200).json({
             success: true,
             message: 'Login successful',
             data: {
                 admin: adminData,
-                token: accessToken
+                token: accessToken // Kept for backward compatibility but optional now
             }
         });
 
@@ -89,9 +97,12 @@ export const adminLogout = async (req, res) => {
             await admin.save();
         }
 
+        // Clear Cookie
+        res.clearCookie('adminToken');
+
         res.status(200).json({
             success: true,
-            message: 'Logout successful'
+            message: 'Logged out successfully'
         });
 
     } catch (error) {

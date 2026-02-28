@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     BarChart3,
     Users,
@@ -98,7 +98,7 @@ export function DashboardHome() {
     const fetchDashboardData = async () => {
         try {
             const { dashboardAPI } = await import('../../../services/admin.api');
-            
+
             // Fetch analytics
             const analyticsResponse = await dashboardAPI.getAnalytics();
             if (analyticsResponse.success) {
@@ -124,29 +124,29 @@ export function DashboardHome() {
     return (
         <>
             <div className="analytics-grid">
-                <AnalyticsCard 
-                    icon={<Users color="#3b82f6" />} 
-                    title="Total Users" 
-                    value={analytics?.totalUsers || 0} 
-                    bg="#eff6ff" 
+                <AnalyticsCard
+                    icon={<Users color="#3b82f6" />}
+                    title="Total Users"
+                    value={analytics?.totalUsers || 0}
+                    bg="#eff6ff"
                 />
-                <AnalyticsCard 
-                    icon={<HardHat color="#f97316" />} 
-                    title="Total Labours" 
-                    value={analytics?.totalLabours || 0} 
-                    bg="#fff7ed" 
+                <AnalyticsCard
+                    icon={<HardHat color="#f97316" />}
+                    title="Total Labours"
+                    value={analytics?.totalLabours || 0}
+                    bg="#fff7ed"
                 />
-                <AnalyticsCard 
-                    icon={<Briefcase color="#10b981" />} 
-                    title="Total Contractors" 
-                    value={analytics?.totalContractors || 0} 
-                    bg="#ecfdf5" 
+                <AnalyticsCard
+                    icon={<Briefcase color="#10b981" />}
+                    title="Total Contractors"
+                    value={analytics?.totalContractors || 0}
+                    bg="#ecfdf5"
                 />
-                <AnalyticsCard 
-                    icon={<Bell color="#f43f5e" />} 
-                    title="Active Requests" 
-                    value={analytics?.activeRequests || 0} 
-                    bg="#fff1f2" 
+                <AnalyticsCard
+                    icon={<Bell color="#f43f5e" />}
+                    title="Active Requests"
+                    value={analytics?.activeRequests || 0}
+                    bg="#fff1f2"
                 />
             </div>
 
@@ -187,24 +187,24 @@ export function DashboardHome() {
                                             </div>
                                         </td>
                                         <td>
-                                            <span style={{ 
-                                                padding: '4px 8px', 
-                                                borderRadius: '6px', 
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '6px',
                                                 fontSize: '0.75rem',
                                                 fontWeight: 600,
                                                 background: interaction.requestType === 'LABOUR_HIRE' ? '#eff6ff' :
-                                                           interaction.requestType === 'CONTRACTOR_HIRE' ? '#ecfdf5' :
-                                                           '#fff7ed',
+                                                    interaction.requestType === 'CONTRACTOR_HIRE' ? '#ecfdf5' :
+                                                        '#fff7ed',
                                                 color: interaction.requestType === 'LABOUR_HIRE' ? '#3b82f6' :
-                                                       interaction.requestType === 'CONTRACTOR_HIRE' ? '#10b981' :
-                                                       '#f97316'
+                                                    interaction.requestType === 'CONTRACTOR_HIRE' ? '#10b981' :
+                                                        '#f97316'
                                             }}>
                                                 {interaction.requestType.replace('_', ' ')}
                                             </span>
                                         </td>
                                         <td style={{ maxWidth: '200px' }}>
-                                            <div style={{ 
-                                                fontSize: '0.8rem', 
+                                            <div style={{
+                                                fontSize: '0.8rem',
                                                 color: '#4b5563',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
@@ -214,11 +214,10 @@ export function DashboardHome() {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className={`status-badge ${
-                                                interaction.status === 'ACCEPTED' ? 'status-completed' :
+                                            <span className={`status-badge ${interaction.status === 'ACCEPTED' ? 'status-completed' :
                                                 interaction.status === 'REJECTED' ? 'status-cancelled' :
-                                                'status-pending'
-                                            }`}>
+                                                    'status-pending'
+                                                }`}>
                                                 {interaction.status}
                                             </span>
                                         </td>
@@ -322,12 +321,12 @@ export function DashboardHome() {
                                 return data.map((value, i) => {
                                     const heightPercent = maxValue > 0 ? (value / maxValue) * 100 : 0;
                                     return (
-                                        <div 
-                                            key={i} 
-                                            style={{ 
-                                                flex: 1, 
-                                                height: `${heightPercent}%`, 
-                                                background: '#3b82f6', 
+                                        <div
+                                            key={i}
+                                            style={{
+                                                flex: 1,
+                                                height: `${heightPercent}%`,
+                                                background: '#3b82f6',
                                                 borderRadius: '4px 4px 0 0',
                                                 minHeight: '5px',
                                                 transition: 'height 0.3s ease'
@@ -359,7 +358,52 @@ const ProfessionalDashboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const adminRole = localStorage.getItem('adminRole');
+    const [adminData, setAdminData] = useState(() => {
+        const username = localStorage.getItem('adminUsername');
+        const role = localStorage.getItem('adminRole');
+        const profileStr = localStorage.getItem('adminProfile');
+
+        // Priority: 1. username from login, 2. name from profile, 3. fallback to 'Admin'
+        let displayName = username || 'Admin';
+
+        try {
+            if (profileStr && profileStr !== 'undefined' && profileStr !== 'null') {
+                const profile = JSON.parse(profileStr);
+                // User specifically wants the name they logged in with (username)
+                displayName = username || profile.username || profile.name || profile.fullName || 'Admin';
+            }
+        } catch (e) {
+            console.error('Error parsing admin profile:', e);
+        }
+
+        return { name: displayName, role: role || 'Admin' };
+    });
+
+    useEffect(() => {
+        const refreshAdminInfo = () => {
+            const username = localStorage.getItem('adminUsername');
+            const role = localStorage.getItem('adminRole');
+            const profileStr = localStorage.getItem('adminProfile');
+
+            let displayName = username || 'Admin';
+
+            try {
+                if (profileStr && profileStr !== 'undefined' && profileStr !== 'null') {
+                    const profile = JSON.parse(profileStr);
+                    displayName = username || profile.username || profile.name || profile.fullName || 'Admin';
+                }
+            } catch (e) {
+                console.error('Error parsing admin profile:', e);
+            }
+
+            setAdminData({ name: displayName, role: role || 'Admin' });
+        };
+
+        refreshAdminInfo();
+    }, [location.pathname]);
+
+    const adminRole = adminData.role;
+    const adminName = adminData.name;
 
     const handleLogout = () => {
         localStorage.removeItem('adminAuth');
@@ -404,7 +448,7 @@ const ProfessionalDashboard = () => {
             </button>
 
             {/* Mobile Overlay */}
-            <div 
+            <div
                 className={`mobile-sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
                 onClick={closeMobileMenu}
             ></div>
@@ -479,7 +523,7 @@ const ProfessionalDashboard = () => {
                             <span>Verification</span>
                         </NavLink>
                     )}
-                    
+
                     {hasAccess(['SUPER_ADMIN', 'ADMIN_USER']) && (
                         <NavLink
                             to="/admin/dashboard/broadcasts"
@@ -490,7 +534,7 @@ const ProfessionalDashboard = () => {
                             <span>Broadcast</span>
                         </NavLink>
                     )}
-                    
+
                     {hasAccess(['SUPER_ADMIN']) && (
                         <NavLink
                             to="/admin/dashboard/banners"
@@ -501,7 +545,7 @@ const ProfessionalDashboard = () => {
                             <span>Banner Section</span>
                         </NavLink>
                     )}
-                    
+
                     {hasAccess(['SUPER_ADMIN']) && (
                         <NavLink
                             to="/admin/dashboard/admins"
@@ -512,7 +556,7 @@ const ProfessionalDashboard = () => {
                             <span>Admin Management</span>
                         </NavLink>
                     )}
-                    
+
                     <NavLink
                         to="/admin/dashboard/settings"
                         onClick={closeMobileMenu}
@@ -540,10 +584,10 @@ const ProfessionalDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#ccc', overflow: 'hidden' }}>
-                                <img src="https://ui-avatars.com/api/?name=Admin+User&background=f97316&color=fff" alt="Admin" style={{ width: '100%' }} />
+                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminName)}&background=f97316&color=fff`} alt="Admin" style={{ width: '100%' }} />
                             </div>
                             <div style={{ cursor: 'default' }}>
-                                <p style={{ fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>Sagar Chauhan</p>
+                                <p style={{ fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>{adminName}</p>
                                 <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{getRoleTitle()}</p>
                             </div>
                         </div>

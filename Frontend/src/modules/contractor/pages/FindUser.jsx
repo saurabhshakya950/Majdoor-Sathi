@@ -105,9 +105,9 @@ const FindUser = () => {
         }
     };
 
-    const fetchJobs = async () => {
+    const fetchJobs = async (isSilent = false) => {
         try {
-            setLoading(true);
+            if (!isSilent) setLoading(true);
 
             // Try to fetch from database first
             try {
@@ -143,7 +143,6 @@ const FindUser = () => {
 
                     setJobs(uniqueJobs);
                     setFilteredJobs(uniqueJobs);
-                    console.log('Fetched jobs - DB:', transformedJobs.length, 'Local:', localJobs.length, 'Total:', uniqueJobs.length);
                     return;
                 }
             } catch (apiError) {
@@ -154,7 +153,6 @@ const FindUser = () => {
             const localJobs = JSON.parse(localStorage.getItem('user_jobs') || '[]');
             setJobs(localJobs);
             setFilteredJobs(localJobs);
-            console.log('Loaded jobs from localStorage:', localJobs.length);
 
         } catch (error) {
             console.error('Failed to fetch jobs:', error);
@@ -163,7 +161,7 @@ const FindUser = () => {
                 position: 'top-center',
             });
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 

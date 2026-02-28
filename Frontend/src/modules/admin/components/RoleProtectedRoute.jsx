@@ -3,12 +3,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
     const isAuthenticated = localStorage.getItem('adminAuth') === 'true';
-    const adminToken = localStorage.getItem('adminToken');
     const userRole = localStorage.getItem('adminRole');
     const location = useLocation();
 
-    // Validate token exists and is not empty
-    if (!isAuthenticated || !adminToken || adminToken === 'null' || adminToken === 'undefined') {
+    // Validate authentication found
+    if (!isAuthenticated) {
         console.log('🚫 RoleProtectedRoute: No valid authentication found');
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }

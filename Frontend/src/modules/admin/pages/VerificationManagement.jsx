@@ -30,21 +30,7 @@ const VerificationManagement = () => {
     const fetchVerificationRequests = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('adminToken');
-            
-            if (!token) {
-                toast.error('Please login as admin');
-                setLoading(false);
-                return;
-            }
-
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/verification/requests?category=${activeCategory}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            const data = await response.json();
+            const data = await verificationAPI.getAllRequests({ category: activeCategory });
 
             if (data.success) {
                 setVerificationRequests(data.data.requests || []);
@@ -53,7 +39,11 @@ const VerificationManagement = () => {
             }
         } catch (error) {
             console.error('Error fetching verification requests:', error);
-            toast.error('Failed to load verification requests');
+            if (error.response?.status === 401) {
+                toast.error('Please login as admin');
+            } else {
+                toast.error('Failed to load verification requests');
+            }
         } finally {
             setLoading(false);
         }
@@ -61,34 +51,27 @@ const VerificationManagement = () => {
 
     const handleAction = async (id, action) => {
         try {
-            const token = localStorage.getItem('adminToken');
-            
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/verification/requests/${id}/${action}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    reason: action === 'reject' ? 'Documents not valid' : undefined
-                })
-            });
+            let data;
+            if (action === 'approve') {
+                data = await verificationAPI.approveRequest(id);
+            } else if (action === 'reject') {
+                data = await verificationAPI.rejectRequest(id, 'Documents not valid');
+            }
 
-            const data = await response.json();
-
-            if (data.success) {
+            if (data && data.success) {
                 toast.success(`Request ${action}d successfully`);
                 fetchVerificationRequests();
                 if (selectedRequest && selectedRequest._id === id) {
                     setIsModalOpen(false);
                     setSelectedRequest(null);
                 }
-            } else {
+            } else if (data) {
                 toast.error(data.message || `Failed to ${action} request`);
             }
         } catch (error) {
             console.error('Error updating verification:', error);
-            toast.error(`Failed to ${action} request`);
+            const errorMessage = error.response?.data?.message || `Failed to ${action} request`;
+            toast.error(errorMessage);
         }
     };
 
@@ -116,9 +99,9 @@ const VerificationManagement = () => {
                 </h2>
                 <div className="admin-search-bar" style={{ width: '250px' }}>
                     <Search size={18} color="#6b7280" />
-                    <input 
-                        type="text" 
-                        placeholder="Search requests..." 
+                    <input
+                        type="text"
+                        placeholder="Search requests..."
                         className="admin-search-input"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -228,15 +211,14 @@ const VerificationManagement = () => {
                                     <td>{req.trade || activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}</td>
                                     <td>{new Date(req.createdAt).toLocaleDateString()}</td>
                                     <td>
-                                        <span className={`status-badge ${
-                                            req.status === 'Approved' ? 'status-completed' :
-                                            req.status === 'Rejected' ? 'status-pending' : ''
-                                        }`} style={{
-                                            background: req.status === 'Rejected' ? '#fee2e2' : 
-                                                       req.status === 'Pending' ? '#fef3c7' : '',
-                                            color: req.status === 'Rejected' ? '#b91c1c' : 
-                                                  req.status === 'Pending' ? '#92400e' : ''
-                                        }}>
+                                        <span className={`status-badge ${req.status === 'Approved' ? 'status-completed' :
+                                                req.status === 'Rejected' ? 'status-pending' : ''
+                                            }`} style={{
+                                                background: req.status === 'Rejected' ? '#fee2e2' :
+                                                    req.status === 'Pending' ? '#fef3c7' : '',
+                                                color: req.status === 'Rejected' ? '#b91c1c' :
+                                                    req.status === 'Pending' ? '#92400e' : ''
+                                            }}>
                                             {req.status}
                                         </span>
                                     </td>
@@ -310,15 +292,14 @@ const VerificationManagement = () => {
                                     <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>{selectedRequest.requestId || selectedRequest._id.slice(-8).toUpperCase()} | {selectedRequest.phone || 'N/A'}</p>
                                 </div>
                                 <div style={{ marginLeft: 'auto' }}>
-                                    <span className={`status-badge ${
-                                        selectedRequest.status === 'Approved' ? 'status-completed' :
-                                        selectedRequest.status === 'Rejected' ? 'status-pending' : ''
-                                    }`} style={{
-                                        background: selectedRequest.status === 'Rejected' ? '#fee2e2' : 
-                                                   selectedRequest.status === 'Pending' ? '#fef3c7' : '',
-                                        color: selectedRequest.status === 'Rejected' ? '#b91c1c' : 
-                                              selectedRequest.status === 'Pending' ? '#92400e' : ''
-                                    }}>
+                                    <span className={`status-badge ${selectedRequest.status === 'Approved' ? 'status-completed' :
+                                            selectedRequest.status === 'Rejected' ? 'status-pending' : ''
+                                        }`} style={{
+                                            background: selectedRequest.status === 'Rejected' ? '#fee2e2' :
+                                                selectedRequest.status === 'Pending' ? '#fef3c7' : '',
+                                            color: selectedRequest.status === 'Rejected' ? '#b91c1c' :
+                                                selectedRequest.status === 'Pending' ? '#92400e' : ''
+                                        }}>
                                         {selectedRequest.status}
                                     </span>
                                 </div>

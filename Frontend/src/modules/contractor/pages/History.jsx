@@ -20,19 +20,19 @@ const History = () => {
 
         loadHistory();
 
-        // Auto-refresh every 10 seconds
+        // Auto-refresh every 10 seconds (Silent)
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing contractor history...');
-                loadHistory();
+                loadHistory(true);
             }
         }, 10000);
 
         return () => clearInterval(interval);
     }, []);
 
-    const loadHistory = async () => {
+    const loadHistory = async (isSilent = false) => {
         try {
+            if (!isSilent) setLoading(true);
             console.log('🔵 Loading contractor application history from database...');
             const response = await contractorAPI.getContractorApplicationHistory();
 
@@ -44,7 +44,7 @@ const History = () => {
             console.error('❌ Failed to load history:', error);
             setHistory([]);
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 
@@ -109,8 +109,8 @@ const History = () => {
                         <button
                             onClick={() => setTypeFilter('all')}
                             className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all ${typeFilter === 'all'
-                                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-50 border'
+                                ? 'bg-yellow-400 text-gray-900 shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-50 border'
                                 }`}
                         >
                             All ({allCount})
@@ -118,8 +118,8 @@ const History = () => {
                         <button
                             onClick={() => setTypeFilter('user')}
                             className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all ${typeFilter === 'user'
-                                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-50 border'
+                                ? 'bg-yellow-400 text-gray-900 shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-50 border'
                                 }`}
                         >
                             Contr. ({userCount})
@@ -127,8 +127,8 @@ const History = () => {
                         <button
                             onClick={() => setTypeFilter('worker')}
                             className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all ${typeFilter === 'worker'
-                                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                                    : 'bg-white text-gray-600 hover:bg-gray-50 border'
+                                ? 'bg-yellow-400 text-gray-900 shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-gray-50 border'
                                 }`}
                         >
                             Workers ({workerCount})
@@ -162,8 +162,8 @@ const History = () => {
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${request.type === 'user'
-                                                    ? 'bg-blue-500'
-                                                    : 'bg-green-500'
+                                                ? 'bg-blue-500'
+                                                : 'bg-green-500'
                                                 }`}>
                                                 {request.workerName.charAt(0).toUpperCase()}
                                             </div>
@@ -176,8 +176,8 @@ const History = () => {
                                             </div>
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${request.status === 'accepted'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-red-100 text-red-700'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-red-100 text-red-700'
                                             }`}>
                                             {request.status === 'accepted' ? '✓' : '✕'}
                                             {request.status === 'accepted' ? 'Accepted' : 'Declined'}

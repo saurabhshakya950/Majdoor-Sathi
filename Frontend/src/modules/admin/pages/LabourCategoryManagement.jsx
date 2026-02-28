@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Image as ImageIcon, Save, X, Upload } from 'lucide-react';
+import { Plus, Trash2, Image as ImageIcon, Save, X, Upload, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { labourCategoryAPI } from '../../../services/admin.api';
 
@@ -9,10 +9,13 @@ const LabourCategoryManagement = () => {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
 
+    const [searchQuery, setSearchQuery] = useState('');
+
     // New Category Form State
     const [newCategoryName, setNewCategoryName] = useState('');
-    const [newCategoryImage, setNewCategoryImage] = useState('');
-    const [imagePreview, setImagePreview] = useState('');
+
+    // New Sub-categories State
+    const [newSubCategories, setNewSubCategories] = useState([{ name: '', image: '' }]);
 
     useEffect(() => {
         fetchCategories();
@@ -31,31 +34,6 @@ const LabourCategoryManagement = () => {
         }
     };
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            toast.error('Please select an image file');
-            return;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image size should be less than 5MB');
-            return;
-        }
-
-        // Convert to base64
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64String = reader.result;
-            setNewCategoryImage(base64String);
-            setImagePreview(base64String);
-        };
-        reader.readAsDataURL(file);
-    };
 
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) {
@@ -65,39 +43,36 @@ const LabourCategoryManagement = () => {
 
         try {
             setUploading(true);
-            
+
             console.log('📤 Uploading category:', {
                 name: newCategoryName,
-                hasImage: !!newCategoryImage,
-                imageType: newCategoryImage ? (newCategoryImage.startsWith('data:') ? 'base64' : 'url') : 'none',
-                imageSize: newCategoryImage ? `${(newCategoryImage.length / 1024).toFixed(2)} KB` : '0 KB'
+                subCount: newSubCategories.length
             });
 
             const categoryData = {
                 name: newCategoryName.trim(),
-                image: newCategoryImage || undefined // Don't send empty string
+                subCategories: newSubCategories.filter(s => s.name.trim() !== '')
             };
 
             console.log('🚀 Sending request to backend...');
             const response = await labourCategoryAPI.create(categoryData);
-            
+
             console.log('✅ Category created:', response);
-            
-            toast.success('Category added successfully');
-            
+
+            toast.success(response.message || 'Category processed successfully');
+
             // Reset form and refresh
             setNewCategoryName('');
-            setNewCategoryImage('');
-            setImagePreview('');
+            setNewSubCategories([{ name: '', image: '' }]);
             setIsAddModalOpen(false);
             fetchCategories();
         } catch (error) {
             console.error('❌ Error adding category:', error);
             console.error('Error response:', error.response);
-            
+
             // Extract error message
             let errorMessage = 'Failed to add category';
-            
+
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.response?.data?.error) {
@@ -105,7 +80,7 @@ const LabourCategoryManagement = () => {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             // Show specific error or generic message
             if (errorMessage.includes('already exists')) {
                 toast.error('Category with this name already exists');
@@ -138,9 +113,66 @@ const LabourCategoryManagement = () => {
     const closeModal = () => {
         setIsAddModalOpen(false);
         setNewCategoryName('');
-        setNewCategoryImage('');
-        setImagePreview('');
+        setNewSubCategories([{ name: '', image: '' }]);
     };
+
+    const addSubCategoryField = () => {
+        setNewSubCategories([...newSubCategories, { name: '', image: '' }]);
+    };
+
+    const removeSubCategoryField = (index) => {
+        setNewSubCategories(newSubCategories.filter((_, i) => i !== index));
+    };
+
+    const handleSubCategoryChange = (index, field, value) => {
+        const updated = [...newSubCategories];
+        updated[index][field] = value;
+        setNewSubCategories(updated);
+    };
+
+    const handleSubCategoryImageUpload = (index, e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            handleSubCategoryChange(index, 'image', reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Flatten categories into sub-category items for display
+    const displayItems = categories.flatMap(cat => {
+        if (!cat.subCategories || cat.subCategories.length === 0) {
+            return [{
+                id: cat._id,
+                name: cat.name,
+                image: cat.image,
+                parentId: cat._id,
+                parentName: cat.name,
+                isSub: false
+            }];
+        }
+        return cat.subCategories.map((sub, idx) => ({
+            id: sub._id || `${cat._id}-${idx}`,
+            name: sub.name,
+            image: sub.image,
+            parentId: cat._id,
+            parentName: cat.name,
+            isSub: true
+        }));
+    });
+
+    const filteredItems = displayItems.filter(item => {
+        const query = searchQuery.toLowerCase();
+        return item.name.toLowerCase().includes(query) ||
+            item.parentName.toLowerCase().includes(query);
+    });
 
     return (
         <div className="p-6">
@@ -149,13 +181,25 @@ const LabourCategoryManagement = () => {
                     <h1 className="text-2xl font-bold text-gray-800">Labour Categories</h1>
                     <p className="text-gray-500 text-sm">Manage types of labourers available in the system</p>
                 </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                    <Plus size={20} />
-                    <span>Add Category</span>
-                </button>
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search categories..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none w-64"
+                        />
+                        <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+                    </div>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        <Plus size={20} />
+                        <span>Add Category</span>
+                    </button>
+                </div>
             </div>
 
             {/* Categories Grid */}
@@ -170,27 +214,34 @@ const LabourCategoryManagement = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {categories.map((category) => (
-                        <div key={category._id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center hover:shadow-md transition-shadow relative group">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 overflow-hidden">
-                                {category.image ? (
-                                    <img 
-                                        src={category.image} 
-                                        alt={category.name} 
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
-                                        }}
-                                    />
-                                ) : (
-                                    <ImageIcon size={32} className="text-gray-400" />
-                                )}
+                    {filteredItems.map((item) => (
+                        <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col hover:shadow-md transition-shadow relative group">
+                            <div className="flex flex-col items-center mb-4">
+                                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 overflow-hidden border">
+                                    {item.image ? (
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <ImageIcon size={32} className="text-gray-400" />
+                                    )}
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    {item.isSub && (
+                                        <span className="text-[10px] text-orange-500 font-bold uppercase tracking-widest mb-1 opacity-70">
+                                            {item.parentName}
+                                        </span>
+                                    )}
+                                    <h3 className="font-bold text-gray-800 text-lg text-center leading-tight">
+                                        {item.name}
+                                    </h3>
+                                </div>
                             </div>
-                            <h3 className="font-semibold text-gray-800 text-lg text-center">{category.name}</h3>
 
                             <button
-                                onClick={() => handleDeleteCategory(category._id)}
+                                onClick={() => handleDeleteCategory(item.parentId)}
                                 className="absolute top-2 right-2 p-1.5 text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Delete Category"
                             >
@@ -212,7 +263,7 @@ const LabourCategoryManagement = () => {
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
                             {/* Category Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -222,75 +273,75 @@ const LabourCategoryManagement = () => {
                                     type="text"
                                     value={newCategoryName}
                                     onChange={(e) => setNewCategoryName(e.target.value)}
-                                    placeholder="e.g. Tile Installer"
+                                    placeholder="e.g. Agriculture"
                                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                                 />
                             </div>
 
-                            {/* Image Upload */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Image URL (Optional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newCategoryImage && !newCategoryImage.startsWith('data:') ? newCategoryImage : ''}
-                                    onChange={(e) => {
-                                        setNewCategoryImage(e.target.value);
-                                        setImagePreview(e.target.value);
-                                    }}
-                                    placeholder="https://example.com/image.png"
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none mb-2"
-                                />
-                                
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="flex-1 border-t border-gray-300"></div>
-                                    <span className="text-xs text-gray-500">OR</span>
-                                    <div className="flex-1 border-t border-gray-300"></div>
+                            {/* Sub-categories Section (Moved Up) */}
+                            <div className="pt-2 border-t mt-2">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Sub-categories (Skills)</h3>
+                                    <button
+                                        onClick={addSubCategoryField}
+                                        className="text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 px-2 py-1 rounded flex items-center gap-1 transition-colors border border-orange-200"
+                                    >
+                                        <Plus size={14} />
+                                        <span>Add Skill</span>
+                                    </button>
                                 </div>
 
-                                <label className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-orange-500 hover:bg-orange-50 transition-colors">
-                                    <Upload size={20} className="text-gray-400" />
-                                    <span className="text-sm text-gray-600">Upload Image</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                        className="hidden"
-                                    />
-                                </label>
-                                <p className="text-xs text-gray-500 mt-1">Max size: 5MB. Supported: JPG, PNG, GIF</p>
+                                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                    {newSubCategories.length === 0 ? (
+                                        <p className="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No skills added yet.</p>
+                                    ) : (
+                                        newSubCategories.map((sub, index) => (
+                                            <div key={index} className="flex gap-3 items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100 group">
+                                                <div className="relative w-10 h-10 bg-white rounded-lg flex-shrink-0 border flex items-center justify-center overflow-hidden">
+                                                    {sub.image ? (
+                                                        <img src={sub.image} className="w-full h-full object-cover" alt="Sub" />
+                                                    ) : (
+                                                        <Upload size={14} className="text-gray-400" />
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleSubCategoryImageUpload(index, e)}
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="text"
+                                                        value={sub.name}
+                                                        onChange={(e) => handleSubCategoryChange(index, 'name', e.target.value)}
+                                                        placeholder="Skill Name (e.g. Cultivator)"
+                                                        className="w-full text-sm border-none bg-transparent focus:ring-0 p-0 font-semibold text-gray-700"
+                                                    />
+                                                    <p className="text-[10px] text-gray-400">Click icon to upload</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeSubCategoryField(index)}
+                                                    className="text-gray-300 hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Image Preview */}
-                            {imagePreview && (
-                                <div className="mt-3">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
-                                    <div className="flex justify-center">
-                                        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-200">
-                                            <img 
-                                                src={imagePreview} 
-                                                alt="Preview" 
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             <button
                                 onClick={handleAddCategory}
                                 disabled={uploading}
-                                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 rounded-xl mt-4 transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
                             >
                                 {uploading ? (
                                     <>
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                        <span>Uploading...</span>
+                                        <span>Saving Category...</span>
                                     </>
                                 ) : (
                                     <>

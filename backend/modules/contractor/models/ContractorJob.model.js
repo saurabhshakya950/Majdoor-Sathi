@@ -44,7 +44,7 @@ const contractorJobSchema = new mongoose.Schema({
     labourSkill: {
         type: String,
         required: [true, 'Labour skill is required'],
-        enum: ['Construction', 'Interior', 'Painting', 'Plumbing', 'Electrical', 'Other']
+        trim: true
     },
     experience: {
         type: String,

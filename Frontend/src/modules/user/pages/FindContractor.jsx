@@ -35,11 +35,10 @@ const FindContractor = () => {
             }
         }, 3000);
 
-        // Poll for card updates every 5 seconds
+        // Poll for card updates every 5 seconds (Silent)
         const cardInterval = setInterval(() => {
             if (!document.hidden) {
-                console.log('⏰ Polling for card updates...');
-                fetchContractorJobs();
+                fetchContractorJobs(true);
             }
         }, 5000);
 
@@ -129,23 +128,20 @@ const FindContractor = () => {
         }
     };
 
-    const fetchContractorJobs = async () => {
+    const fetchContractorJobs = async (isSilent = false) => {
         try {
-            setLoading(true);
+            if (!isSilent) setLoading(true);
 
             // Fetch from database - pass audience: 'User' to get only User-targeted cards
             const response = await contractorAPI.browseContractorJobs({ audience: 'User' });
 
             if (response.success && response.data.jobs) {
-                console.log('📦 Raw API response:', response.data.jobs);
-
                 // Filter only Active status cards
                 const activeJobs = response.data.jobs.filter(job => job.profileStatus === 'Active');
-                console.log('✅ Filtered Active jobs:', activeJobs.length, 'out of', response.data.jobs.length);
 
                 const dbJobs = activeJobs.map(job => ({
                     id: job._id,
-                    userId: job.user, // Add the contractor's user ID
+                    userId: job.user,
                     contractorName: job.contractorName,
                     phoneNumber: job.phoneNumber,
                     contactNo: job.phoneNumber,
@@ -161,42 +157,22 @@ const FindContractor = () => {
                     budgetAmount: job.budgetAmount,
                     rating: job.rating || 0,
                     profileStatus: job.profileStatus,
-                    availabilityStatus: 'Available', // Always Available since we filtered Active only
+                    availabilityStatus: 'Available',
                     createdAt: job.createdAt
                 }));
 
-                console.log('🔄 Mapped contractor jobs:', dbJobs);
-
-                // Merge with localStorage (also filter Active only)
-                const localCards = JSON.parse(localStorage.getItem('contractor_cards_for_user') || '[]')
-                    .filter(card => card.availabilityStatus === 'Available');
-                console.log('💾 LocalStorage cards (Available only):', localCards.length);
-
-                // Combine and remove duplicates
-                const allCards = [...dbJobs, ...localCards];
-                const uniqueCards = allCards.filter((card, index, self) =>
-                    index === self.findIndex(c => c.id === card.id)
-                );
-
-                console.log('✅ Final cards from database:', dbJobs.length);
-                console.log('📊 Cards data:', dbJobs);
-
                 setCards(dbJobs);
                 setFilteredCards(dbJobs);
-
-                console.log('🎯 State updated - cards and filteredCards set');
             } else {
-                // No cards available
                 setCards([]);
                 setFilteredCards([]);
             }
         } catch (error) {
             console.error('Error fetching contractor jobs:', error);
-            // Show empty state on error
             setCards([]);
             setFilteredCards([]);
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 

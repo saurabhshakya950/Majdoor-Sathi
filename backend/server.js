@@ -13,6 +13,7 @@ console.log('');
 
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -154,9 +155,10 @@ app.use(compression({
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
     'http://localhost:5173',
     'http://localhost:5174',
-    'https://contractor-eta.vercel.app' // Add your production URL here
+    'https://contractor-eta.vercel.app'
 ];
 
+app.use(cookieParser());
 app.use(cors({
     origin: allowedOrigins,
     credentials: true
@@ -203,6 +205,19 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
+        console.error(`👉 FIX: Run this command to free the port:`);
+        console.error(`   npx kill-port ${PORT}\n`);
+        process.exit(1); // Clean exit so nodemon doesn't keep retrying
+    } else {
+        console.error('Server error:', err);
+        process.exit(1);
+    }
+});
+
 server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
     console.log(`🔌 Socket.io server ready`);

@@ -39,24 +39,18 @@ const MyProjectForUser = () => {
     ];
 
     // Load contractor cards from database
-    const loadCards = async () => {
+    const loadCards = async (isSilent = false) => {
         try {
-            setLoading(true);
+            if (!isSilent) setLoading(true);
             console.log('🔄 Loading contractor cards...');
             const token = localStorage.getItem('access_token');
-            console.log('Token exists:', !!token);
-            
+
             if (token) {
-                console.log('📡 Fetching from API with targetAudience=User...');
                 const response = await contractorAPI.getContractorJobs({ targetAudience: 'User' });
-                console.log('📦 Full API Response:', JSON.stringify(response, null, 2));
-                
+
                 if (response && response.success && response.data && response.data.jobs) {
-                    console.log('✅ Jobs found:', response.data.jobs.length);
-                    
                     if (response.data.jobs.length > 0) {
                         const formattedCards = response.data.jobs.map(job => {
-                            console.log('Formatting job:', job);
                             return {
                                 id: job._id,
                                 contractorName: job.contractorName || 'N/A',
@@ -71,48 +65,37 @@ const MyProjectForUser = () => {
                                 createdAt: job.createdAt
                             };
                         });
-                        
-                        console.log('✅ Formatted cards:', formattedCards);
+
                         setCards(formattedCards);
                     } else {
-                        console.log('⚠️ Jobs array is empty');
                         setCards([]);
                     }
                 } else {
-                    console.log('⚠️ Invalid response structure:', response);
                     setCards([]);
                 }
             } else {
-                console.log('⚠️ No token, using localStorage');
                 const savedCards = JSON.parse(localStorage.getItem('contractor_cards_for_user') || '[]');
-                console.log('📦 LocalStorage cards:', savedCards);
                 setCards(savedCards);
             }
         } catch (error) {
             console.error('❌ Error loading contractor cards:', error);
-            console.error('Error response:', error.response);
-            console.error('Error message:', error.message);
-            
             // Fallback to localStorage
             const savedCards = JSON.parse(localStorage.getItem('contractor_cards_for_user') || '[]');
-            console.log('📦 Fallback to localStorage:', savedCards);
             setCards(savedCards);
         } finally {
-            setLoading(false);
-            console.log('✅ Loading complete. Cards count:', cards.length);
+            if (!isSilent) setLoading(false);
         }
     };
 
     useEffect(() => {
         console.log('🚀 Component mounted, loading cards...');
         loadCards();
-        
-        // Auto-refresh every 10 seconds (reduced from 5 for better performance)
+
+        // Auto-refresh every 10 seconds (Silent)
         const interval = setInterval(() => {
-            console.log('🔄 Auto-refresh triggered');
-            loadCards();
+            loadCards(true);
         }, 10000);
-        
+
         return () => {
             console.log('🛑 Component unmounting, clearing interval');
             clearInterval(interval);
@@ -157,20 +140,20 @@ const MyProjectForUser = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            
+
             if (token) {
                 // Map frontend businessType to backend enum
                 let mappedBusinessType = 'Individual Contractor';
                 if (formData.businessType === 'Company' || formData.businessType === 'Firm') {
                     mappedBusinessType = 'Business';
                 }
-                
+
                 // Map primaryWorkCategory to labourSkill enum (use 'Other' if not in enum)
                 const validSkills = ['Construction', 'Interior', 'Painting', 'Plumbing', 'Electrical'];
-                const mappedSkill = validSkills.includes(formData.primaryWorkCategory) 
-                    ? formData.primaryWorkCategory 
+                const mappedSkill = validSkills.includes(formData.primaryWorkCategory)
+                    ? formData.primaryWorkCategory
                     : 'Other';
-                
+
                 // Save to database
                 const jobData = {
                     contractorName: formData.contractorName,
@@ -190,16 +173,16 @@ const MyProjectForUser = () => {
                 };
 
                 console.log('Creating contractor job:', jobData);
-                
+
                 const response = await contractorAPI.createContractorJob(jobData);
                 console.log('📦 Create response:', response);
-                
+
                 if (response.success) {
                     console.log('✅ Contractor job created in database:', response);
-                    
+
                     toast.success('Card created successfully!');
                     setShowForm(false);
-                    
+
                     // Reset form
                     setFormData({
                         contractorName: '',
@@ -211,10 +194,9 @@ const MyProjectForUser = () => {
                         budgetAmount: ''
                     });
                     setRating(0);
-                    
-                    // Reload cards from database
-                    console.log('🔄 Reloading cards after creation...');
-                    await loadCards();
+
+                    // Reload cards from database silently
+                    await loadCards(true);
                 } else {
                     throw new Error(response.message || 'Failed to create card');
                 }
@@ -231,10 +213,10 @@ const MyProjectForUser = () => {
                 const updatedCards = [...cards, newCard];
                 setCards(updatedCards);
                 localStorage.setItem('contractor_cards_for_user', JSON.stringify(updatedCards));
-                
+
                 toast.success('Card created successfully!');
                 setShowForm(false);
-                
+
                 // Reset form
                 setFormData({
                     contractorName: '',
@@ -266,24 +248,24 @@ const MyProjectForUser = () => {
     const handleToggleAvailability = async (cardId) => {
         const card = cards.find(c => c.id === cardId);
         if (!card) return;
-        
+
         const newStatus = card.availabilityStatus === 'Available' ? 'Busy' : 'Available';
         const newProfileStatus = newStatus === 'Available' ? 'Active' : 'Closed';
-        
+
         console.log(`🔄 Toggling card ${cardId} from ${card.availabilityStatus} to ${newStatus}`);
-        
+
         try {
             const token = localStorage.getItem('access_token');
-            
+
             if (token) {
                 // Update in database
                 const response = await contractorAPI.updateContractorJob(cardId, {
                     profileStatus: newProfileStatus
                 });
-                
+
                 if (response.success) {
                     console.log('✅ Status updated in database');
-                    
+
                     // Update local state
                     const updatedCards = cards.map(c => {
                         if (c.id === cardId) {
@@ -295,7 +277,7 @@ const MyProjectForUser = () => {
                         }
                         return c;
                     });
-                    
+
                     setCards(updatedCards);
                     toast.success(`Status changed to ${newStatus}`);
                 } else {
@@ -312,12 +294,12 @@ const MyProjectForUser = () => {
                     }
                     return c;
                 });
-                
+
                 setCards(updatedCards);
                 localStorage.setItem('contractor_cards_for_user', JSON.stringify(updatedCards));
                 console.log('💾 Saved updated cards to localStorage:', updatedCards);
             }
-            
+
             // Trigger a custom event to notify other tabs/windows
             window.dispatchEvent(new Event('storage'));
         } catch (error) {
@@ -467,11 +449,10 @@ const MyProjectForUser = () => {
                                             className="transition-transform hover:scale-110"
                                         >
                                             <Star
-                                                className={`w-8 h-8 ${
-                                                    star <= rating
+                                                className={`w-8 h-8 ${star <= rating
                                                         ? 'fill-yellow-400 text-yellow-400'
                                                         : 'fill-gray-200 text-gray-200'
-                                                }`}
+                                                    }`}
                                             />
                                         </button>
                                     ))}
@@ -534,9 +515,9 @@ const MyProjectForUser = () => {
 
                         {/* Cards Grid */}
                         {cards.map((card) => (
-                            <ContractorProfileCard 
+                            <ContractorProfileCard
                                 key={card.id}
-                                data={card} 
+                                data={card}
                                 onViewDetails={() => handleViewDetails(card)}
                                 onToggleAvailability={handleToggleAvailability}
                             />
@@ -583,11 +564,10 @@ const MyProjectForUser = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">Availability Status</p>
-                                    <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
-                                        selectedCard.availabilityStatus === 'Available'
+                                    <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCard.availabilityStatus === 'Available'
                                             ? 'bg-green-100 text-green-700'
                                             : 'bg-red-100 text-red-700'
-                                    }`}>
+                                        }`}>
                                         {selectedCard.availabilityStatus}
                                     </span>
                                 </div>

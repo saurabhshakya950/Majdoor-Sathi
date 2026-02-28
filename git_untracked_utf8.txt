@@ -1,0 +1,4 @@
+﻿Frontend/lint_output.txt
+git_status.txt
+git_status_utf8.txt
+git_untracked_utf8.txt

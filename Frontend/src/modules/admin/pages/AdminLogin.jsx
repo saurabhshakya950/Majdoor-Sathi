@@ -21,26 +21,20 @@ const AdminLogin = () => {
             if (response.success) {
                 // Validate token before storing
                 const token = response.data.token;
-                
+
                 if (!token || token === 'null' || token === 'undefined') {
                     throw new Error('Invalid token received from server');
                 }
 
                 console.log('✅ Login successful, storing auth data...');
-                console.log('   Token length:', token.length);
                 console.log('   Admin role:', response.data.admin.role);
                 console.log('   Admin username:', response.data.admin.username);
 
-                // Store auth data
+                // Store basic info (Not sensitive like token)
                 localStorage.setItem('adminAuth', 'true');
-                localStorage.setItem('adminToken', token);
                 localStorage.setItem('adminRole', response.data.admin.role);
                 localStorage.setItem('adminUsername', response.data.admin.username);
                 localStorage.setItem('adminProfile', JSON.stringify(response.data.admin));
-
-                // Verify storage
-                const storedToken = localStorage.getItem('adminToken');
-                console.log('   Stored token verified:', storedToken === token);
 
                 toast.success('Login successful!');
                 navigate('/admin/dashboard/home');

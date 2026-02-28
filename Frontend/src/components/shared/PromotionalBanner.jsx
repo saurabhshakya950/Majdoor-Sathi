@@ -1,98 +1,71 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-// import { broadcastAPI } from '../../services/api';
 
-const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
+// Default banner data - Construction materials theme with realistic images
+const DEFAULT_BANNERS = [
+    {
+        id: 1,
+        title: 'Build Strong Foundations',
+        subtitle: 'Premium Quality Cement',
+        description: 'High-grade cement for all construction needs',
+        price: '₹350',
+        unit: 'per bag',
+        discount: 'Up to 20% Off',
+        badge: '🔥 Limited Time Offer',
+        bgImage: 'https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=1200&q=80&auto=format&fit=crop',
+        bgGradient: 'from-gray-800 via-gray-700 to-gray-900',
+        icon: '🧱',
+        secondaryIcon: '🏗️',
+        ctaPrimary: 'Shop Now',
+        ctaSecondary: 'View Details'
+    },
+    {
+        id: 2,
+        title: 'High-Strength TMT Bars',
+        subtitle: 'Premium Steel & Sariya',
+        description: 'Corrosion-resistant steel for maximum durability',
+        price: '₹60',
+        unit: 'per kg',
+        discount: 'Save 15%',
+        badge: '⚡ Best Quality',
+        bgImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200&q=80&auto=format&fit=crop',
+        bgGradient: 'from-slate-800 via-slate-700 to-slate-900',
+        icon: '🏗️',
+        secondaryIcon: '⚙️',
+        ctaPrimary: 'Order Now',
+        ctaSecondary: 'Learn More'
+    },
+    {
+        id: 3,
+        title: 'Combo Bulk Offer',
+        subtitle: 'Cement + Steel Package',
+        description: 'Complete construction material bundle',
+        price: '₹25,000',
+        unit: 'combo pack',
+        discount: 'Save ₹5,000',
+        badge: '💰 Best Deal',
+        bgImage: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=80&auto=format&fit=crop',
+        bgGradient: 'from-zinc-800 via-zinc-700 to-zinc-900',
+        icon: '📦',
+        secondaryIcon: '🎯',
+        ctaPrimary: 'Get Combo',
+        ctaSecondary: 'View Offers'
+    }
+];
+
+const PromotionalBanner = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
-    const [adminBroadcasts, setAdminBroadcasts] = useState([]);
-    const [loading, setLoading] = useState(true);
     const autoPlayRef = useRef(null);
     const sliderRef = useRef(null);
 
-    // Fetching admin broadcasts removed as per user request
-    // Admin broadcasts should only appear in notifications, not as banners
-    useEffect(() => {
-        setAdminBroadcasts([]);
-        setLoading(false);
-    }, []);
-
-    // Default banner data - Construction materials theme with realistic images
-    const defaultBanners = [
-        {
-            id: 1,
-            title: 'Build Strong Foundations',
-            subtitle: 'Premium Quality Cement',
-            description: 'High-grade cement for all construction needs',
-            price: '₹350',
-            unit: 'per bag',
-            discount: 'Up to 20% Off',
-            badge: '🔥 Limited Time Offer',
-            bgImage: 'https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=1200&q=80&auto=format&fit=crop',
-            bgGradient: 'from-gray-800 via-gray-700 to-gray-900',
-            icon: '🧱',
-            secondaryIcon: '🏗️',
-            ctaPrimary: 'Shop Now',
-            ctaSecondary: 'View Details'
-        },
-        {
-            id: 2,
-            title: 'High-Strength TMT Bars',
-            subtitle: 'Premium Steel & Sariya',
-            description: 'Corrosion-resistant steel for maximum durability',
-            price: '₹60',
-            unit: 'per kg',
-            discount: 'Save 15%',
-            badge: '⚡ Best Quality',
-            bgImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200&q=80&auto=format&fit=crop',
-            bgGradient: 'from-slate-800 via-slate-700 to-slate-900',
-            icon: '🏗️',
-            secondaryIcon: '⚙️',
-            ctaPrimary: 'Order Now',
-            ctaSecondary: 'Learn More'
-        },
-        {
-            id: 3,
-            title: 'Combo Bulk Offer',
-            subtitle: 'Cement + Steel Package',
-            description: 'Complete construction material bundle',
-            price: '₹25,000',
-            unit: 'combo pack',
-            discount: 'Save ₹5,000',
-            badge: '💰 Best Deal',
-            bgImage: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=80&auto=format&fit=crop',
-            bgGradient: 'from-zinc-800 via-zinc-700 to-zinc-900',
-            icon: '📦',
-            secondaryIcon: '🎯',
-            ctaPrimary: 'Get Combo',
-            ctaSecondary: 'View Offers'
-        }
-    ];
-
-    // Admin banners mapping removed - broadcasts now only for notifications
-    const adminBannersFormatted = [];
-
-    // Combine admin broadcasts with default banners
-    const banners = adminBannersFormatted.length > 0 ? [...adminBannersFormatted, ...defaultBanners] : defaultBanners;
-
+    // Banners state - currently using default ones
+    const banners = DEFAULT_BANNERS;
     const totalSlides = banners.length;
 
-    // Auto-play functionality
-    const startAutoPlay = useCallback(() => {
-        autoPlayRef.current = setInterval(() => {
-            nextSlide();
-        }, 6000); // Auto-scroll every 6 seconds
-    }, []);
-
-    const stopAutoPlay = () => {
-        if (autoPlayRef.current) {
-            clearInterval(autoPlayRef.current);
-        }
-    };
-
-    // Navigation functions
+    // Navigation functions - MUST be declared before startAutoPlay
     const nextSlide = useCallback(() => {
         if (isAnimating) return;
         setIsAnimating(true);
@@ -113,6 +86,27 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
         setCurrentSlide(index);
         setTimeout(() => setIsAnimating(false), 600);
     };
+
+    // Auto-play functionality
+    const stopAutoPlay = useCallback(() => {
+        if (autoPlayRef.current) {
+            clearInterval(autoPlayRef.current);
+            autoPlayRef.current = null;
+        }
+    }, []);
+
+    const startAutoPlay = useCallback(() => {
+        stopAutoPlay();
+        autoPlayRef.current = setInterval(() => {
+            nextSlide();
+        }, 6000); // Auto-scroll every 6 seconds
+    }, [nextSlide, stopAutoPlay]);
+
+    // Initialize auto-play
+    useEffect(() => {
+        startAutoPlay();
+        return () => stopAutoPlay();
+    }, [startAutoPlay, stopAutoPlay]);
 
     // Touch handlers for mobile swipe
     const handleTouchStart = (e) => {
@@ -139,12 +133,6 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
         setTouchStart(0);
         setTouchEnd(0);
     };
-
-    // Initialize auto-play
-    useEffect(() => {
-        startAutoPlay();
-        return () => stopAutoPlay();
-    }, [startAutoPlay]);
 
     // Pause on hover (desktop)
     const handleMouseEnter = () => stopAutoPlay();

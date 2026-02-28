@@ -11,18 +11,15 @@ const MyProjects = () => {
     const [selectedCard, setSelectedCard] = useState(null);
 
     // Load contractor cards from database
-    const loadCards = async () => {
+    const loadCards = async (isSilent = false) => {
         try {
-            setLoading(true);
+            if (!isSilent) setLoading(true);
             console.log('🔄 [MyProjects] Loading contractor cards for Labour...');
 
             // Fetch jobs with targetAudience='Labour' filter
             const response = await contractorAPI.getContractorJobs({ targetAudience: 'Labour' });
-            console.log('📦 [MyProjects] API Response:', response);
 
             if (response && response.success && response.data && response.data.jobs) {
-                console.log('✅ [MyProjects] Jobs found:', response.data.jobs.length);
-
                 const formattedCards = response.data.jobs.map(job => ({
                     id: job._id,
                     contractorName: job.contractorName || 'N/A',
@@ -43,28 +40,24 @@ const MyProjects = () => {
                     createdAt: job.createdAt
                 }));
 
-                console.log('✅ [MyProjects] Formatted cards (Labour only):', formattedCards);
                 setCards(formattedCards);
             } else {
-                console.log('⚠️ [MyProjects] No jobs in response');
                 setCards([]);
             }
         } catch (error) {
             console.error('❌ [MyProjects] Error loading cards:', error);
             setCards([]);
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 
     useEffect(() => {
-        console.log('🚀 [MyProjects] Component mounted');
         loadCards();
 
-        // Auto-refresh every 10 seconds
+        // Auto-refresh every 10 seconds (Silent)
         const interval = setInterval(() => {
-            console.log('🔄 [MyProjects] Auto-refresh triggered');
-            loadCards();
+            loadCards(true);
         }, 10000);
 
         return () => {
@@ -87,8 +80,8 @@ const MyProjects = () => {
                 profileStatus: newStatus
             });
 
-            // Reload cards from database
-            await loadCards();
+            // Reload cards from database silently
+            await loadCards(true);
         } catch (error) {
             console.error('Error toggling availability:', error);
         }
@@ -236,8 +229,8 @@ const MyProjects = () => {
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Profile Status</label>
                                 <p className={`font-medium ${selectedCard.profileStatus === 'Active'
-                                        ? 'text-green-600'
-                                        : 'text-gray-600'
+                                    ? 'text-green-600'
+                                    : 'text-gray-600'
                                     }`}>
                                     {selectedCard.profileStatus === 'Active' ? 'Open' : 'Closed'}
                                 </p>
