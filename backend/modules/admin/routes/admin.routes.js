@@ -10,6 +10,7 @@ import dashboardAdminRoutes from './dashboard.admin.routes.js';
 import broadcastAdminRoutes from './broadcast.admin.routes.js';
 import adminManagementRoutes from './admin.management.routes.js';
 import bannerAdminRoutes from './banner.admin.routes.js';
+import getStartedAdminRoutes from './getstarted.admin.routes.js';
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.use('/dashboard', dashboardAdminRoutes);
 router.use('/broadcasts', broadcastAdminRoutes);
 router.use('/management', adminManagementRoutes);
 router.use('/banners', bannerAdminRoutes);
+router.use('/getstarted', getStartedAdminRoutes);
 
 export default router;

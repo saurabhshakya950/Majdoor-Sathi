@@ -7,9 +7,7 @@ const GetStarted = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [displayText, setDisplayText] = useState('');
     const [isTyping, setIsTyping] = useState(true);
-
-    // Real construction/labour related images - contractors, workers, materials
-    const backgroundImages = [
+    const [backgroundImages, setBackgroundImages] = useState([
         {
             url: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=2069&auto=format&fit=crop",
             alt: "Construction Workers Team",
@@ -35,10 +33,33 @@ const GetStarted = () => {
             alt: "Building Construction Work",
             text: "Quality Construction"
         }
-    ];
+    ]);
+
+    // Fetch dynamic slides
+    useEffect(() => {
+        const fetchSlides = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/getstarted/public`);
+                const data = await response.json();
+                if (data.success && data.data.slides && data.data.slides.length > 0) {
+                    const dynamicSlides = data.data.slides.map(slide => ({
+                        url: slide.imageUrl,
+                        alt: slide.title,
+                        text: slide.title
+                    }));
+                    setBackgroundImages(dynamicSlides);
+                }
+            } catch (error) {
+                console.error('Error fetching dynamic slides:', error);
+            }
+        };
+        fetchSlides();
+    }, []);
 
     // Typewriter effect
     useEffect(() => {
+        if (!backgroundImages[currentSlide]) return;
+
         const currentText = backgroundImages[currentSlide].text;
         let charIndex = 0;
         setDisplayText('');
@@ -52,10 +73,10 @@ const GetStarted = () => {
                 setIsTyping(false);
                 clearInterval(typingInterval);
             }
-        }, 100); // 100ms per character
+        }, 100);
 
         return () => clearInterval(typingInterval);
-    }, [currentSlide]);
+    }, [currentSlide, backgroundImages]);
 
     // Auto-scroll every 4 seconds
     useEffect(() => {
@@ -125,8 +146,8 @@ const GetStarted = () => {
                                 key={index}
                                 onClick={() => setCurrentSlide(index)}
                                 className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide
-                                        ? 'bg-white w-8'
-                                        : 'bg-white/50 w-2 hover:bg-white/75'
+                                    ? 'bg-white w-8'
+                                    : 'bg-white/50 w-2 hover:bg-white/75'
                                     }`}
                                 aria-label={`Go to slide ${index + 1}`}
                             />

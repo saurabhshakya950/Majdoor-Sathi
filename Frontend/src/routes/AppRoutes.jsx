@@ -88,6 +88,7 @@ const RoleProtectedRoute = lazy(() => import('../modules/admin/components/RolePr
 const LabourCategoryManagement = lazy(() => import('../modules/admin/pages/LabourCategoryManagement'));
 const BroadcastManagement = lazy(() => import('../modules/admin/pages/BroadcastManagement'));
 const BannerSection = lazy(() => import('../modules/admin/pages/BannerSection'));
+const GetStartedSlides = lazy(() => import('../modules/admin/pages/GetStartedSlides'));
 const AdminManagement = lazy(() => import('../modules/admin/pages/AdminManagement'));
 
 // Loading component for Suspense fallback
@@ -200,6 +201,7 @@ const AppRoutes = () => {
                     <Route path="verification" element={<Suspense fallback={<PageLoader />}><RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><VerificationManagement /></RoleProtectedRoute></Suspense>} />
                     <Route path="broadcasts" element={<Suspense fallback={<PageLoader />}><RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_USER']}><BroadcastManagement /></RoleProtectedRoute></Suspense>} />
                     <Route path="banners" element={<Suspense fallback={<PageLoader />}><RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><BannerSection /></RoleProtectedRoute></Suspense>} />
+                    <Route path="get-started-slides" element={<Suspense fallback={<PageLoader />}><RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><GetStartedSlides /></RoleProtectedRoute></Suspense>} />
                     <Route path="admins" element={<Suspense fallback={<PageLoader />}><RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminManagement /></RoleProtectedRoute></Suspense>} />
                     <Route path="settings" element={<AdminSettings />} />
                 </Route>

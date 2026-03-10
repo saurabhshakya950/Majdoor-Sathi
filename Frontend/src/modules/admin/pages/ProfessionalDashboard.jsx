@@ -20,15 +20,24 @@ import {
     LogOut,
     SlidersHorizontal,
     Image,
-    UserCog
+    UserCog,
+    Activity,
+    Zap,
+    ShieldCheck,
+    ExternalLink,
+    RefreshCw
 } from 'lucide-react';
 import { Outlet, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 import './AdminDashboard.css';
 
 // Internal Components
-export function AnalyticsCard({ icon, title, value, bg }) {
+export function AnalyticsCard({ icon, title, value, bg, onClick }) {
     return (
-        <div className="analytics-card">
+        <div
+            className="analytics-card"
+            onClick={onClick}
+            style={{ cursor: onClick ? 'pointer' : 'default' }}
+        >
             <div className="analytics-icon" style={{ backgroundColor: bg }}>
                 {icon}
             </div>
@@ -36,50 +45,50 @@ export function AnalyticsCard({ icon, title, value, bg }) {
                 <h3>{title}</h3>
                 <p>{value}</p>
             </div>
+            {onClick && (
+                <div className="card-arrow" style={{ marginLeft: 'auto', opacity: 0.3 }}>
+                    <MoreVertical size={16} />
+                </div>
+            )}
         </div>
     );
 }
 
-export function ChatOverlay({ onClose }) {
+
+export function QuickAction({ icon, title, onClick, color }) {
     return (
-        <div className="chat-overlay">
-            <div className="chat-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }}></div>
-                    <span>Vietusw Support</span>
-                </div>
-                <X size={18} style={{ cursor: 'pointer' }} onClick={onClose} />
+        <div className="quick-action-card" onClick={onClick}>
+            <div className="action-icon" style={{ color: color }}>
+                {icon}
             </div>
-            <div className="chat-messages">
-                <div className="message received">
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: '4px' }}>Dlrawa (ID: 683)</div>
-                    Hi, I need help with my verification.
-                    <div className="waveform">
-                        {[5, 12, 8, 15, 10, 18, 14, 20, 16, 12, 8, 10, 5, 12, 8].map((h, i) => (
-                            <div key={i} className="waveform-bar" style={{ height: `${h}px` }}></div>
-                        ))}
-                    </div>
-                </div>
-                <div className="message sent">Please upload your Aadhar Card photo.</div>
-                <div className="message received">
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: '4px' }}>Dlrawa</div>
-                    Okay, doing it now.
-                </div>
+            <span>{title}</span>
+            <ExternalLink size={14} className="action-arrow" />
+        </div>
+    );
+}
+
+export function SystemHealth() {
+    return (
+        <div className="system-health-panel">
+            <div className="health-header">
+                <Activity size={18} />
+                <span>System Health</span>
             </div>
-            <div className="chat-input" style={{ padding: '12px' }}>
-                <div style={{ display: 'block', width: '100%' }}>
-                    <input
-                        type="text"
-                        placeholder="Type to respond..."
-                        className="admin-search-input"
-                        style={{ width: '100%', marginBottom: '8px', border: '1px solid #eee', borderRadius: '8px', padding: '8px' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <button style={{ color: '#6b7280', background: 'none', border: 'none' }}><Plus size={18} /></button>
-                        <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 16px', fontSize: '0.85rem' }}>
-                            View Details
-                        </button>
-                    </div>
+            <div className="health-grid">
+                <div className="health-item">
+                    <div className="health-status online"></div>
+                    <span>API Server</span>
+                    <Zap size={14} className="item-icon" />
+                </div>
+                <div className="health-item">
+                    <div className="health-status online"></div>
+                    <span>Database</span>
+                    <ShieldCheck size={14} className="item-icon" />
+                </div>
+                <div className="health-item">
+                    <div className="health-status online"></div>
+                    <span>Cloudinary</span>
+                    <Image size={14} className="item-icon" />
                 </div>
             </div>
         </div>
@@ -90,6 +99,7 @@ export function DashboardHome() {
     const [analytics, setAnalytics] = React.useState(null);
     const [interactions, setInteractions] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         fetchDashboardData();
@@ -118,35 +128,68 @@ export function DashboardHome() {
     };
 
     if (loading) {
-        return <div style={{ textAlign: 'center', padding: '40px' }}>Loading dashboard...</div>;
+        return (
+            <div className="dashboard-loading-spinner">
+                <RefreshCw className="animate-spin" size={40} />
+                <p>Analyzing Platform Data...</p>
+            </div>
+        );
     }
 
     return (
         <>
+            <div className="dashboard-top-row">
+                <SystemHealth />
+                <div className="quick-actions-grid">
+                    <QuickAction
+                        icon={<Image size={20} />}
+                        title="Add Banner"
+                        color="#f97316"
+                        onClick={() => navigate('/admin/dashboard/banners')}
+                    />
+                    <QuickAction
+                        icon={<SlidersHorizontal size={20} />}
+                        title="Update Slides"
+                        color="#3b82f6"
+                        onClick={() => navigate('/admin/dashboard/get-started-slides')}
+                    />
+                    <QuickAction
+                        icon={<Bell size={20} />}
+                        title="Broadcast"
+                        color="#8b5cf6"
+                        onClick={() => navigate('/admin/dashboard/broadcasts')}
+                    />
+                </div>
+            </div>
+
             <div className="analytics-grid">
                 <AnalyticsCard
                     icon={<Users color="#3b82f6" />}
                     title="Total Users"
                     value={analytics?.totalUsers || 0}
                     bg="#eff6ff"
+                    onClick={() => navigate('/admin/dashboard/users')}
                 />
                 <AnalyticsCard
                     icon={<HardHat color="#f97316" />}
                     title="Total Labours"
                     value={analytics?.totalLabours || 0}
                     bg="#fff7ed"
+                    onClick={() => navigate('/admin/dashboard/labours')}
                 />
                 <AnalyticsCard
                     icon={<Briefcase color="#10b981" />}
                     title="Total Contractors"
                     value={analytics?.totalContractors || 0}
                     bg="#ecfdf5"
+                    onClick={() => navigate('/admin/dashboard/contractors')}
                 />
                 <AnalyticsCard
-                    icon={<Bell color="#f43f5e" />}
-                    title="Active Requests"
-                    value={analytics?.activeRequests || 0}
+                    icon={<CheckCircle color="#f43f5e" />}
+                    title="Verification Queue"
+                    value={analytics?.verificationQueue || 0}
                     bg="#fff1f2"
+                    onClick={() => navigate('/admin/dashboard/verification')}
                 />
             </div>
 
@@ -353,7 +396,6 @@ export function DashboardHome() {
 }
 
 const ProfessionalDashboard = () => {
-    const [isChatOpen, setIsChatOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
@@ -550,6 +592,17 @@ const ProfessionalDashboard = () => {
 
                     {hasAccess(['SUPER_ADMIN']) && (
                         <NavLink
+                            to="/admin/dashboard/get-started-slides"
+                            onClick={closeMobileMenu}
+                            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <SlidersHorizontal size={20} />
+                            <span>GetStarted Slides</span>
+                        </NavLink>
+                    )}
+
+                    {hasAccess(['SUPER_ADMIN']) && (
+                        <NavLink
                             to="/admin/dashboard/admins"
                             onClick={closeMobileMenu}
                             className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
@@ -595,28 +648,11 @@ const ProfessionalDashboard = () => {
                         </div>
                     </div>
                 </header>
-
                 <div className="admin-tab-content">
                     <Outlet />
                 </div>
             </main>
-
-            {/* Chat Trigger */}
-            <div
-                className="chat-trigger"
-                onClick={() => setIsChatOpen(!isChatOpen)}
-                style={{
-                    position: 'fixed', bottom: '24px', right: '24px',
-                    background: '#f97316', color: 'white', padding: '16px',
-                    borderRadius: '50%', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                    zIndex: 1001
-                }}
-            >
-                {isChatOpen ? <X size={24} /> : <MessageSquare size={24} />}
-            </div>
-
-            {isChatOpen && <ChatOverlay onClose={() => setIsChatOpen(false)} />}
-        </div >
+        </div>
     );
 };
 

@@ -11,12 +11,46 @@
     --admin-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* Custom Scrollbar - Removes default ugly scrollbar but keeps scroll functionality */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Sidebar specific scrollbar to match dark theme */
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 .admin-dashboard-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    /* Lock height to viewport */
+    overflow: hidden;
+    /* Stop global body scrolling */
     background-color: var(--admin-bg);
     font-family: 'Outfit', 'Inter', sans-serif;
     color: var(--admin-text-main);
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
 /* Sidebar */
@@ -34,6 +68,10 @@
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 100;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Prevents scroll chaining to main content */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 .admin-sidebar-logo {
@@ -83,7 +121,10 @@
     margin-left: 260px;
     padding: 24px;
     overflow-y: auto;
-    min-height: 100vh;
+    height: 100vh;
+    /* Fixed height for proper scrolling */
+    overscroll-behavior: contain;
+    /* Prevents scroll chaining back to body */
 }
 
 .admin-header {
@@ -800,7 +841,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .broadcast-loading-state p {
@@ -1349,6 +1392,7 @@
 
 /* Mobile Styles (max-width: 768px) */
 @media (max-width: 768px) {
+
     /* Show mobile menu toggle */
     .mobile-menu-toggle {
         display: flex;
@@ -1614,6 +1658,7 @@
 
 /* Print Styles */
 @media print {
+
     .admin-sidebar,
     .mobile-menu-toggle,
     .admin-header,
@@ -1636,6 +1681,7 @@
 
 /* Touch Device Optimizations */
 @media (hover: none) and (pointer: coarse) {
+
     /* Larger touch targets */
     .admin-nav-item,
     .action-btn,
@@ -1683,6 +1729,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -1704,6 +1751,7 @@
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1853,7 +1901,217 @@
     color: #dc2626;
 }
 
+/* ==================== PREMIUM DASHBOARD UPGRADES ==================== */
+.dashboard-top-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.system-health-panel {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: var(--admin-shadow);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.health-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--admin-sidebar-bg);
+    margin-bottom: 16px;
+}
+
+.health-grid {
+    display: flex;
+    gap: 24px;
+}
+
+.health-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    background: #f9fafb;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+    transition: all 0.3s ease;
+}
+
+.health-item:hover {
+    background: white;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.health-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.health-status.online {
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    animation: pulse-online 2s infinite;
+}
+
+@keyframes pulse-online {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    flex: 2;
+}
+
+.quick-action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--admin-shadow);
+    border: 1px solid transparent;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(249, 115, 22, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.action-icon {
+    width: 44px;
+    height: 44px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-action-card span {
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.action-arrow {
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.quick-action-card:hover .action-arrow {
+    opacity: 0.5;
+    transform: translateX(3px);
+}
+
+/* Enhanced Table & Badges */
+.status-completed {
+    position: relative;
+    overflow: hidden;
+}
+
+.status-completed::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 4px;
+    height: 4px;
+    background: #10b981;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: glow-green 1.5s infinite;
+}
+
+@keyframes glow-green {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 8px #10b981;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+/* Loading Spinner */
+.dashboard-loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+    color: var(--admin-text-sub);
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Revenue Chart Bar - Gradient */
+.right-panel-item div[style*="height"] {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%) !important;
+    border-radius: 6px 6px 2px 2px !important;
+}
+
+.right-panel-item div[style*="height"]:hover {
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%) !important;
+    cursor: help;
+}
+
 /* Mobile Responsive */
+@media (max-width: 1024px) {
+    .dashboard-top-row {
+        flex-direction: column;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .modal-content {
         max-width: 100%;
@@ -1876,5 +2134,14 @@
 
     .modal-footer button {
         width: 100%;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .health-grid {
+        flex-direction: column;
+        gap: 10px;
     }
 }

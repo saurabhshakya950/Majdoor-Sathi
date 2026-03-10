@@ -495,3 +495,32 @@ export const bannerAPI = {
         return response.data;
     }
 };
+
+// ==================== GET STARTED SLIDES APIs ====================
+export const getStartedSlidesAPI = {
+    getAll: async () => {
+        const response = await adminApi.get('/getstarted');
+        return response.data;
+    },
+    create: async (slideData) => {
+        const response = await adminApi.post('/getstarted', slideData);
+        return response.data;
+    },
+    update: async (id, slideData) => {
+        const response = await adminApi.put(`/getstarted/${id}`, slideData);
+        return response.data;
+    },
+    delete: async (id) => {
+        const response = await adminApi.delete(`/getstarted/${id}`);
+        return response.data;
+    },
+    toggleStatus: async (id) => {
+        const response = await adminApi.patch(`/getstarted/${id}/toggle`);
+        return response.data;
+    },
+    // Public method for GetStarted page (uses direct axios since it's public)
+    getActiveSlides: async () => {
+        const response = await axios.get(`${API_URL}/admin/getstarted/public`);
+        return response.data;
+    }
+};
