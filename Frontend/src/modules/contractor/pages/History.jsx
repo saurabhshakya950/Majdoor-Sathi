@@ -64,7 +64,7 @@ const History = () => {
     const workerCount = history.filter(req => req.type === 'worker').length;
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header with User Info */}
             <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10">
                 <div className="flex items-center justify-between">

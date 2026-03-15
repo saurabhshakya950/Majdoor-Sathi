@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ContractorBottomNav from '../components/ContractorBottomNav';
@@ -308,7 +308,7 @@ const FindUser = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Sticky Header and Search Bar */}
             <div className="sticky top-0 z-10 bg-white">
                 <ContractorHeader />

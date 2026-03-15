@@ -119,7 +119,7 @@ const LabourMyCard = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <div className="bg-white px-4 py-4 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate('/labour/settings')} className="p-1">

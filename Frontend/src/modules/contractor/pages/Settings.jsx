@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -71,7 +71,7 @@ const Settings = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header (Sticky) */}
             <ContractorPageHeader title="Settings" backPath="/contractor/hire-workers" />
 

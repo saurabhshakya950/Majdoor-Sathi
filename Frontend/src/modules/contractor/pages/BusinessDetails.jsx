@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import ContractorPageHeader from '../components/ContractorPageHeader';
@@ -91,7 +91,7 @@ const BusinessDetails = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="Business details" sticky />
 
             <div className="flex-1 overflow-y-auto">

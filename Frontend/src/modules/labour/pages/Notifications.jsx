@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, Check, CheckCheck, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -131,7 +131,7 @@ const Notifications = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header */}
             <div className="bg-white shadow-sm sticky top-0 z-10">
                 <div className="flex items-center justify-between p-4">

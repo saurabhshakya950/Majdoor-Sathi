@@ -309,7 +309,7 @@ const MyProjectForUser = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="My Project for User" backPath="/contractor/settings" />
 
             <div className="p-4">

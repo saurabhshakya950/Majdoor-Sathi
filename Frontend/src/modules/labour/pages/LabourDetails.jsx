@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Upload, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -97,7 +97,7 @@ const LabourDetails = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col p-4 overflow-hidden">
+        <div className="bg-gray-50 flex flex-col p-4 overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <h1 className="text-xl font-bold text-gray-900 mb-4 text-center">Labour Details</h1>
 
             <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">

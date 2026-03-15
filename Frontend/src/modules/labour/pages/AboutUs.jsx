@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Briefcase } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
@@ -30,7 +30,7 @@ const AboutUs = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header */}
             <div className="bg-white px-4 py-4 shadow-sm flex items-center gap-3">
                 <button

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, User, Briefcase, Shield, Phone, Info, LogOut, MessageSquare, X, MessageCircle } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
@@ -83,7 +83,7 @@ const LabourSettings = () => {
     ];
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header */}
             <div className="bg-white px-4 py-4 shadow-sm flex items-center gap-3">
                 <button
@@ -96,7 +96,7 @@ const LabourSettings = () => {
             </div>
 
             {/* Settings Menu */}
-            <div className="flex-1 overflow-y-auto pb-20">
+            <div className="flex-1 overflow-y-auto pb-24">
                 <div className="bg-white">
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;

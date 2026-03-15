@@ -6,7 +6,7 @@ const LabourPaymentDetails = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <div className="bg-white px-4 py-4 shadow-sm flex items-center gap-3">
                 <button onClick={() => navigate(-1)} className="p-1">
                     <ChevronLeft className="w-6 h-6" />

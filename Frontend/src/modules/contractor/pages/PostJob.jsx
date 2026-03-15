@@ -153,7 +153,7 @@ const PostJob = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="Create Contractor Card" backPath="/contractor/hire-workers" />
 
             <div className="p-4 pb-20">

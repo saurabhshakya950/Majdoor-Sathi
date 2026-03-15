@@ -32,7 +32,7 @@ const Requests = () => {
     };
 
     return (
-        <div className="h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col overflow-hidden">
+        <div className="bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header (Sticky by container) */}
             <UserHeader />
 

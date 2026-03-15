@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Shield, Upload, X, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -280,7 +280,7 @@ const Legal = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="Legal Verification" backPath="/user/settings" sticky />
 
             <div className="flex-1 overflow-y-auto">

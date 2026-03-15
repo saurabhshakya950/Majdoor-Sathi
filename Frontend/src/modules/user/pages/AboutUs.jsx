@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
@@ -30,7 +30,7 @@ const AboutUs = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="About us" backPath="/user/settings" sticky />
 
             <div className="p-4 pb-8 space-y-6">

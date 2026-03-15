@@ -295,7 +295,7 @@ const HireWorkers = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Sticky Header and Search Bar */}
             <div className="sticky top-0 z-10 bg-white">
                 {/* Header Section */}

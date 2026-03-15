@@ -6,7 +6,7 @@ const AboutUs = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="About us" backPath="/contractor/settings" sticky />
 
             <AboutUsContent />

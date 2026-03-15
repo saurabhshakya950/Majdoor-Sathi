@@ -93,7 +93,7 @@ const AdminManagement = lazy(() => import('../modules/admin/pages/AdminManagemen
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center bg-gray-50" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
         <div className="text-center">
             <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading...</p>

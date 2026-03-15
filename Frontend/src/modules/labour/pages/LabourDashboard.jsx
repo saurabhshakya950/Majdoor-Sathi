@@ -11,7 +11,7 @@ const LabourDashboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header */}
             <LabourHeader />
 

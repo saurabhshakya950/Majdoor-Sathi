@@ -96,7 +96,7 @@ const MyProjects = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Custom Header with + icon in title row */}
             <div className="bg-white shadow-sm p-4 sticky top-0 z-10">
                 <div className="flex items-center justify-between">

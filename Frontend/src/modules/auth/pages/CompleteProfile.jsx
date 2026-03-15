@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useRef } from 'react';
 import { User, Hammer, Briefcase } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -337,7 +337,7 @@ const CompleteProfile = () => {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex flex-col p-4 overflow-hidden">
+        <div className="bg-gray-50 flex flex-col p-4 overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <h1 className="text-lg font-bold text-gray-900 mb-4 text-center">Complete profile</h1>
 
             {/* Photo Placeholder */}

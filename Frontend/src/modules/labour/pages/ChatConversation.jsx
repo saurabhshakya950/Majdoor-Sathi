@@ -177,14 +177,14 @@ const ChatConversation = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
                 <div className="text-gray-500">Loading chat...</div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             {/* Header */}
             <div className="bg-white shadow-sm px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
                 <button onClick={() => navigate('/labour/chat')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
