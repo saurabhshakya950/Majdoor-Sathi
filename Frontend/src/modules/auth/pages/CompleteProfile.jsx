@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useState, useRef } from 'react';
 import { User, Hammer, Briefcase } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -205,7 +205,7 @@ const CompleteProfile = () => {
             // Handle different user types separately
             if (formData.userType === 'User') {
                 // Only for User type - update User database
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/users/profile`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/profile`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ const CompleteProfile = () => {
 
                 // Create contractor profile in database (this will also update User model)
                 try {
-                    const contractorResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/profile`, {
+                    const contractorResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/profile`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -296,7 +296,7 @@ const CompleteProfile = () => {
                 console.log('Creating Labour profile...');
 
                 try {
-                    const labourResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/create-profile`, {
+                    const labourResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/labour/create-profile`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -315,7 +315,7 @@ const CompleteProfile = () => {
 
                     const labourData = await labourResponse.json();
                     if (labourData.success) {
-                        console.log('✅ Labour profile created in database:', labourData.data);
+                        console.log('âœ… Labour profile created in database:', labourData.data);
                         toast.success('Profile created successfully!');
 
                         // Navigate to labour details page
@@ -542,3 +542,4 @@ const CompleteProfile = () => {
 };
 
 export default CompleteProfile;
+

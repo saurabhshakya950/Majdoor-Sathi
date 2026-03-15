@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Upload, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -65,7 +65,7 @@ const LabourDetails = () => {
             }
 
             // Update work details in database
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/work-details`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/labour/work-details`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ const LabourDetails = () => {
             const data = await response.json();
 
             if (data.success) {
-                console.log('✅ Work details saved to database');
+                console.log('âœ… Work details saved to database');
                 toast.success('Profile completed successfully!');
                 navigate('/labour/find-user');
             } else {
@@ -236,3 +236,4 @@ const LabourDetails = () => {
 };
 
 export default LabourDetails;
+

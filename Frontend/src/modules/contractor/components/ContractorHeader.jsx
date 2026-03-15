@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
@@ -36,7 +36,7 @@ const ContractorHeader = memo(() => {
                     return;
                 }
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/profile`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -97,7 +97,7 @@ const ContractorHeader = memo(() => {
                 const token = localStorage.getItem('access_token');
                 if (!token) return;
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/unread-count?userType=CONTRACTOR`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/unread-count?userType=CONTRACTOR`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -142,7 +142,7 @@ const ContractorHeader = memo(() => {
 
                     {/* Welcome Text and Name */}
                     <div>
-                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>
+                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome ðŸ‘‹</p>
                         <h1 className="text-sm font-bold text-gray-900 leading-tight whitespace-nowrap">
                             {contractorName || '\u00A0'}
                         </h1>
@@ -179,3 +179,4 @@ const ContractorHeader = memo(() => {
 ContractorHeader.displayName = 'ContractorHeader';
 
 export default ContractorHeader;
+

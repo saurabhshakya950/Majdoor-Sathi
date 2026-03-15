@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, User, Briefcase, Shield, Phone, Info, LogOut, MessageSquare, X, MessageCircle } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
@@ -44,7 +44,7 @@ const LabourSettings = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/feedback`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/labour/feedback`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ const LabourSettings = () => {
                                     >
                                         <span className={`text-5xl ${star <= rating ? 'text-green-600' : 'text-gray-300'
                                             }`}>
-                                            ★
+                                            â˜…
                                         </span>
                                     </button>
                                 ))}
@@ -199,3 +199,4 @@ const LabourSettings = () => {
 };
 
 export default LabourSettings;
+

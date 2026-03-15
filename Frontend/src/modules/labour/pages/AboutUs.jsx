@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Briefcase } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
@@ -16,7 +16,7 @@ const AboutUs = () => {
     const fetchAboutUsContent = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/cms/aboutUs`);
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/aboutUs`);
             const data = await response.json();
             
             if (data.success && data.data.content) {
@@ -74,3 +74,4 @@ const AboutUs = () => {
 };
 
 export default AboutUs;
+

@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
@@ -33,7 +33,7 @@ const UserHeader = memo(() => {
                 const token = localStorage.getItem('access_token');
                 if (!token) return;
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/users/profile`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -89,7 +89,7 @@ const UserHeader = memo(() => {
                 const token = localStorage.getItem('access_token');
                 if (!token) return;
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/unread-count?userType=USER`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/unread-count?userType=USER`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -134,7 +134,7 @@ const UserHeader = memo(() => {
                     
                     {/* Welcome Text and Name */}
                     <div>
-                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>
+                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome ðŸ‘‹</p>
                         <h1 className="text-sm font-bold text-gray-900 leading-tight whitespace-nowrap">
                             {userName || '\u00A0'}
                         </h1>
@@ -171,3 +171,4 @@ const UserHeader = memo(() => {
 UserHeader.displayName = 'UserHeader';
 
 export default UserHeader;
+

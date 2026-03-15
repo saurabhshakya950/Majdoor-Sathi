@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
@@ -36,14 +36,14 @@ const LabourHeader = memo(() => {
                     return;
                 }
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/profile`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/labour/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
                 const data = await response.json();
-                console.log('✅ Labour profile fetched:', data);
+                console.log('âœ… Labour profile fetched:', data);
 
                 if (data.success && data.data) {
                     const labour = data.data.labour;
@@ -51,7 +51,7 @@ const LabourHeader = memo(() => {
 
                     if (displayName) {
                         setLabourName(displayName);
-                        console.log('✅ Name set:', displayName);
+                        console.log('âœ… Name set:', displayName);
 
                         // Update localStorage for next time
                         try {
@@ -65,11 +65,11 @@ const LabourHeader = memo(() => {
                         // Fallback to mobile number
                         const mobileNumber = localStorage.getItem('mobile_number');
                         setLabourName(mobileNumber ? `Labour ${mobileNumber.slice(-4)}` : 'Labour');
-                        console.log('⚠️ No name found, using fallback');
+                        console.log('âš ï¸ No name found, using fallback');
                     }
                 }
             } catch (error) {
-                console.error('❌ Error fetching labour profile:', error);
+                console.error('âŒ Error fetching labour profile:', error);
                 // Keep the localStorage name if API fails
             }
         };
@@ -79,7 +79,7 @@ const LabourHeader = memo(() => {
 
         // Listen for profile update events
         const handleProfileUpdate = () => {
-            console.log('📢 Profile update event received');
+            console.log('ðŸ“¢ Profile update event received');
             loadNameFromStorage();
             fetchLabourProfile();
         };
@@ -99,7 +99,7 @@ const LabourHeader = memo(() => {
                 const token = localStorage.getItem('access_token');
                 if (!token) return;
 
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/unread-count?userType=LABOUR`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/unread-count?userType=LABOUR`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -144,7 +144,7 @@ const LabourHeader = memo(() => {
 
                     {/* Welcome Text and Name - Right next to logo */}
                     <div>
-                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>
+                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome ðŸ‘‹</p>
                         <h1 className="text-sm font-bold text-gray-900 leading-tight whitespace-nowrap">
                             {labourName || '\u00A0'}
                         </h1>
@@ -181,3 +181,4 @@ const LabourHeader = memo(() => {
 LabourHeader.displayName = 'LabourHeader';
 
 export default LabourHeader;
+

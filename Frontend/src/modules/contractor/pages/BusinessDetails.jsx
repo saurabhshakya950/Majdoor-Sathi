@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import ContractorPageHeader from '../components/ContractorPageHeader';
@@ -49,7 +49,7 @@ const BusinessDetails = () => {
 
             // Save to database
             if (token) {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/business-details`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/business-details`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -112,3 +112,4 @@ const BusinessDetails = () => {
 };
 
 export default BusinessDetails;
+

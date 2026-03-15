@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Shield, Upload, X, CheckCircle, XCircle } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
@@ -57,7 +57,7 @@ const LabourLegalDetails = () => {
             const token = localStorage.getItem('access_token');
 
             if (token) {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/labour/verification-status`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/labour/verification-status`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -220,7 +220,7 @@ const LabourLegalDetails = () => {
             }
 
             // Submit verification request to database
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/verification/submit`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/verification/submit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -404,7 +404,7 @@ const LabourLegalDetails = () => {
                 {verificationStatus === 'submitted' && (
                     <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <p className="text-sm text-blue-700 font-medium">
-                            ⏳ Your verification is pending. Admin will review your documents soon.
+                            â³ Your verification is pending. Admin will review your documents soon.
                         </p>
                     </div>
                 )}
@@ -412,7 +412,7 @@ const LabourLegalDetails = () => {
                 {verificationStatus === 'verified' && (
                     <div className="mb-4 bg-green-50 border border-green-200 rounded-xl p-4">
                         <p className="text-sm text-green-700 font-medium">
-                            ✅ Your documents have been verified successfully!
+                            âœ… Your documents have been verified successfully!
                         </p>
                     </div>
                 )}
@@ -420,7 +420,7 @@ const LabourLegalDetails = () => {
                 {verificationStatus === 'rejected' && (
                     <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
                         <p className="text-sm text-red-700 font-medium">
-                            ❌ Your verification was rejected. Please upload correct documents and try again.
+                            âŒ Your verification was rejected. Please upload correct documents and try again.
                         </p>
                     </div>
                 )}
@@ -442,3 +442,4 @@ const LabourLegalDetails = () => {
 };
 
 export default LabourLegalDetails;
+

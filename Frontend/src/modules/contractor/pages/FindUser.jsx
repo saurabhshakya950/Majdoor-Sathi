@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ContractorBottomNav from '../components/ContractorBottomNav';
@@ -32,7 +32,7 @@ const FindUser = () => {
                 return;
             }
 
-            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/profile`, {
+            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -66,14 +66,14 @@ const FindUser = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing application statuses...');
+                console.log('ðŸ”„ Auto-refreshing application statuses...');
                 loadApplicationStatuses();
             }
         }, 5000);
 
         // Listen for application updates
         const handleApplicationUpdate = () => {
-            console.log('📢 Application update event received');
+            console.log('ðŸ“¢ Application update event received');
             loadApplicationStatuses();
         };
 
@@ -90,7 +90,7 @@ const FindUser = () => {
             const response = await jobAPI.getMyApplications();
 
             if (response.success) {
-                console.log('✅ Loaded application statuses:', response.data.applications);
+                console.log('âœ… Loaded application statuses:', response.data.applications);
                 setAppliedJobs(response.data.applications);
             }
         } catch (error) {
@@ -195,7 +195,7 @@ const FindUser = () => {
 
     const handleApplyNow = async (jobId) => {
         try {
-            console.log('🔵 Applying to job:', jobId);
+            console.log('ðŸ”µ Applying to job:', jobId);
 
             // Fetch fresh profile from database
             const token = localStorage.getItem('access_token');
@@ -208,7 +208,7 @@ const FindUser = () => {
             }
 
             // Get contractor profile from database
-            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/profile`, {
+            const profileResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -241,7 +241,7 @@ const FindUser = () => {
                 return;
             }
 
-            console.log('✅ Profile verified:', { firstName, lastName, city });
+            console.log('âœ… Profile verified:', { firstName, lastName, city });
 
             // Find the job
             const job = jobs.find(j => j.id === jobId);
@@ -417,7 +417,7 @@ const FindUser = () => {
                                     onClick={handleCloseModal}
                                     className="text-gray-500 hover:text-gray-700 text-2xl"
                                 >
-                                    ×
+                                    Ã—
                                 </button>
                             </div>
 
@@ -457,7 +457,7 @@ const FindUser = () => {
                                     <p className="text-gray-900 font-medium">
                                         {selectedJob.budgetType === 'Negotiable'
                                             ? 'Negotiable'
-                                            : `₹${selectedJob.budgetAmount}`}
+                                            : `â‚¹${selectedJob.budgetAmount}`}
                                     </p>
                                 </div>
 
@@ -545,3 +545,4 @@ const FindUser = () => {
 };
 
 export default FindUser;
+

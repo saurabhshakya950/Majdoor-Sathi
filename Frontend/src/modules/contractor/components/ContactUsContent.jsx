@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 
 const ContactUsContent = () => {
     const [contactData, setContactData] = useState('');
@@ -11,7 +11,7 @@ const ContactUsContent = () => {
     const fetchContactContent = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/cms/contactUs`);
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/contactUs`);
             const data = await response.json();
             
             if (data.success && data.data.content) {
@@ -57,3 +57,4 @@ const ContactUsContent = () => {
 };
 
 export default ContactUsContent;
+

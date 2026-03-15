@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import PageHeader from '../components/PageHeader';
 import ContactForm from '../components/ContactForm';
@@ -35,9 +35,9 @@ const ContactUs = () => {
             
             // Fetch all CMS content in parallel
             const [contactRes, termsRes, privacyRes] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/cms/contactUs`),
-                fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/cms/terms`),
-                fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/admin/cms/privacy`)
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/contactUs`),
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/terms`),
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/privacy`)
             ]);
 
             const contactData = await contactRes.json();
@@ -127,3 +127,4 @@ const ContactUs = () => {
 };
 
 export default ContactUs;
+

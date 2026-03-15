@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -40,7 +40,7 @@ const OTPVerification = () => {
                 ]);
 
                 // Call real verify OTP API
-                const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}`;
+                const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
                 const response = await fetch(`${API_URL}/auth/verify-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -55,7 +55,7 @@ const OTPVerification = () => {
                 const data = await response.json();
 
                 if (data.success) {
-                    toast.success('✅ OTP Verified Successfully!');
+                    toast.success('âœ… OTP Verified Successfully!');
 
                     // Store tokens and user info
                     localStorage.setItem('access_token', data.data.accessToken);
@@ -179,3 +179,4 @@ const OTPVerification = () => {
 };
 
 export default OTPVerification;
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, Check, CheckCheck, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -24,7 +24,7 @@ const Notifications = () => {
                 return;
             }
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications?userType=LABOUR`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications?userType=LABOUR`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -47,7 +47,7 @@ const Notifications = () => {
         try {
             const token = localStorage.getItem('access_token');
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/${id}/read`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${id}/read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -68,7 +68,7 @@ const Notifications = () => {
         try {
             const token = localStorage.getItem('access_token');
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/read-all`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/read-all`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -91,7 +91,7 @@ const Notifications = () => {
         try {
             const token = localStorage.getItem('access_token');
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/notifications/${id}?userType=LABOUR`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${id}?userType=LABOUR`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -122,11 +122,11 @@ const Notifications = () => {
 
     const getTypeIcon = (type) => {
         switch (type) {
-            case 'BROADCAST': return '📢';
-            case 'JOB': return '💼';
-            case 'APPLICATION': return '📝';
-            case 'VERIFICATION': return '✅';
-            default: return '🔔';
+            case 'BROADCAST': return 'ðŸ“¢';
+            case 'JOB': return 'ðŸ’¼';
+            case 'APPLICATION': return 'ðŸ“';
+            case 'VERIFICATION': return 'âœ…';
+            default: return 'ðŸ””';
         }
     };
 
@@ -240,3 +240,4 @@ const Notifications = () => {
 };
 
 export default Notifications;
+

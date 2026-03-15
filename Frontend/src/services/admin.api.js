@@ -1,6 +1,6 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}`;
+const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
 
 // Create axios instance with default config
 const adminApi = axios.create({
@@ -33,13 +33,13 @@ adminApi.interceptors.response.use(
         if (error.response?.status === 401) {
             const errorMessage = error.response?.data?.message || '';
             
-            console.log('🔴 Admin API 401 Error:', errorMessage);
+            console.log('ðŸ”´ Admin API 401 Error:', errorMessage);
             
             // Only logout on these specific error codes from backend
             const logoutErrors = ['TOKEN_MISSING', 'TOKEN_EXPIRED', 'TOKEN_INVALID', 'ADMIN_NOT_FOUND'];
             
             if (logoutErrors.includes(errorMessage)) {
-                console.log('🚪 Logging out due to:', errorMessage);
+                console.log('ðŸšª Logging out due to:', errorMessage);
                 
                 // Clear all admin data
                 localStorage.removeItem('adminToken');
@@ -54,13 +54,13 @@ adminApi.interceptors.response.use(
                 }
             } else {
                 // Log but don't logout for other 401 errors (like permission issues)
-                console.warn('⚠️ 401 error but not a token issue:', errorMessage);
+                console.warn('âš ï¸ 401 error but not a token issue:', errorMessage);
             }
         }
         
         // For network errors (no response), don't logout
         if (!error.response) {
-            console.warn('⚠️ Network error - keeping session active');
+            console.warn('âš ï¸ Network error - keeping session active');
         }
         
         return Promise.reject(error);
@@ -93,7 +93,7 @@ export const adminAuthAPI = {
             return response.data;
         } catch (error) {
             // Don't throw error, just return invalid status
-            console.warn('⚠️ Token verification failed:', error.message);
+            console.warn('âš ï¸ Token verification failed:', error.message);
             return { success: false, valid: false };
         }
     },
@@ -524,3 +524,4 @@ export const getStartedSlidesAPI = {
         return response.data;
     }
 };
+

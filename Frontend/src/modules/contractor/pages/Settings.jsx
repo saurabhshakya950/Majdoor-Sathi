@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -44,7 +44,7 @@ const Settings = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}/contractor/feedback`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contractor/feedback`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ const Settings = () => {
                                     >
                                         <span className={`text-5xl ${star <= rating ? 'text-green-600' : 'text-gray-300'
                                             }`}>
-                                            ★
+                                            â˜…
                                         </span>
                                     </button>
                                 ))}
@@ -142,3 +142,4 @@ const Settings = () => {
 };
 
 export default Settings;
+

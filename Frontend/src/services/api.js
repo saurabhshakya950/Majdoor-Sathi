@@ -1,7 +1,7 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 // API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`}`;
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
 
 // Create axios instance
 const api = axios.create({
@@ -483,7 +483,7 @@ export const contractorAPI = {
         return response.data;
     },
 
-    // Contractor Job Application APIs (Labour → Contractor Job)
+    // Contractor Job Application APIs (Labour â†’ Contractor Job)
     applyToContractorJob: async (jobId, message = '') => {
         const response = await api.post(`/contractor/jobs/${jobId}/apply`, { message });
         return response.data;
@@ -558,6 +558,7 @@ export const chatAPI = {
 };
 
 export default api;
+
 
 
 
