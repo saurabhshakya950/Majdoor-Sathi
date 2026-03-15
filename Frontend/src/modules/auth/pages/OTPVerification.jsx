@@ -1,4 +1,4 @@
-﻿import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -75,7 +75,7 @@ const OTPVerification = () => {
                         const routes = {
                             'User': '/user/home',
                             'Contractor': '/contractor/home',
-                            'Labour': '/labour/home'
+                            'Labour': '/labour/find-user'
                         };
                         navigate(routes[userType] || '/complete-profile');
                     } else {

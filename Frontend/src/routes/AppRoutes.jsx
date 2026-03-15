@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
 
@@ -166,7 +166,7 @@ const AppRoutes = () => {
                 <Route path="/contractor/chat/:id" element={<ProtectedRoute><ContractorChatConversation /></ProtectedRoute>} />
 
                 {/* Labour Module Routes - Protected */}
-                <Route path="/labour/home" element={<ProtectedRoute><LabourDashboard /></ProtectedRoute>} />
+                <Route path="/labour/home" element={<Navigate to="/labour/find-user" replace />} />
                 <Route path="/labour/details" element={<ProtectedRoute><LabourDetails /></ProtectedRoute>} />
                 <Route path="/labour/hire-workers" element={<ProtectedRoute><LabourDashboard /></ProtectedRoute>} />
                 <Route path="/labour/find-user" element={<ProtectedRoute><LabourFindUser /></ProtectedRoute>} />

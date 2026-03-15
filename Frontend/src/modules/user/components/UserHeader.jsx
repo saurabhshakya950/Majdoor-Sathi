@@ -1,4 +1,4 @@
-﻿import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
@@ -134,7 +134,7 @@ const UserHeader = memo(() => {
                     
                     {/* Welcome Text and Name */}
                     <div>
-                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome ðŸ‘‹</p>
+                        <p className="text-xs text-gray-500 leading-tight whitespace-nowrap">Hey, Welcome 👋</p>
                         <h1 className="text-sm font-bold text-gray-900 leading-tight whitespace-nowrap">
                             {userName || '\u00A0'}
                         </h1>
