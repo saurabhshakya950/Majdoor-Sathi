@@ -312,7 +312,7 @@ const MyProjectForUser = () => {
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="My Project for User" backPath="/contractor/settings" />
 
-            <div className="p-4">
+            <div className="flex-1 overflow-y-auto p-4 pb-24">
                 {loading ? (
                     // Loading State
                     <div className="flex items-center justify-center min-h-[60vh]">

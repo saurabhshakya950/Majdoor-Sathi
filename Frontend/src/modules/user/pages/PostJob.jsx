@@ -113,7 +113,7 @@ const PostJob = () => {
             
             if (token) {
                 // Save to database
-                const response = await jobAPI.create(formData);
+                const response = await jobAPI.createJob(formData);
                 if (response.success) {
                     toast.success('Job posted successfully!');
                     navigate('/user/my-projects');
@@ -146,7 +146,8 @@ const PostJob = () => {
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="Post a Job" backPath="/user/hire-workers" />
 
-            <div className="p-4 pb-20">
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4 pb-20">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
@@ -300,6 +301,7 @@ const PostJob = () => {
                 </form>
             </div>
         </div>
+    </div>
     );
 };
 

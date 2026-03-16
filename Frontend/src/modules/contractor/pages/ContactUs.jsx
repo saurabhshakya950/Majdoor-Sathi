@@ -9,7 +9,9 @@ const ContactUs = () => {
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="Contact us" backPath="/contractor/settings" sticky />
 
-            <ContactUsContent />
+            <div className="flex-1 overflow-y-auto">
+                <ContactUsContent />
+            </div>
         </div>
     );
 };

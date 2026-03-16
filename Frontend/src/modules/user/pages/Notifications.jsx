@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, Check, CheckCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -117,17 +117,17 @@ const Notifications = () => {
             case 'HIGH': return 'bg-orange-100 border-orange-300 text-orange-800';
             case 'MEDIUM': return 'bg-blue-100 border-blue-300 text-blue-800';
             case 'LOW': return 'bg-gray-100 border-gray-300 text-gray-800';
-            default: return 'bg-blue-100 border-blue-300 text-blue-800';
+            default: return '🔔';
         }
     };
 
     const getTypeIcon = (type) => {
         switch (type) {
-            case 'BROADCAST': return 'ðŸ“¢';
-            case 'JOB': return 'ðŸ’¼';
-            case 'APPLICATION': return 'ðŸ“';
-            case 'VERIFICATION': return 'âœ…';
-            default: return 'ðŸ””';
+            case 'BROADCAST': return '📢';
+            case 'JOB': return '💼';
+            case 'APPLICATION': return '📄';
+            case 'VERIFICATION': return '✅';
+            default: return '🔔';
         }
     };
 

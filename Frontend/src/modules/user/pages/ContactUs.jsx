@@ -66,7 +66,8 @@ const ContactUs = () => {
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="Contact us" backPath="/user/settings" sticky />
 
-            <div className="p-4 pb-8 space-y-6">
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4 pb-8 space-y-6">
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
@@ -123,6 +124,7 @@ const ContactUs = () => {
                 )}
             </div>
         </div>
+    </div>
     );
 };
 

@@ -233,7 +233,8 @@ const LegalVerification = () => {
         <div className="bg-gray-50 pb-6 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="Legal Verification" backPath="/user/settings" />
 
-            <div className="p-4">
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4">
                 <InfoBox variant="info" message="Verified users get more visibility and trust. Your documents are stored securely." />
 
                 <div className="mb-6 mt-6">
@@ -307,6 +308,7 @@ const LegalVerification = () => {
                 </button>
             </div>
         </div>
+    </div>
     );
 };
 

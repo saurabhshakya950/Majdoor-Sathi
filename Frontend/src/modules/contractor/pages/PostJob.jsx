@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ContractorPageHeader from '../components/ContractorPageHeader';
-import { contractorAPI } from '../../../services/api';
+import { contractorAPI, categoryAPI } from '../../../services/api';
 
 const PostJob = () => {
     const navigate = useNavigate();
@@ -156,7 +156,8 @@ const PostJob = () => {
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <ContractorPageHeader title="Create Contractor Card" backPath="/contractor/hire-workers" />
 
-            <div className="p-4 pb-20">
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4 pb-20">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Contractor Information */}
                     <div className="bg-white rounded-lg shadow-sm p-4">
@@ -406,6 +407,7 @@ const PostJob = () => {
                 </form>
             </div>
         </div>
+    </div>
     );
 };
 
