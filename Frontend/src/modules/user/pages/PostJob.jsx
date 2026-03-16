@@ -85,6 +85,63 @@ const PostJob = () => {
         { value: 'Contract', label: 'Contract' }
     ];
 
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Basic Validation
+        if (!formData.address || !formData.mobileNumber || !formData.jobTitle || !formData.jobDescription || !formData.category || !formData.workDuration) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        if (formData.budgetType === 'Fixed Amount' && !formData.budgetAmount) {
+            toast.error('Please enter budget amount');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('access_token');
+            
+            if (token) {
+                // Save to database
+                const response = await jobAPI.create(formData);
+                if (response.success) {
+                    toast.success('Job posted successfully!');
+                    navigate('/user/my-projects');
+                } else {
+                    throw new Error(response.message || 'Failed to post job');
+                }
+            } else {
+                // Fallback to localStorage if no token (offline/guest mode)
+                const existingJobs = JSON.parse(localStorage.getItem('user_posted_jobs') || '[]');
+                const newJob = {
+                    ...formData,
+                    id: Date.now(),
+                    createdAt: new Date().toISOString()
+                };
+                existingJobs.push(newJob);
+                localStorage.setItem('user_posted_jobs', JSON.stringify(existingJobs));
+                
+                toast.success('Job saved locally!');
+                navigate('/user/my-projects');
+            }
+        } catch (error) {
+            console.error('Error posting job:', error);
+            toast.error(error.message || 'Failed to post job. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
             <PageHeader title="Post a Job" backPath="/user/hire-workers" />
