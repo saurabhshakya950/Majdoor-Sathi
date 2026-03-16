@@ -46,7 +46,8 @@ const server = http.createServer(app);
 const allowedSocketOrigins = process.env.CORS_ORIGIN?.split(',') || [
     'http://localhost:5173',
     'http://localhost:5174',
-    'https://contractor-eta.vercel.app' // Add your production URL here
+    'https://contractor-eta.vercel.app',
+    'https://www.majdoorsathi.com' // Add your production URL here
 ];
 
 const io = new Server(server, {
@@ -156,7 +157,8 @@ app.use(compression({
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
     'http://localhost:5173',
     'http://localhost:5174',
-    'https://contractor-eta.vercel.app'
+    'https://contractor-eta.vercel.app',
+    'https://www.majdoorsathi.com'
 ];
 
 app.use(cookieParser());
@@ -193,12 +195,26 @@ app.use('/api/contractor', contractorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/banners', bannerRoutes); // Public banners route
 
-// Health check route
+// Health check & VPS test route
 app.get('/api/health', (req, res) => {
     res.status(200).json({
+        status: 'online',
+        server: 'Express',
+        vps_status: 'operational',
+        pm2_monitored: !!process.env.PM2_HOME || !!process.env.npm_lifecycle_script?.includes('pm2'),
+        database: connectDB.name === 'connectDB' ? 'initialized' : 'unknown',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime().toFixed(2) + ' seconds',
+        message: 'VPS and Backend are working correctly! 🚀'
+    });
+});
+
+app.get('/api/test-api', (req, res) => {
+    res.status(200).json({
         success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
+        message: 'API is reachable from VPS',
+        headers: req.headers,
+        ip: req.ip || req.headers['x-forwarded-for']
     });
 });
 
