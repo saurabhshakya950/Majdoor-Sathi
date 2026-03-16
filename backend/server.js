@@ -155,9 +155,6 @@ app.use(compression({
 
 // CORS Configuration - Supports both development and production
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'https://contractor-eta.vercel.app',
     'https://www.majdoorsathi.com'
 ];
 
