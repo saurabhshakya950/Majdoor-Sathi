@@ -158,6 +158,27 @@ export const verifyOTPAndLogin = async (req, res, next) => {
         
         await user.save();
 
+        // 🟢 SMART PROFILE LOOKUP: If user is Labour or Contractor, fetch their name from their related collection
+        // This solves the issue where registered labourers were redirected back to profile setup
+        let firstName = user.firstName;
+        let lastName = user.lastName;
+
+        if (user.userType === 'Labour') {
+            const labourProfile = await Labour.findOne({ user: user._id });
+            if (labourProfile) {
+                console.log(`👷 Registered Labour found: ${labourProfile.firstName}`);
+                firstName = labourProfile.firstName;
+                lastName = labourProfile.lastName;
+            }
+        } else if (user.userType === 'Contractor') {
+            const contractorProfile = await Contractor.findOne({ user: user._id });
+            if (contractorProfile) {
+                console.log(`🏢 Registered Contractor found: ${contractorProfile.firstName}`);
+                firstName = contractorProfile.firstName;
+                lastName = contractorProfile.lastName;
+            }
+        }
+
         res.status(200).json({
             success: true,
             message: 'Login successful',
@@ -166,8 +187,8 @@ export const verifyOTPAndLogin = async (req, res, next) => {
                     _id: user._id,
                     mobileNumber: user.mobileNumber,
                     userType: user.userType,
-                    firstName: user.firstName,
-                    lastName: user.lastName
+                    firstName: firstName, // Merged from role model if applicable
+                    lastName: lastName    // Merged from role model if applicable
                 },
                 accessToken,
                 refreshToken
@@ -213,6 +234,25 @@ export const login = async (req, res, next) => {
         await user.save();
 
         console.log('✅ Login successful for:', mobileNumber);
+
+        // 🟢 SMART PROFILE LOOKUP: Merge name from related role-specific collection
+        let firstName = user.firstName;
+        let lastName = user.lastName;
+
+        if (user.userType === 'Labour') {
+            const labourProfile = await Labour.findOne({ user: user._id });
+            if (labourProfile) {
+                firstName = labourProfile.firstName;
+                lastName = labourProfile.lastName;
+            }
+        } else if (user.userType === 'Contractor') {
+            const contractorProfile = await Contractor.findOne({ user: user._id });
+            if (contractorProfile) {
+                firstName = contractorProfile.firstName;
+                lastName = contractorProfile.lastName;
+            }
+        }
+
         console.log('===========================\n');
 
         res.status(200).json({
@@ -223,8 +263,8 @@ export const login = async (req, res, next) => {
                     _id: user._id,
                     mobileNumber: user.mobileNumber,
                     userType: user.userType,
-                    firstName: user.firstName,
-                    lastName: user.lastName
+                    firstName: firstName, // Merged from role model
+                    lastName: lastName    // Merged from role model
                 },
                 accessToken,
                 refreshToken
