@@ -16,7 +16,7 @@ const ContractorRequest = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing contractor requests...');
+                console.log('[REFRESH] Auto-refreshing contractor requests...');
                 loadRequests();
             }
         }, 5000);
@@ -26,11 +26,11 @@ const ContractorRequest = () => {
 
     const loadRequests = async () => {
         try {
-            console.log('🔵 Loading contractor hire requests from database...');
+            console.log('[INFO] Loading contractor hire requests from database...');
             const response = await labourAPI.getLabourHireRequests({ status: 'pending' });
 
             if (response.success) {
-                console.log('✅ Requests loaded:', response.data.hireRequests.length);
+                console.log('[SUCCESS] Requests loaded:', response.data.hireRequests.length);
 
                 // Filter only contractor requests
                 const contractorRequests = response.data.hireRequests.filter(
@@ -54,7 +54,7 @@ const ContractorRequest = () => {
                 setRequests(formattedRequests);
             }
         } catch (error) {
-            console.error('❌ Failed to load requests:', error);
+            console.error('[ERROR] Failed to load requests:', error);
             // Fallback to localStorage
             const savedRequests = JSON.parse(localStorage.getItem('labour_contractor_requests') || '[]');
             const sortedRequests = savedRequests.sort((a, b) => b.id - a.id);
@@ -66,7 +66,7 @@ const ContractorRequest = () => {
 
     const handleAccept = async (requestId) => {
         try {
-            console.log('🟢 Accepting contractor request:', requestId);
+            console.log('[INFO] Accepting contractor request:', requestId);
 
             const response = await labourAPI.updateHireRequestStatus(requestId, 'accepted');
 
@@ -80,14 +80,14 @@ const ContractorRequest = () => {
                 await loadRequests();
             }
         } catch (error) {
-            console.error('❌ Failed to accept request:', error);
+            console.error('[ERROR] Failed to accept request:', error);
             toast.error('Failed to accept request');
         }
     };
 
     const handleDecline = async (requestId) => {
         try {
-            console.log('🔴 Declining contractor request:', requestId);
+            console.log('[INFO] Declining contractor request:', requestId);
 
             const response = await labourAPI.updateHireRequestStatus(requestId, 'declined');
 
@@ -101,7 +101,7 @@ const ContractorRequest = () => {
                 await loadRequests();
             }
         } catch (error) {
-            console.error('❌ Failed to decline request:', error);
+            console.error('[ERROR] Failed to decline request:', error);
             toast.error('Failed to decline request');
         }
     };

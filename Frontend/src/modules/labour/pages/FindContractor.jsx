@@ -31,14 +31,14 @@ const FindContractor = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing contractor jobs and application status...');
+                console.log('[REFRESH] Auto-refreshing contractor jobs and application status...');
                 fetchApplicationStatus();
             }
         }, 5000);
 
         // Listen for application updates
         const handleApplicationUpdate = () => {
-            console.log('📢 Application updated event received');
+            console.log('[EVENT] Application updated event received');
             fetchApplicationStatus();
         };
 
@@ -55,7 +55,7 @@ const FindContractor = () => {
             const response = await contractorAPI.getLabourApplications();
 
             if (response.success) {
-                console.log('✅ Application status loaded:', response.data.applications);
+                console.log('[SUCCESS] Application status loaded:', response.data.applications);
                 setAppliedJobs(response.data.applications);
             }
         } catch (error) {
@@ -140,19 +140,19 @@ const FindContractor = () => {
 
     const handleApplyNow = async (cardId) => {
         try {
-            console.log('🟢 Applying to contractor job:', cardId);
+            console.log('[INFO] Applying to contractor job:', cardId);
 
             const response = await contractorAPI.applyToContractorJob(cardId);
 
             if (response.success) {
-                console.log('✅ Application submitted successfully');
+                console.log('[SUCCESS] Application submitted successfully');
                 toast.success('Application submitted successfully!');
 
                 // Refresh application status
                 await fetchApplicationStatus();
             }
         } catch (error) {
-            console.error('❌ Failed to apply:', error);
+            console.error('[ERROR] Failed to apply:', error);
             if (error.response?.data?.message) {
                 toast.error(error.response.data.message);
             } else {
@@ -280,9 +280,9 @@ const FindContractor = () => {
                                 <h2 className="text-xl font-bold text-gray-900">Contractor Details</h2>
                                 <button
                                     onClick={handleCloseModal}
-                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                 >
-                                    ×
+                                    <X className="w-6 h-6 text-gray-500" />
                                 </button>
                             </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import ContractorProfileCard from '../components/ContractorProfileCard';
 import { contractorAPI } from '../../../services/api';
 
@@ -14,7 +14,7 @@ const MyProjects = () => {
     const loadCards = async (isSilent = false) => {
         try {
             if (!isSilent) setLoading(true);
-            console.log('🔄 [MyProjects] Loading contractor cards for Labour...');
+            console.log('[REFRESH] [MyProjects] Loading contractor cards for Labour...');
 
             // Fetch jobs with targetAudience='Labour' filter
             const response = await contractorAPI.getContractorJobs({ targetAudience: 'Labour' });
@@ -45,7 +45,7 @@ const MyProjects = () => {
                 setCards([]);
             }
         } catch (error) {
-            console.error('❌ [MyProjects] Error loading cards:', error);
+            console.error('[ERROR] [MyProjects] Error loading cards:', error);
             setCards([]);
         } finally {
             if (!isSilent) setLoading(false);
@@ -61,7 +61,7 @@ const MyProjects = () => {
         }, 10000);
 
         return () => {
-            console.log('🛑 [MyProjects] Component unmounting');
+            console.log('[INFO] [MyProjects] Component unmounting');
             clearInterval(interval);
         };
     }, []);
@@ -163,9 +163,9 @@ const MyProjects = () => {
                             <h2 className="text-xl font-bold text-gray-900">Contractor Details</h2>
                             <button
                                 onClick={handleCloseModal}
-                                className="text-gray-500 hover:text-gray-700 text-2xl"
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                             >
-                                ×
+                                <X className="w-6 h-6 text-gray-500" />
                             </button>
                         </div>
 
@@ -222,7 +222,7 @@ const MyProjects = () => {
                                 <p className="text-gray-900 font-medium">
                                     {selectedCard.budgetType === 'Negotiable'
                                         ? 'Negotiable'
-                                        : `₹${selectedCard.budgetAmount}`}
+                                        : `\u20B9${selectedCard.budgetAmount}`}
                                 </p>
                             </div>
 

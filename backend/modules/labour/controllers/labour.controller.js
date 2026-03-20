@@ -26,7 +26,8 @@ export const createLabourProfile = async (req, res) => {
             skillType,
             experience,
             workPhotos,
-            previousWorkLocation
+            previousWorkLocation,
+            aadharNumber
         } = req.body;
 
         // Get userId from token if available, otherwise from mobileNumber
@@ -105,6 +106,7 @@ export const createLabourProfile = async (req, res) => {
             if (experience) existingLabour.experience = experience;
             if (uploadedWorkPhotos.length > 0) existingLabour.workPhotos = uploadedWorkPhotos;
             if (previousWorkLocation) existingLabour.previousWorkLocation = previousWorkLocation;
+            if (aadharNumber) existingLabour.aadharNumber = aadharNumber;
             await existingLabour.save();
 
             console.log('✅ Labour profile updated:', existingLabour._id);
@@ -129,7 +131,8 @@ export const createLabourProfile = async (req, res) => {
             skillType: skillType || 'Other',
             experience: experience || '',
             workPhotos: uploadedWorkPhotos,
-            previousWorkLocation: previousWorkLocation || ''
+            previousWorkLocation: previousWorkLocation || '',
+            aadharNumber: aadharNumber || ''
         });
 
         console.log('✅ Labour profile created:', labour._id);
@@ -440,11 +443,18 @@ export const getLabourVerificationStatus = async (req, res) => {
             });
         }
 
+        const VerificationRequest = (await import('../../admin/models/VerificationRequest.model.js')).default;
+        const verificationRequest = await VerificationRequest.findOne({
+            entityId: labour._id,
+            entityType: 'labour'
+        }).sort({ createdAt: -1 });
+
         res.status(200).json({
             success: true,
             data: {
                 verificationStatus: labour.verificationStatus,
-                isVerified: labour.isVerified
+                isVerified: labour.isVerified,
+                verificationRequest: verificationRequest || null
             }
         });
     } catch (error) {

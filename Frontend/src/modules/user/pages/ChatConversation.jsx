@@ -49,7 +49,7 @@ const ChatConversation = () => {
             // Listen for new messages
             socketService.onReceiveMessage((newMessage) => {
                 if (newMessage.chatId === chatId) {
-                    console.log('📨 New message received:', newMessage);
+                    console.log('[INFO] New message received:', newMessage);
 
                     // ✅ Avoid duplicate messages - only add if not already in state
                     setMessages(prev => {

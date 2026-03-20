@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Star, X } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
 import { labourAPI } from '../../../services/api';
 
@@ -182,9 +182,13 @@ const LabourMyCard = () => {
                                     <p className="text-sm text-gray-600">🔧 {card.primarySkill || 'N/A'}</p>
                                     <div className="flex gap-1 mt-1">
                                         {[1, 2, 3, 4, 5].map((star) => (
-                                            <span key={star} className={`text-lg ${star <= (card.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                                ★
-                                            </span>
+                                            <Star
+                                                key={star}
+                                                className={`w-5 h-5 transition-all ${star <= (card.rating || 0)
+                                                        ? 'text-yellow-400 fill-yellow-400'
+                                                        : 'text-gray-300'
+                                                    }`}
+                                            />
                                         ))}
                                     </div>
                                 </div>
@@ -253,13 +257,24 @@ const LabourMyCard = () => {
                     <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
                             <h2 className="text-xl font-bold">Labour Details</h2>
-                            <button onClick={handleCloseModal} className="text-2xl">×</button>
+                            <button
+                                onClick={handleCloseModal}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-500" />
+                            </button>
                         </div>
                         
                         <div className="p-4 space-y-3">
                             <div><label className="text-sm text-gray-500">Full Name</label><p className="font-medium">{selectedCard.fullName || 'N/A'}</p></div>
                             <div><label className="text-sm text-gray-500">Primary Skill</label><p className="font-medium">{selectedCard.primarySkill || 'N/A'}</p></div>
-                            <div><label className="text-sm text-gray-500">Rating</label><p className="font-medium">{selectedCard.rating || 0} ⭐</p></div>
+                            <div>
+                                <label className="text-sm text-gray-500">Rating</label>
+                                <div className="flex items-center gap-1 font-medium">
+                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                    <span>{selectedCard.rating || 0} / 5</span>
+                                </div>
+                            </div>
                             <div><label className="text-sm text-gray-500">Gender</label><p className="font-medium">{selectedCard.gender || 'N/A'}</p></div>
                             <div><label className="text-sm text-gray-500">Mobile</label><p className="font-medium">{selectedCard.mobileNumber || 'N/A'}</p></div>
                             <div><label className="text-sm text-gray-500">City</label><p className="font-medium">{selectedCard.city || 'N/A'}</p></div>

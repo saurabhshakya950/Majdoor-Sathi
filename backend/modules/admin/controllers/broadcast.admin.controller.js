@@ -245,13 +245,15 @@ export const deleteBroadcast = async (req, res) => {
             });
         }
 
-        // Can't delete if already sent
+        // Broadcast can now be deleted even if it was sent, to allow history cleanup
+        /* 
         if (broadcast.status === 'SENT') {
             return res.status(400).json({
                 success: false,
                 message: 'Cannot delete a broadcast that has already been sent'
             });
         }
+        */
 
         await broadcast.deleteOne();
 

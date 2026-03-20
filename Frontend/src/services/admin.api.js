@@ -33,13 +33,13 @@ adminApi.interceptors.response.use(
         if (error.response?.status === 401) {
             const errorMessage = error.response?.data?.message || '';
             
-            console.log('ðŸ”´ Admin API 401 Error:', errorMessage);
+            console.log('[ERROR] Admin API 401 Error:', errorMessage);
             
             // Only logout on these specific error codes from backend
             const logoutErrors = ['TOKEN_MISSING', 'TOKEN_EXPIRED', 'TOKEN_INVALID', 'ADMIN_NOT_FOUND'];
             
             if (logoutErrors.includes(errorMessage)) {
-                console.log('ðŸšª Logging out due to:', errorMessage);
+                console.log('[LOGOUT] Logging out due to:', errorMessage);
                 
                 // Clear all admin data
                 localStorage.removeItem('adminToken');
@@ -54,13 +54,13 @@ adminApi.interceptors.response.use(
                 }
             } else {
                 // Log but don't logout for other 401 errors (like permission issues)
-                console.warn('âš ï¸ 401 error but not a token issue:', errorMessage);
+                console.warn('[WARNING] 401 error but not a token issue:', errorMessage);
             }
         }
         
         // For network errors (no response), don't logout
         if (!error.response) {
-            console.warn('âš ï¸ Network error - keeping session active');
+            console.warn('[WARNING] Network error - keeping session active');
         }
         
         return Promise.reject(error);
@@ -93,7 +93,7 @@ export const adminAuthAPI = {
             return response.data;
         } catch (error) {
             // Don't throw error, just return invalid status
-            console.warn('âš ï¸ Token verification failed:', error.message);
+            console.warn('[WARNING] Token verification failed:', error.message);
             return { success: false, valid: false };
         }
     },
@@ -525,3 +525,26 @@ export const getStartedSlidesAPI = {
     }
 };
 
+
+// ==================== ADMIN NOTIFICATION APIs ====================
+export const adminNotificationAPI = {
+    getNotifications: async (params = {}) => {
+        const response = await adminApi.get('/notifications', { params });
+        return response.data;
+    },
+
+    markAsRead: async (id) => {
+        const response = await adminApi.patch(`/notifications/${id}/read`);
+        return response.data;
+    },
+
+    markAllAsRead: async () => {
+        const response = await adminApi.patch('/notifications/read-all');
+        return response.data;
+    },
+
+    saveFcmToken: async (fcmToken, platform = 'web') => {
+        const response = await adminApi.post('/auth/fcm-token', { fcmToken, platform });
+        return response.data;
+    }
+};

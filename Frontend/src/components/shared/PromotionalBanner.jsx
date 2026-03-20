@@ -9,42 +9,42 @@ const DEFAULT_BANNERS = [
         title: 'Build Strong Foundations',
         subtitle: 'Premium Quality Cement',
         description: 'High-grade cement for all construction needs',
-        price: '₹350',
+        price: '\u20B9350',
         priceUnit: 'per bag',
         discount: 'Up to 20% Off',
-        badgeText: '🔥 Limited Time Offer',
+        badgeText: '\uD83D\uDD25 Limited Time Offer',
         backgroundImage: 'https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?w=1200&q=80&auto=format&fit=crop',
         bgGradient: 'from-gray-800 via-gray-700 to-gray-900',
-        icon: '🧱',
-        secondaryIcon: '🏗️'
+        icon: '\uD83E\uDDF1',
+        secondaryIcon: '\uD83C\uDFD7\uFE0F'
     },
     {
         id: 2,
         title: 'High-Strength TMT Bars',
         subtitle: 'Premium Steel & Sariya',
         description: 'Corrosion-resistant steel for maximum durability',
-        price: '₹60',
+        price: '\u20B960',
         priceUnit: 'per kg',
         discount: 'Save 15%',
-        badgeText: '⚡ Best Quality',
+        badgeText: '\u26A1 Best Quality',
         backgroundImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200&q=80&auto=format&fit=crop',
         bgGradient: 'from-slate-800 via-slate-700 to-slate-900',
-        icon: '🏗️',
-        secondaryIcon: '⚙️'
+        icon: '\uD83C\uDFD7\uFE0F',
+        secondaryIcon: '\u2699\uFE0F'
     },
     {
         id: 3,
         title: 'Combo Bulk Offer',
         subtitle: 'Cement + Steel Package',
         description: 'Complete construction material bundle',
-        price: '₹25,000',
+        price: '\u20B925,000',
         priceUnit: 'combo pack',
-        discount: 'Save ₹5,000',
-        badgeText: '💰 Best Deal',
+        discount: 'Save \u20B95,000',
+        badgeText: '\uD83D\uDCB0 Best Deal',
         backgroundImage: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1200&q=80&auto=format&fit=crop',
         bgGradient: 'from-zinc-800 via-zinc-700 to-zinc-900',
-        icon: '📦',
-        secondaryIcon: '🎯'
+        icon: '\uD83D\uDCE6',
+        secondaryIcon: '\uD83C\uDFAF'
     }
 ];
 
@@ -76,8 +76,8 @@ const PromotionalBanner = ({ targetAudience = 'ALL' }) => {
                         badgeText: banner.badgeText,
                         backgroundImage: banner.backgroundImage,
                         bgGradient: 'from-gray-800 via-gray-700 to-gray-900',
-                        icon: '🏗️',
-                        secondaryIcon: '📦'
+                        icon: '\uD83C\uDFD7\uFE0F',
+                        secondaryIcon: '\uD83D\uDCE6'
                     }));
                     setApiBanners(transformedBanners);
                 }

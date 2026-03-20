@@ -1,0 +1,76 @@
+PROJECT API AUDIT REPORT - MAJDOOR SATHI
+==========================================
+Date: 2026-03-19
+Status: Analysis & Testing Complete
+
+1. AUTH & SECURITY MODULE (/api/auth)
+--------------------------------------
+- POST /api/auth/send-otp        | OTP bhejta hai mobile number par          | WORKING | Auth / Login Screen
+- POST /api/auth/verify-otp      | OTP verify karke token bhejta hai         | WORKING | Auth / OTP Verification
+- POST /api/auth/login           | Direct login (Fixed: Merges role name)    | WORKING | Auth / Login Screen
+- POST /api/auth/register        | Naya account banata hai (User/Contractor) | WORKING | Auth / Complete Profile
+- POST /api/auth/logout          | Session end karta hai                     | WORKING | Top Navigation / Profile
+- POST /api/auth/refresh-token   | Naya access token generate karta hai      | WORKING | Backend Utility
+- POST /api/auth/fcm-token       | Notifications ke liye token save karta hai| WORKING | App Initialization
+
+2. LABOUR MODULE (/api/labour)
+-------------------------------
+- POST /api/labour/create-profile| Labour ka basic profile banata hai        | WORKING | Registration Flow
+- GET  /api/labour/browse        | Publicly available Labour list            | WORKING | Find Labour Screen
+- GET  /api/labour/profile       | Login Labour ki details fetch karta hai   | WORKING | Labour Dashboard/Profile
+- PUT  /api/labour/work-details  | Kaam ki extra details update karta hai    | WORKING | Labour Profile Edit
+- POST /api/labour/card          | Labour ID card create karta hai           | WORKING | Labour Card Screen
+- POST /api/labour/hire-request  | User se hire request bhejta hai           | WORKING | Hire Labour Action
+- GET  /api/labour/hire-requests | Labour ko aayi hui hiring requests        | WORKING | Labour Requests Tab
+- PATCH/api/labour/hire-request/:id | Request accept ya decline karna       | WORKING | Labour Requests Action
+
+3. CONTRACTOR MODULE (/api/contractor)
+--------------------------------------
+- GET  /api/contractor/browse    | Sabhi active contractors ki list          | WORKING | Find Contractor Screen
+- POST /api/contractor/profile   | Contractor account setup karta hai        | WORKING | Registration Flow
+- GET  /api/contractor/profile   | Contractor ki dashboard profile           | WORKING | Contractor Home
+- PUT  /api/contractor/business-details | Business info update karna        | WORKING | Contractor Profile Edit
+- POST /api/contractor/jobs      | Naya kaam (Job) post karna                | WORKING | Post Job Screen
+- GET  /api/contractor/jobs      | Contractor ke khud ke post kiye jobs      | WORKING | My Projects Screen
+- GET  /api/contractor/jobs/browse| Publicly available jobs list             | WORKING | Browse Jobs Screen
+
+4. USER & JOB MODULE (/api/users, /api/jobs)
+--------------------------------------------
+- GET  /api/users/profile        | Normal User ki login details              | WORKING | User Profile
+- PUT  /api/users/profile        | User name/location update karna           | WORKING | Edit User Profile
+- POST /api/users/jobs           | User ka job post karna                    | WORKING | User Post Job
+- GET  /api/users/jobs           | User ke apne post kiye jobs               | WORKING | My Requests Screen
+- GET  /api/jobs/browse          | Saare available jobs dhoondna             | WORKING | Job Search Screen
+- POST /api/jobs/:id/apply       | Job ke liye apply karna                   | WORKING | Apply Action
+
+5. CHAT & NOTIFICATIONS (/api/chat, /api/notifications)
+-------------------------------------------------------
+- GET  /api/chat/chats           | User ki saari chats ki list               | WORKING | Chat Messages Screen
+- POST /api/chat/initialize      | Nayi chat shuru karna                     | WORKING | Hire/Accept Action
+- POST /api/chat/chats/:id/messages | Message bhejna                        | WORKING | Individual Chat Room
+- GET  /api/notifications        | Sabhi alerts/updates                      | WORKING | Notification Screen
+- GET  /api/notifications/unread-count | Unread alerts ki ginti              | WORKING | Top Navigation Badge
+
+6. SYSTEM & PUBLIC CONTENT
+---------------------------
+- GET  /api/categories           | Work categories (Plumber, Painter, etc)   | WORKING | Dropdowns / Filters
+- GET  /api/banners/active       | App ke active banners/promotions          | WORKING | Home Screen Carousel
+- GET  /api/health               | Server and DB status check                | WORKING | Monitoring
+- GET  /api/test-api             | Connectivity test route                   | WORKING | Monitoring
+
+7. ADMIN MANAGEMENT (/api/admin)
+--------------------------------
+- POST /api/admin/auth/login     | Admin panel login                         | WORKING | Admin Panel
+- GET  /api/admin/dashboard      | Admin stats aur overview                  | WORKING | Admin Home
+- GET  /api/admin/users          | Saare registered users ki list            | WORKING | User Management
+- GET  /api/admin/labours        | Saare registered labours ki list          | WORKING | Labour Management
+- GET  /api/admin/contractors    | Saare contractors ki list                 | WORKING | Contractor Management
+
+==========================================
+AUDIT VERDICT: ALL CORE APIs ARE FUNCTIONAL
+==========================================
+Notes:
+- JWT Token validation is strictly enforced on all 'Protected' routes.
+- CORS is configured to allow local (5173, 5174) and production domains.
+- File upload limit is set to 50MB for profile/work photos.
+- Login logic is now 'Smart' for Labour/Contractor role-based names.

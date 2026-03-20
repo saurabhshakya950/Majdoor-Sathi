@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, Info, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ContractorPageHeader from '../components/ContractorPageHeader';
 import ContractorBottomNav from '../components/ContractorBottomNav';
@@ -42,7 +42,7 @@ const MyProjectForUser = () => {
     const loadCards = async (isSilent = false) => {
         try {
             if (!isSilent) setLoading(true);
-            console.log('🔄 Loading contractor cards...');
+            console.log('[REFRESH] Loading contractor cards...');
             const token = localStorage.getItem('access_token');
 
             if (token) {
@@ -78,7 +78,7 @@ const MyProjectForUser = () => {
                 setCards(savedCards);
             }
         } catch (error) {
-            console.error('❌ Error loading contractor cards:', error);
+            console.error('[ERROR] Error loading contractor cards:', error);
             // Fallback to localStorage
             const savedCards = JSON.parse(localStorage.getItem('contractor_cards_for_user') || '[]');
             setCards(savedCards);
@@ -88,7 +88,7 @@ const MyProjectForUser = () => {
     };
 
     useEffect(() => {
-        console.log('🚀 Component mounted, loading cards...');
+        console.log('[INFO] Component mounted, loading cards...');
         loadCards();
 
         // Auto-refresh every 10 seconds (Silent)
@@ -97,7 +97,7 @@ const MyProjectForUser = () => {
         }, 10000);
 
         return () => {
-            console.log('🛑 Component unmounting, clearing interval');
+            console.log('[INFO] Component unmounting, clearing interval');
             clearInterval(interval);
         };
     }, []);
@@ -172,13 +172,13 @@ const MyProjectForUser = () => {
                     targetAudience: 'User' // Only for User, not Labour
                 };
 
-                console.log('Creating contractor job:', jobData);
+                console.log('[INFO] Creating contractor job:', jobData);
 
                 const response = await contractorAPI.createContractorJob(jobData);
-                console.log('📦 Create response:', response);
+                console.log('[DEBUG] Create response:', response);
 
                 if (response.success) {
-                    console.log('✅ Contractor job created in database:', response);
+                    console.log('[SUCCESS] Contractor job created in database:', response);
 
                     toast.success('Card created successfully!');
                     setShowForm(false);
@@ -252,7 +252,7 @@ const MyProjectForUser = () => {
         const newStatus = card.availabilityStatus === 'Available' ? 'Busy' : 'Available';
         const newProfileStatus = newStatus === 'Available' ? 'Active' : 'Closed';
 
-        console.log(`🔄 Toggling card ${cardId} from ${card.availabilityStatus} to ${newStatus}`);
+        console.log(`[REFRESH] Toggling card ${cardId} from ${card.availabilityStatus} to ${newStatus}`);
 
         try {
             const token = localStorage.getItem('access_token');
@@ -264,7 +264,7 @@ const MyProjectForUser = () => {
                 });
 
                 if (response.success) {
-                    console.log('✅ Status updated in database');
+                    console.log('[SUCCESS] Status updated in database');
 
                     // Update local state
                     const updatedCards = cards.map(c => {
@@ -297,13 +297,13 @@ const MyProjectForUser = () => {
 
                 setCards(updatedCards);
                 localStorage.setItem('contractor_cards_for_user', JSON.stringify(updatedCards));
-                console.log('💾 Saved updated cards to localStorage:', updatedCards);
+                console.log('[INFO] Saved updated cards to localStorage:', updatedCards);
             }
 
             // Trigger a custom event to notify other tabs/windows
             window.dispatchEvent(new Event('storage'));
         } catch (error) {
-            console.error('❌ Error updating availability status:', error);
+            console.error('[ERROR] Error updating availability status:', error);
             toast.error('Failed to update status. Please try again.');
         }
     };
@@ -339,7 +339,7 @@ const MyProjectForUser = () => {
                         {/* Basic Information */}
                         <div className="mb-6">
                             <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                <span className="text-blue-500">ℹ️</span>
+                                <Info className="w-4 h-4 text-blue-500" />
                                 Basic Information
                             </h4>
                             <p className="text-xs text-gray-500 mb-3">(User will only view this)</p>
@@ -395,7 +395,7 @@ const MyProjectForUser = () => {
                         {/* Work & Skills Info */}
                         <div className="mb-6">
                             <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                <span className="text-green-500">🛠️</span>
+                                <Wrench className="w-4 h-4 text-green-500" />
                                 Work & Skills Info
                             </h4>
                             <p className="text-xs text-gray-500 mb-3">(User will understand what work contractor does)</p>
@@ -481,7 +481,7 @@ const MyProjectForUser = () => {
                             {/* Budget Amount */}
                             <div className="mb-3">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Budget Amount (₹) <span className="text-red-500">*</span>
+                                    Budget Amount (\u20B9) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"

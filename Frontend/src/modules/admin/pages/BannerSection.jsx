@@ -215,12 +215,12 @@ const BannerSection = () => {
                                             name="badgeText"
                                             value={formData.badgeText}
                                             onChange={handleInputChange}
-                                            placeholder="e.g., 🔥 Limited Time Offer"
+                                            placeholder="e.g., \uD83D\uDD25 Limited Time Offer"
                                             required
                                         />
                                     </div>
                                     <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                                        Example: "🔥 Limited Time Offer", "⚡ Best Quality"
+                                        Example: "\uD83D\uDD25 Limited Time Offer", "\u26A1 Best Quality"
                                     </small>
                                 </div>
 
@@ -332,7 +332,7 @@ const BannerSection = () => {
                                             name="price"
                                             value={formData.price}
                                             onChange={handleInputChange}
-                                            placeholder="e.g., ₹350"
+                                            placeholder="e.g., \u20B9350"
                                             required
                                         />
                                     </div>
@@ -457,7 +457,7 @@ const BannerSection = () => {
                                         <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#9ca3af' }}>
                                             <span>Target: {banner.targetAudience}</span>
                                             <span>Priority: {banner.priority}</span>
-                                            <span>Status: {banner.isActive ? '✅ Active' : '❌ Inactive'}</span>
+                                            <span>Status: {banner.isActive ? 'Active' : 'Inactive'}</span>
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px' }}>

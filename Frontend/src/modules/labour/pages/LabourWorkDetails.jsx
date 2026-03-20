@@ -95,7 +95,7 @@ const LabourWorkDetails = () => {
             }
 
             // Has token - save to backend with Cloudinary
-            console.log('📤 Updating work details with backend API...');
+            console.log('[INFO] Updating work details with backend API...');
 
             const updateData = {
                 skillType: formData.skillType,
@@ -110,7 +110,7 @@ const LabourWorkDetails = () => {
             const existingPhotos = formData.workPhotos.filter(photo => !photo.startsWith('data:image'));
 
             if (newPhotos.length > 0) {
-                console.log(`📸 ${newPhotos.length} new work photos detected, will upload to Cloudinary`);
+                console.log(`[INFO] ${newPhotos.length} new work photos detected, will upload to Cloudinary`);
                 updateData.workPhotos = formData.workPhotos; // Send all photos, backend will handle filtering
             } else if (existingPhotos.length > 0) {
                 updateData.workPhotos = existingPhotos; // Keep existing photos
@@ -118,7 +118,7 @@ const LabourWorkDetails = () => {
 
             const response = await labourAPI.updateWorkDetails(updateData);
 
-            console.log('✅ Work details updated:', response);
+            console.log('[SUCCESS] Work details updated:', response);
 
             // Update localStorage with response data
             if (response.success && response.data.labour) {
@@ -140,7 +140,7 @@ const LabourWorkDetails = () => {
 
             toast.success('Work details saved successfully!');
         } catch (error) {
-            console.error('❌ Error updating work details:', error);
+            console.error('[ERROR] Error updating work details:', error);
             toast.error(error.response?.data?.message || 'Failed to update work details');
         }
     };

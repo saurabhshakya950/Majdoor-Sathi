@@ -43,7 +43,7 @@ const LabourHeader = memo(() => {
                 });
 
                 const data = await response.json();
-                console.log('âœ… Labour profile fetched:', data);
+                console.log('[SUCCESS] Labour profile fetched:', data);
 
                 if (data.success && data.data) {
                     const labour = data.data.labour;
@@ -51,7 +51,7 @@ const LabourHeader = memo(() => {
 
                     if (displayName) {
                         setLabourName(displayName);
-                        console.log('âœ… Name set:', displayName);
+                        console.log('[SUCCESS] Name set:', displayName);
 
                         // Update localStorage for next time
                         try {
@@ -65,11 +65,11 @@ const LabourHeader = memo(() => {
                         // Fallback to mobile number
                         const mobileNumber = localStorage.getItem('mobile_number');
                         setLabourName(mobileNumber ? `Labour ${mobileNumber.slice(-4)}` : 'Labour');
-                        console.log('âš ï¸ No name found, using fallback');
+                        console.log('[WARNING] No name found, using fallback');
                     }
                 }
             } catch (error) {
-                console.error('âŒ Error fetching labour profile:', error);
+                console.error('[ERROR] Error fetching labour profile:', error);
                 // Keep the localStorage name if API fails
             }
         };
@@ -79,7 +79,7 @@ const LabourHeader = memo(() => {
 
         // Listen for profile update events
         const handleProfileUpdate = () => {
-            console.log('ðŸ“¢ Profile update event received');
+            console.log('[EVENT] Profile update event received');
             loadNameFromStorage();
             fetchLabourProfile();
         };
@@ -116,10 +116,19 @@ const LabourHeader = memo(() => {
 
         fetchNotificationCount();
 
+        // Listen for notificationsRead event to update count instantly
+        const handleNotificationsRead = () => {
+            setNotificationCount(0);
+        };
+        window.addEventListener('notificationsRead', handleNotificationsRead);
+
         // Refresh count every 30 seconds
         const interval = setInterval(fetchNotificationCount, 30000);
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notificationsRead', handleNotificationsRead);
+        };
     }, [location]);
 
     const handleNotifications = () => {

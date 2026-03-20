@@ -21,7 +21,7 @@ const Chat = () => {
 
             // Listen for new messages
             socketService.onReceiveMessage((message) => {
-                console.log('📨 New message received:', message);
+                console.log('[INFO] New message received:', message);
                 updateChatWithNewMessage(message);
             });
         }

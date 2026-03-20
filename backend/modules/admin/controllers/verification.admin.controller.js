@@ -3,6 +3,8 @@ import User from '../../user/models/User.model.js';
 import Labour from '../../labour/models/Labour.model.js';
 import Contractor from '../../contractor/models/Contractor.model.js';
 import { uploadToCloudinary } from '../../../utils/cloudinary.utils.js';
+import { sendNotificationToUser, sendNotificationToAdmin } from '../../../utils/notificationHelper.js';
+import Notification from '../../../models/Notification.model.js';
 
 // @desc    Get all verification requests
 // @route   GET /api/admin/verification/requests
@@ -164,10 +166,35 @@ export const approveVerificationRequest = async (req, res) => {
         else if (request.entityType === 'contractor') Model = Contractor;
 
         if (Model) {
+            // 1. Update the main entity (User, Labour, or Contractor profile)
             await Model.findByIdAndUpdate(request.entityId, {
                 isVerified: true,
                 aadharNumber: request.aadhaarNumber
             });
+
+            // 2. SYNC WITH PRIMARY USER COLLECTION
+            // If it's a labour or contractor, we must also update their base User record
+            try {
+                let mainUserId = request.entityId; // For 'user' type, it's the same
+
+                if (request.entityType === 'labour') {
+                    const labour = await Labour.findById(request.entityId);
+                    if (labour) mainUserId = labour.user;
+                } else if (request.entityType === 'contractor') {
+                    const contractor = await Contractor.findById(request.entityId);
+                    if (contractor) mainUserId = contractor.user;
+                }
+
+                if (mainUserId) {
+                    await User.findByIdAndUpdate(mainUserId, {
+                        isVerified: true,
+                        aadharNumber: request.aadhaarNumber
+                    });
+                    console.log(`[SYNC] Updated User ${mainUserId} with verified status and Aadhaar`);
+                }
+            } catch (syncError) {
+                console.error('[ERROR] Failed to sync verified status to User model:', syncError);
+            }
         }
 
         res.status(200).json({
@@ -175,6 +202,52 @@ export const approveVerificationRequest = async (req, res) => {
             message: 'Verification request approved successfully',
             data: { request }
         });
+
+        // SEND NOTIFICATION TO USER
+        try {
+            let actualUserId = request.entityId;
+            
+            // If it's a labour or contractor, we need to get their main User record ID for Firebase tokens
+            if (request.entityType === 'labour') {
+                const labour = await Labour.findById(request.entityId);
+                if (labour) actualUserId = labour.user;
+            } else if (request.entityType === 'contractor') {
+                const contractor = await Contractor.findById(request.entityId);
+                if (contractor) actualUserId = contractor.user;
+            }
+
+            if (actualUserId) {
+                const notificationTitle = "Verification Successful! 🎉";
+                const notificationMessage = "Congratulations! Your legal documents are verified. You are now a verified member of Majdoor Sathii.";
+                
+                // 1. Create In-App Notification (Bell Icon)
+                await Notification.create({
+                    user: actualUserId,
+                    userType: request.entityType.toUpperCase(),
+                    title: notificationTitle,
+                    message: notificationMessage,
+                    type: 'VERIFICATION',
+                    priority: 'HIGH',
+                    metadata: { requestId: request._id, status: 'Approved' }
+                });
+
+                // 2. Send Push Notification (FCM)
+                await sendNotificationToUser(actualUserId, {
+                    title: notificationTitle,
+                    body: notificationMessage,
+                    data: { 
+                        type: 'VERIFICATION_UPDATE',
+                        status: 'Approved',
+                        requestId: request._id.toString()
+                    }
+                });
+
+                console.log(`[SUCCESS] Verification approval notification sent to user ${actualUserId}`);
+            }
+        } catch (notifError) {
+            console.error('[ERROR] Failed to send verification approval notification:', notifError);
+            // Non-blocking error, we don't return to res.status
+        }
 
     } catch (error) {
         res.status(500).json({
@@ -219,6 +292,51 @@ export const rejectVerificationRequest = async (req, res) => {
             message: 'Verification request rejected',
             data: { request }
         });
+
+        // SEND NOTIFICATION TO USER
+        try {
+            let actualUserId = request.entityId;
+            
+            // If it's a labour or contractor, we need to get their main User record ID for Firebase tokens
+            if (request.entityType === 'labour') {
+                const labour = await Labour.findById(request.entityId);
+                if (labour) actualUserId = labour.user;
+            } else if (request.entityType === 'contractor') {
+                const contractor = await Contractor.findById(request.entityId);
+                if (contractor) actualUserId = contractor.user;
+            }
+
+            if (actualUserId) {
+                const notificationTitle = "Verification Rejected ⚠️";
+                const notificationMessage = `Your documents were rejected. Reason: ${reason || 'Documents not valid'}. Please re-upload clear copies.`;
+                
+                // 1. Create In-App Notification (Bell Icon)
+                await Notification.create({
+                    user: actualUserId,
+                    userType: request.entityType.toUpperCase(),
+                    title: notificationTitle,
+                    message: notificationMessage,
+                    type: 'VERIFICATION',
+                    priority: 'MEDIUM',
+                    metadata: { requestId: request._id, status: 'Rejected' }
+                });
+
+                // 2. Send Push Notification (FCM)
+                await sendNotificationToUser(actualUserId, {
+                    title: notificationTitle,
+                    body: notificationMessage,
+                    data: { 
+                        type: 'VERIFICATION_UPDATE',
+                        status: 'Rejected',
+                        requestId: request._id.toString()
+                    }
+                });
+
+                console.log(`[SUCCESS] Verification rejection notification sent to user ${actualUserId}`);
+            }
+        } catch (notifError) {
+            console.error('[ERROR] Failed to send verification rejection notification:', notifError);
+        }
 
     } catch (error) {
         res.status(500).json({
@@ -364,6 +482,50 @@ export const submitVerificationRequest = async (req, res) => {
             message: 'Verification request submitted successfully',
             data: { verificationRequest }
         });
+
+        // NOTIFY ALL ADMINS (Non-blocking — runs after response is sent)
+        try {
+            const entityLabel = entityType === 'labour' ? 'Labour' :
+                entityType === 'contractor' ? 'Contractor' : 'User';
+            const submitterName = name || 'Someone';
+            const notifTitle = `New ${entityLabel} Verification Request 🔔`;
+            const notifMessage = `${submitterName} has submitted documents for verification. Please review.`;
+
+            // 1. In-App Bell Notification for all active admins
+            const Admin = (await import('../models/Admin.model.js')).default;
+            const admins = await Admin.find({ isActive: true });
+            const adminNotifications = admins.map(admin =>
+                Notification.create({
+                    user: admin._id,
+                    userType: 'ADMIN',
+                    title: notifTitle,
+                    message: notifMessage,
+                    type: 'VERIFICATION',
+                    priority: 'HIGH',
+                    metadata: {
+                        requestId: verificationRequest._id,
+                        entityType,
+                        submitterName: name
+                    }
+                })
+            );
+            await Promise.allSettled(adminNotifications);
+
+            // 2. Push Notification to admin browsers
+            await sendNotificationToAdmin({
+                title: notifTitle,
+                body: notifMessage,
+                data: {
+                    type: 'NEW_VERIFICATION_REQUEST',
+                    entityType,
+                    requestId: verificationRequest._id.toString()
+                }
+            });
+
+            console.log(`[ADMIN NOTIFY] Verification submit notification sent for ${entityType} (${name})`);
+        } catch (notifError) {
+            console.error('[ERROR] Failed to send admin notification on submit:', notifError);
+        }
 
     } catch (error) {
         console.error('❌ SUBMIT VERIFICATION ERROR:', error.message);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import UserBottomNav from '../components/UserBottomNav';
 import UserHeader from '../components/UserHeader';
 import { labourAPI } from '../../../services/api';
@@ -38,7 +38,7 @@ const HireWorkers = () => {
                 const response = await labourAPI.getSentHireRequests({ requesterModel: 'User' });
 
                 if (response.success) {
-                    console.log('📊 Sent hire requests:', response.data.hireRequests);
+                    console.log('[INFO] Sent hire requests:', response.data.hireRequests);
 
                     // Create state map from requests
                     const uiStateMap = {};
@@ -61,8 +61,8 @@ const HireWorkers = () => {
                         }
                     });
 
-                    console.log('✅ Final UI state map:', uiStateMap);
-                    console.log('✅ Final chatId map:', chatIdMap);
+                    console.log('[SUCCESS] Final UI state map:', uiStateMap);
+                    console.log('[SUCCESS] Final chatId map:', chatIdMap);
                     setHiredWorkers(uiStateMap);
                     setChatIds(chatIdMap);
                 }
@@ -273,7 +273,7 @@ const HireWorkers = () => {
                 setHiredWorkers(updatedHired);
 
                 // Show success message
-                alert('✅ Hire request sent successfully!');
+                alert('Hire request sent successfully!');
             }
 
         } catch (error) {
@@ -396,9 +396,13 @@ const HireWorkers = () => {
                                             <p className="text-sm text-gray-600">🔧 {card.primarySkill}</p>
                                             <div className="flex gap-1 mt-1">
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <span key={star} className={`text-lg transition-all STAR_SYMBOL星 ${star <= card.rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                                        ★
-                                                    </span>
+                                                    <Star
+                                                        key={star}
+                                                        className={`w-5 h-5 transition-all ${star <= card.rating
+                                                                ? 'text-yellow-400 fill-yellow-400'
+                                                                : 'text-gray-300'
+                                                            }`}
+                                                    />
                                                 ))}
                                             </div>
                                         </div>
@@ -478,7 +482,7 @@ const HireWorkers = () => {
                                                             }
 
                                                             // Fallback: Initialize new chat
-                                                            console.log('🚀 Initializing new chat with worker...');
+                                                            console.log('[INFO] Initializing new chat with worker...');
                                                             const initResponse = await chatAPI.initializeChat({
                                                                 participant2Id: card.userId,
                                                                 participant2Type: 'Labour',
@@ -489,7 +493,7 @@ const HireWorkers = () => {
                                                             });
 
                                                             if (initResponse.success && initResponse.data.chat) {
-                                                                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                                                                console.log('[SUCCESS] Chat initialized:', initResponse.data.chat._id);
                                                                 navigate(`/user/chat/${initResponse.data.chat._id}`);
                                                                 return;
                                                             }
@@ -518,9 +522,9 @@ const HireWorkers = () => {
                                                     }`}
                                             >
                                                 {hiredWorkers[card.id] === 'declined'
-                                                    ? '✗ Declined'
+                                                    ? '\u2717 Declined'
                                                     : hiredWorkers[card.id] === 'pending'
-                                                        ? '⏳ Request Sent'
+                                                        ? '\u231B Request Sent'
                                                         : 'Hire Worker'}
                                             </button>
                                         )}
@@ -538,13 +542,24 @@ const HireWorkers = () => {
                     <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
                             <h2 className="text-xl font-bold">Worker Details</h2>
-                            <button onClick={handleCloseModal} className="text-2xl">×</button>
+                            <button
+                                onClick={handleCloseModal}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-gray-500" />
+                            </button>
                         </div>
 
                         <div className="p-4 space-y-3">
                             <div><label className="text-sm text-gray-500">Full Name</label><p className="font-medium">{selectedCard.fullName}</p></div>
                             <div><label className="text-sm text-gray-500">Primary Skill</label><p className="font-medium">{selectedCard.primarySkill}</p></div>
-                            <div><label className="text-sm text-gray-500">Rating</label><p className="font-medium">{selectedCard.rating} ⭐</p></div>
+                            <div>
+                                <label className="text-sm text-gray-500">Rating</label>
+                                <div className="flex items-center gap-1 font-medium">
+                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                    <span>{selectedCard.rating} / 5</span>
+                                </div>
+                            </div>
                             <div><label className="text-sm text-gray-500">Gender</label><p className="font-medium">{selectedCard.gender}</p></div>
                             <div><label className="text-sm text-gray-500">Mobile</label><p className="font-medium">{selectedCard.mobileNumber}</p></div>
                             <div><label className="text-sm text-gray-500">City</label><p className="font-medium">{selectedCard.city}</p></div>

@@ -84,7 +84,7 @@ const LabourDetails = () => {
             const data = await response.json();
 
             if (data.success) {
-                console.log('âœ… Work details saved to database');
+                console.log('[SUCCESS] Work details saved to database');
                 toast.success('Profile completed successfully!');
                 navigate('/labour/find-user');
             } else {

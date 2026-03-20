@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     CheckCircle,
     XCircle,
@@ -22,6 +23,16 @@ const VerificationManagement = () => {
     const [verificationRequests, setVerificationRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const location = useLocation();
+
+    // Read ?filter= param from URL (set by bell notification click)
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const filter = params.get('filter');
+        if (filter && ['user', 'labour', 'contractor'].includes(filter)) {
+            setActiveCategory(filter);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         fetchVerificationRequests();

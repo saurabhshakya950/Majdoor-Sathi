@@ -5,7 +5,8 @@ import {
     changePassword,
     verifyToken,
     getAdminProfile,
-    updateAdminProfile
+    updateAdminProfile,
+    saveFcmToken
 } from '../controllers/auth.admin.controller.js';
 import { protectAdmin } from '../middleware/admin.auth.middleware.js';
 import {
@@ -25,5 +26,6 @@ router.put('/change-password', protectAdmin, validateChangePassword, changePassw
 router.get('/verify-token', protectAdmin, verifyToken);
 router.get('/profile', protectAdmin, getAdminProfile);
 router.put('/profile', protectAdmin, validateUpdateAdminProfile, updateAdminProfile);
+router.post('/fcm-token', protectAdmin, saveFcmToken);
 
 export default router;

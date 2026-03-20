@@ -19,7 +19,7 @@ const History = () => {
         // Auto-refresh every 10 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing history...');
+                console.log('[REFRESH] Auto-refreshing history...');
                 loadHistory();
             }
         }, 10000);
@@ -29,17 +29,17 @@ const History = () => {
 
     const loadHistory = async () => {
         try {
-            console.log('🔵 Loading application history from database...');
+            console.log('[INFO] Loading application history from database...');
             const response = await jobAPI.getApplicationHistory();
 
             if (response.success) {
-                console.log('✅ History loaded:', response.data.history.length, 'items');
-                console.log('📊 History data sample:', response.data.history[0]);
+                console.log('[SUCCESS] History loaded:', response.data.history.length, 'items');
+                console.log('[DEBUG] History data sample:', response.data.history[0]);
                 setHistory(response.data.history);
                 setFilteredHistory(response.data.history);
             }
         } catch (error) {
-            console.error('❌ Failed to load history:', error);
+            console.error('[ERROR] Failed to load history:', error);
             // Fallback to localStorage
             const savedHistory = JSON.parse(localStorage.getItem('request_history') || '[]');
             setHistory(savedHistory);

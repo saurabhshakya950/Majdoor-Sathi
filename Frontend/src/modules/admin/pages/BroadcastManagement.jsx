@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Plus, Edit, Trash2, Users, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Send, Plus, Edit, Trash2, Users, Clock, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { broadcastAPI } from '../../../services/admin.api';
 import './AdminDashboard.css';
@@ -344,32 +344,38 @@ const BroadcastManagement = () => {
                                             {getAudienceBadge(broadcast.targetAudience)}
                                         </div>
                                     </div>
-                                    {broadcast.status !== 'SENT' && broadcast.status !== 'SENDING' && (
-                                        <div className="broadcast-card-actions">
-                                            <button
-                                                className="action-btn send-btn"
-                                                onClick={() => handleSend(broadcast._id)}
-                                                title="Send Now"
-                                                disabled={loading}
-                                            >
-                                                <Send size={18} />
-                                            </button>
-                                            <button
-                                                className="action-btn edit-btn"
-                                                onClick={() => handleOpenModal('edit', broadcast)}
-                                                title="Edit"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                className="action-btn delete-btn"
-                                                onClick={() => handleDelete(broadcast._id)}
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="broadcast-card-actions">
+                                        {/* Show Send and Edit only if not already sent or sending */}
+                                        {broadcast.status !== 'SENT' && broadcast.status !== 'SENDING' && (
+                                            <>
+                                                <button
+                                                    className="action-btn send-btn"
+                                                    onClick={() => handleSend(broadcast._id)}
+                                                    title="Send Now"
+                                                    disabled={loading}
+                                                >
+                                                    <Send size={18} />
+                                                </button>
+                                                <button
+                                                    className="action-btn edit-btn"
+                                                    onClick={() => handleOpenModal('edit', broadcast)}
+                                                    title="Edit"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        {/* Always show delete button to manage history */}
+                                        <button
+                                            className="action-btn delete-btn"
+                                            onClick={() => handleDelete(broadcast._id)}
+                                            title="Delete"
+                                            disabled={loading}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <p className="broadcast-message-text">{broadcast.message}</p>
@@ -420,7 +426,7 @@ const BroadcastManagement = () => {
                         <div className="broadcast-modal-header">
                             <h2>{modalMode === 'create' ? 'Create New Broadcast' : 'Edit Broadcast'}</h2>
                             <button className="broadcast-modal-close" onClick={handleCloseModal}>
-                                &times;
+                                <X size={24} />
                             </button>
                         </div>
 

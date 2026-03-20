@@ -16,7 +16,7 @@ const ContractorRequest = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing contractor applications...');
+                console.log('[REFRESH] Auto-refreshing contractor applications...');
                 loadContractorApplications();
             }
         }, 5000);
@@ -29,7 +29,7 @@ const ContractorRequest = () => {
             const response = await jobAPI.getContractorApplications();
 
             if (response.success) {
-                console.log('✅ Loaded contractor applications:', response.data.applications);
+                console.log('[SUCCESS] Loaded contractor applications:', response.data.applications);
 
                 // Transform to match component expectations
                 const formattedRequests = response.data.applications.map(app => ({

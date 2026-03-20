@@ -16,7 +16,7 @@ const WorkersRequest = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing labour applications...');
+                console.log('[REFRESH] Auto-refreshing labour applications...');
                 loadApplications();
             }
         }, 5000);
@@ -26,15 +26,15 @@ const WorkersRequest = () => {
 
     const loadApplications = async () => {
         try {
-            console.log('🔵 Loading labour applications...');
+            console.log('[INFO] Loading labour applications...');
             const response = await contractorAPI.getContractorJobApplications();
 
             if (response.success) {
-                console.log('✅ Applications loaded:', response.data.applications.length);
+                console.log('[SUCCESS] Applications loaded:', response.data.applications.length);
                 setApplications(response.data.applications);
             }
         } catch (error) {
-            console.error('❌ Failed to load applications:', error);
+            console.error('[ERROR] Failed to load applications:', error);
         } finally {
             setLoading(false);
         }
@@ -42,7 +42,7 @@ const WorkersRequest = () => {
 
     const handleAccept = async (jobId, applicationId) => {
         try {
-            console.log('🟢 Accepting application:', applicationId);
+            console.log('[INFO] Accepting application:', applicationId);
 
             const response = await contractorAPI.updateContractorJobApplicationStatus(
                 jobId,
@@ -60,14 +60,14 @@ const WorkersRequest = () => {
                 await loadApplications();
             }
         } catch (error) {
-            console.error('❌ Failed to accept application:', error);
+            console.error('[ERROR] Failed to accept application:', error);
             toast.error('Failed to accept application');
         }
     };
 
     const handleDecline = async (jobId, applicationId) => {
         try {
-            console.log('🔴 Declining application:', applicationId);
+            console.log('[INFO] Declining application:', applicationId);
 
             const response = await contractorAPI.updateContractorJobApplicationStatus(
                 jobId,
@@ -85,7 +85,7 @@ const WorkersRequest = () => {
                 await loadApplications();
             }
         } catch (error) {
-            console.error('❌ Failed to decline application:', error);
+            console.error('[ERROR] Failed to decline application:', error);
             toast.error('Failed to decline application');
         }
     };

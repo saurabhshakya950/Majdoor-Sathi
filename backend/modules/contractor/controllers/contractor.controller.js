@@ -23,7 +23,8 @@ export const createContractorProfile = async (req, res, next) => {
             city,
             state,
             address,
-            mobileNumber
+            mobileNumber,
+            aadharNumber
         } = req.body;
 
         // Update User model with basic details only (location/type)
@@ -65,6 +66,7 @@ export const createContractorProfile = async (req, res, next) => {
             if (lastName) contractor.lastName = lastName;
             if (city) contractor.city = city;
             if (state) contractor.state = state;
+            if (aadharNumber) contractor.aadharNumber = aadharNumber;
             if (contractor.profileCompletionStatus === 'incomplete') {
                 contractor.profileCompletionStatus = 'basic';
             }
@@ -100,7 +102,8 @@ export const updateBusinessDetails = async (req, res, next) => {
             city,
             state,
             addressLine1,
-            landmark
+            landmark,
+            aadharNumber
         } = req.body;
 
         let contractor = await Contractor.findOne({ user: req.user._id });
@@ -126,6 +129,7 @@ export const updateBusinessDetails = async (req, res, next) => {
             if (state) contractor.state = state;
             if (addressLine1) contractor.addressLine1 = addressLine1;
             if (landmark) contractor.landmark = landmark;
+            if (aadharNumber) contractor.aadharNumber = aadharNumber;
             
             // Update profile completion status
             if (businessName && addressLine1) {

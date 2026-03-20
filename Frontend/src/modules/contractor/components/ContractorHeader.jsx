@@ -114,10 +114,19 @@ const ContractorHeader = memo(() => {
 
         fetchNotificationCount();
 
+        // Listen for notificationsRead event to update count instantly
+        const handleNotificationsRead = () => {
+            setNotificationCount(0);
+        };
+        window.addEventListener('notificationsRead', handleNotificationsRead);
+
         // Refresh count every 30 seconds
         const interval = setInterval(fetchNotificationCount, 30000);
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notificationsRead', handleNotificationsRead);
+        };
     }, [location]);
 
     const handleNotifications = () => {

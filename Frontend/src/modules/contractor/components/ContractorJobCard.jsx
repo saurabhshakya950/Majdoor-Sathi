@@ -13,7 +13,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
     const chatId = applicationData?.chatId;
 
     const handleChatClick = async () => {
-        console.log('🔵 Chat button clicked (Contractor Panel - User Job)');
+        console.log('[INFO] Chat button clicked (Contractor Panel - User Job)');
         console.log('Current chatId:', chatId);
         console.log('Job ID:', job.id);
         console.log('Job User Name:', job.userName);
@@ -24,9 +24,9 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
             const { jobAPI, chatAPI } = await import('../../../services/api');
 
             // ALWAYS check for existing chats first (most reliable method)
-            console.log('🔍 Checking for existing chats...');
+            console.log('[INFO] Checking for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
-            console.log('📊 User Chats Response:', chatsResponse);
+            console.log('[DEBUG] User Chats Response:', chatsResponse);
 
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
                 // Find chat with this user by ID (most accurate)
@@ -37,7 +37,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                 });
 
                 if (existingChat) {
-                    console.log('✅ Found existing chat by ID:', existingChat._id);
+                    console.log('[SUCCESS] Found existing chat by ID:', existingChat._id);
                     navigate(`/contractor/chat/${existingChat._id}`);
                     return;
                 }
@@ -50,16 +50,16 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                 });
 
                 if (existingChatByName) {
-                    console.log('✅ Found existing chat by name:', existingChatByName._id);
+                    console.log('[SUCCESS] Found existing chat by name:', existingChatByName._id);
                     navigate(`/contractor/chat/${existingChatByName._id}`);
                     return;
                 }
 
-                console.log('⚠️ No existing chat found with this user');
+                console.log('[INFO] No existing chat found with this user');
             }
 
             // If no chat found via list, OR if chatId is null, INITIALIZE it
-            console.log('🚀 Initializing new chat with user...');
+            console.log('[INFO] Initializing new chat with user...');
             const initResponse = await chatAPI.initializeChat({
                 participant2Id: job.userId,
                 participant2Type: 'User',
@@ -70,16 +70,16 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
             });
 
             if (initResponse.success && initResponse.data.chat) {
-                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                console.log('[SUCCESS] Chat initialized:', initResponse.data.chat._id);
                 navigate(`/contractor/chat/${initResponse.data.chat._id}`);
                 return;
             }
 
-            console.log('❌ Failed to initialize chat, redirecting to chat list');
+            console.log('[ERROR] Failed to initialize chat, redirecting to chat list');
             navigate('/contractor/chat');
 
         } catch (error) {
-            console.error('❌ Failed to open chat:', error);
+            console.error('[ERROR] Failed to open chat:', error);
             // On error, still try to navigate to chat list
             navigate('/contractor/chat');
         }
@@ -112,13 +112,13 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
 
     if (applicationStatus === 'Accepted') {
         buttonClass = 'bg-green-500 text-white cursor-default';
-        buttonText = '✓ Approved';
+        buttonText = '\u2713 Approved';
     } else if (applicationStatus === 'Rejected') {
         buttonClass = 'bg-gray-500 text-white cursor-default';
-        buttonText = '✗ Declined';
+        buttonText = '\u2717 Declined';
     } else if (isApplied) {
         buttonClass = 'bg-orange-500 text-white cursor-default';
-        buttonText = '⏳ Request Sent';
+        buttonText = '\u231B Request Sent';
     } else if (job.status === 'Open') {
         buttonClass = 'btn-primary';
     } else {
@@ -172,7 +172,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                     <span>
                         {job.budgetType === 'Negotiable'
                             ? 'Negotiable'
-                            : `₹${job.budgetAmount}`}
+                            : `\u20B9${job.budgetAmount}`}
                     </span>
                 </div>
             </div>
@@ -191,7 +191,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                             disabled
                             className="flex-1 bg-green-500 text-white cursor-default shadow-md font-semibold py-2 rounded-lg text-sm"
                         >
-                            ✓ Approved
+                            \u2713 Approved
                         </button>
                         <button
                             onClick={handleChatClick}

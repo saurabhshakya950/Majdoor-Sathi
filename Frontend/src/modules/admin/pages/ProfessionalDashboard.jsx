@@ -28,6 +28,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { Outlet, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
+import { adminNotificationAPI } from '../../../services/admin.api';
 import './AdminDashboard.css';
 
 // Internal Components
@@ -355,7 +356,7 @@ export function DashboardHome() {
                     <div className="right-panel-item">
                         <h3>Revenue Tracking</h3>
                         <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '10px 0' }}>
-                            ₹{analytics?.revenue?.total?.toLocaleString() || '0'}
+                            \u20B9{analytics?.revenue?.total?.toLocaleString() || '0'}
                         </p>
                         <div style={{ height: '100px', display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '16px', position: 'relative' }}>
                             {(() => {
@@ -398,6 +399,10 @@ export function DashboardHome() {
 const ProfessionalDashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const notifRef = React.useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
     const [adminData, setAdminData] = useState(() => {
@@ -443,6 +448,53 @@ const ProfessionalDashboard = () => {
 
         refreshAdminInfo();
     }, [location.pathname]);
+
+    // Fetch admin notifications
+    const fetchNotifications = React.useCallback(async () => {
+        try {
+            const data = await adminNotificationAPI.getNotifications({ limit: 15 });
+            if (data.success) {
+                setNotifications(data.data.notifications || []);
+                setUnreadCount(data.data.unreadCount || 0);
+            }
+        } catch (err) {
+            // Silently fail — bell icon is non-critical
+        }
+    }, []);
+
+    React.useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
+
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setShowNotifDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleNotifClick = async (notif) => {
+        try { await adminNotificationAPI.markAsRead(notif._id); } catch (_) {}
+        setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        setShowNotifDropdown(false);
+
+        // Redirect to verification with correct filter
+        const entityType = notif.metadata?.entityType || 'labour';
+        navigate(`/admin/dashboard/verification?filter=${entityType}`);
+    };
+
+    const handleMarkAllRead = async () => {
+        try { await adminNotificationAPI.markAllAsRead(); } catch (_) {}
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+    };
 
     const adminRole = adminData.role;
     const adminName = adminData.name;
@@ -637,6 +689,103 @@ const ProfessionalDashboard = () => {
                 <header className="admin-header">
                     <div></div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+                        {/* Bell Icon with Notification Dropdown */}
+                        <div ref={notifRef} style={{ position: 'relative' }}>
+                            <button
+                                id="admin-bell-btn"
+                                onClick={() => setShowNotifDropdown(prev => !prev)}
+                                style={{
+                                    position: 'relative', background: 'none', border: 'none',
+                                    cursor: 'pointer', padding: '8px', borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'background 0.2s'
+                                }}
+                                title="Notifications"
+                            >
+                                <Bell size={22} color={unreadCount > 0 ? '#f97316' : '#6b7280'} />
+                                {unreadCount > 0 && (
+                                    <span style={{
+                                        position: 'absolute', top: '2px', right: '2px',
+                                        background: '#ef4444', color: 'white',
+                                        borderRadius: '50%', width: '18px', height: '18px',
+                                        fontSize: '0.65rem', fontWeight: 700,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: '2px solid white'
+                                    }}>
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Dropdown */}
+                            {showNotifDropdown && (
+                                <div id="admin-notif-dropdown" style={{
+                                    position: 'absolute', right: 0, top: '48px',
+                                    width: '340px', background: 'white',
+                                    borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                                    border: '1px solid #f3f4f6', zIndex: 1000, overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        padding: '16px 20px', borderBottom: '1px solid #f3f4f6',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                    }}>
+                                        <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Notifications</span>
+                                        {unreadCount > 0 && (
+                                            <button onClick={handleMarkAllRead} style={{
+                                                background: 'none', border: 'none', color: '#f97316',
+                                                fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600
+                                            }}>Mark all read</button>
+                                        )}
+                                    </div>
+                                    <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                                        {notifications.length === 0 ? (
+                                            <div style={{ padding: '32px', textAlign: 'center', color: '#9ca3af' }}>
+                                                <Bell size={32} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
+                                                <p style={{ margin: 0, fontSize: '0.9rem' }}>No notifications yet</p>
+                                            </div>
+                                        ) : (
+                                            notifications.map(notif => (
+                                                <div
+                                                    key={notif._id}
+                                                    id={`notif-${notif._id}`}
+                                                    onClick={() => handleNotifClick(notif)}
+                                                    style={{
+                                                        padding: '14px 20px',
+                                                        cursor: 'pointer',
+                                                        background: notif.isRead ? 'white' : '#fff7ed',
+                                                        borderBottom: '1px solid #f9fafb',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                                                    onMouseLeave={e => e.currentTarget.style.background = notif.isRead ? 'white' : '#fff7ed'}
+                                                >
+                                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                                        <div style={{
+                                                            width: '36px', height: '36px', borderRadius: '50%',
+                                                            background: notif.isRead ? '#f3f4f6' : '#fff7ed',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <Bell size={16} color={notif.isRead ? '#9ca3af' : '#f97316'} />
+                                                        </div>
+                                                        <div style={{ flex: 1 }}>
+                                                            <p style={{ margin: 0, fontWeight: notif.isRead ? 500 : 700, fontSize: '0.85rem', color: '#1a233a' }}>{notif.title}</p>
+                                                            <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#6b7280', lineHeight: 1.4 }}>{notif.message}</p>
+                                                            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: '#9ca3af' }}>
+                                                                {new Date(notif.createdAt).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
+                                                            </p>
+                                                        </div>
+                                                        {!notif.isRead && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f97316', flexShrink: 0, marginTop: '4px' }}></div>}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#ccc', overflow: 'hidden' }}>
                                 <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminName)}&background=f97316&color=fff`} alt="Admin" style={{ width: '100%' }} />

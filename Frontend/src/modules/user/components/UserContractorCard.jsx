@@ -1,4 +1,4 @@
-import { MapPin, Star, Phone, IndianRupee } from 'lucide-react';
+import { MapPin, Star, Phone, IndianRupee, Calendar, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
 
@@ -10,7 +10,7 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
     const chatId = hireRequest?.chatId;
 
     const handleChatClick = async () => {
-        console.log('🔵 Chat button clicked (User Panel)');
+        console.log('[INFO] Chat button clicked (User Panel)');
         console.log('Current chatId:', chatId);
         console.log('Card ID:', card.id);
         console.log('Card Contractor Name:', card.contractorName);
@@ -21,9 +21,9 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
             const { contractorAPI, chatAPI } = await import('../../../services/api');
 
             // ALWAYS check for existing chats first (most reliable method)
-            console.log('🔍 Checking for existing chats...');
+            console.log('[INFO] Checking for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
-            console.log('📊 User Chats Response:', chatsResponse);
+            console.log('[DEBUG] User Chats Response:', chatsResponse);
 
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
                 // Find chat with this contractor by ID (most accurate)
@@ -34,7 +34,7 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                 });
 
                 if (existingChat) {
-                    console.log('✅ Found existing chat by ID:', existingChat._id);
+                    console.log('[SUCCESS] Found existing chat by ID:', existingChat._id);
                     navigate(`/user/chat/${existingChat._id}`);
                     return;
                 }
@@ -47,16 +47,16 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                 });
 
                 if (existingChatByName) {
-                    console.log('✅ Found existing chat by name:', existingChatByName._id);
+                    console.log('[SUCCESS] Found existing chat by name:', existingChatByName._id);
                     navigate(`/user/chat/${existingChatByName._id}`);
                     return;
                 }
 
-                console.log('⚠️ No existing chat found with this contractor');
+                console.log('[INFO] No existing chat found with this contractor');
             }
 
             // If no chat found via list, INITIALIZE it
-            console.log('🚀 Initializing new chat with contractor...');
+            console.log('[INFO] Initializing new chat with contractor...');
             const initResponse = await chatAPI.initializeChat({
                 participant2Id: card.userId,
                 participant2Type: 'Contractor',
@@ -67,17 +67,17 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
             });
 
             if (initResponse.success && initResponse.data.chat) {
-                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                console.log('[SUCCESS] Chat initialized:', initResponse.data.chat._id);
                 navigate(`/user/chat/${initResponse.data.chat._id}`);
                 return;
             }
 
             // If still no chat found, navigate to chat list page
-            console.log('❌ No chat available through any method, redirecting to chat list');
+            console.log('[ERROR] No chat available through any method, redirecting to chat list');
             navigate('/user/chat');
 
         } catch (error) {
-            console.error('❌ Failed to open chat:', error);
+            console.error('[ERROR] Failed to open chat:', error);
             // On error, still try to navigate to chat list
             navigate('/user/chat');
         }
@@ -122,7 +122,7 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                     <span>{card.experience}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <span className="font-medium">📅</span>
+                    <Calendar className="w-4 h-4" />
                     <span>{card.businessType}</span>
                 </div>
             </div>
@@ -161,9 +161,10 @@ const UserContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0, h
                         </button>
                         <button
                             onClick={handleChatClick}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-all active:scale-95 text-sm"
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
                         >
-                            💬 Chat
+                            <MessageSquare className="w-4 h-4" />
+                            Chat
                         </button>
                     </div>
                 </div>

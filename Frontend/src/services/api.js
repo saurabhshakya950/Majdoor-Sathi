@@ -483,7 +483,7 @@ export const contractorAPI = {
         return response.data;
     },
 
-    // Contractor Job Application APIs (Labour â†’ Contractor Job)
+    // Contractor Job Application APIs (Labour → Contractor Job)
     applyToContractorJob: async (jobId, message = '') => {
         const response = await api.post(`/contractor/jobs/${jobId}/apply`, { message });
         return response.data;

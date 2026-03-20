@@ -50,7 +50,7 @@ const JobCard = memo(({ job, onViewDetails, onToggleJobStatus, index = 0 }) => {
                     <span>
                         {job.budgetType === 'Negotiable' 
                             ? 'Negotiable' 
-                            : `₹${job.budgetAmount}`}
+                            : `\u20B9${job.budgetAmount}`}
                     </span>
                 </div>
             </div>

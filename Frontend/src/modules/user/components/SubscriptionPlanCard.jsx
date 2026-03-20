@@ -1,4 +1,4 @@
-import { Crown, Check, X } from 'lucide-react';
+import { Crown, Check, X, Star } from 'lucide-react';
 
 const SubscriptionPlanCard = ({ 
     plan, 
@@ -15,8 +15,9 @@ const SubscriptionPlanCard = ({
             }`}
         >
             {plan.popular && (
-                <div className="bg-yellow-400 text-gray-900 text-center py-2 font-bold text-sm">
-                    ⭐ MOST POPULAR
+                <div className="bg-yellow-400 text-gray-900 text-center py-2 font-bold text-sm flex items-center justify-center gap-2">
+                    <Star className="w-4 h-4 fill-gray-900" />
+                    MOST POPULAR
                 </div>
             )}
 
@@ -35,16 +36,14 @@ const SubscriptionPlanCard = ({
 
                 <div className="mb-6">
                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-bold text-gray-900">
-                            ₹{price}
-                        </span>
+                            \u20B9{price}
                         <span className="text-gray-600">
                             /{billingCycle === 'monthly' ? 'month' : 'year'}
                         </span>
                     </div>
                     {billingCycle === 'yearly' && plan.id === 'premium' && (
                         <p className="text-sm text-green-600 mt-1">
-                            Save ₹{(plan.monthlyPrice * 12) - plan.yearlyPrice} per year
+                            Save \u20B9{(plan.monthlyPrice * 12) - plan.yearlyPrice} per year
                         </p>
                     )}
                 </div>

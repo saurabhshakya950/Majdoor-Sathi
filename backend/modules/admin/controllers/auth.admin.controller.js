@@ -6,7 +6,7 @@ import { generateAccessToken, generateRefreshToken } from '../../../utils/jwt.ut
 // @access  Public
 export const adminLogin = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, fcmToken, platform } = req.body;
 
         // Validation
         if (!username || !password) {
@@ -49,6 +49,24 @@ export const adminLogin = async (req, res) => {
 
         // Update last login
         admin.lastLogin = new Date();
+
+        // Save FCM token if provided (non-blocking)
+        try {
+            if (fcmToken) {
+                const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+                if (!admin[tokenField]) admin[tokenField] = [];
+                if (!admin[tokenField].includes(fcmToken)) {
+                    admin[tokenField].push(fcmToken);
+                    // Keep only last 5 tokens
+                    if (admin[tokenField].length > 5) {
+                        admin[tokenField] = admin[tokenField].slice(-5);
+                    }
+                }
+            }
+        } catch (fcmError) {
+            console.warn('[WARNING] FCM token save failed (non-critical):', fcmError.message);
+        }
+
         await admin.save();
 
         // Remove password from response
@@ -272,6 +290,44 @@ export const updateAdminProfile = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error updating profile',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Save admin FCM token for push notifications
+// @route   POST /api/admin/auth/fcm-token
+// @access  Private
+export const saveFcmToken = async (req, res) => {
+    try {
+        const { fcmToken, platform } = req.body;
+
+        if (!fcmToken) {
+            return res.status(400).json({ success: false, message: 'FCM token is required' });
+        }
+
+        const admin = await Admin.findById(req.admin._id);
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Admin not found' });
+        }
+
+        const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+        if (!admin[tokenField]) admin[tokenField] = [];
+
+        if (!admin[tokenField].includes(fcmToken)) {
+            admin[tokenField].push(fcmToken);
+            if (admin[tokenField].length > 5) {
+                admin[tokenField] = admin[tokenField].slice(-5);
+            }
+            await admin.save();
+        }
+
+        res.status(200).json({ success: true, message: 'FCM token saved successfully' });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error saving FCM token',
             error: error.message
         });
     }

@@ -55,7 +55,7 @@ const OTPVerification = () => {
                 const data = await response.json();
 
                 if (data.success) {
-                    toast.success('âœ… OTP Verified Successfully!');
+                    toast.success('OTP Verified Successfully!');
 
                     // Store tokens and user info
                     localStorage.setItem('access_token', data.data.accessToken);

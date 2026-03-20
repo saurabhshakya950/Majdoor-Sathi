@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Trash2, Check, CheckCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -34,8 +34,15 @@ const Notifications = () => {
             const data = await response.json();
 
             if (data.success) {
-                setNotifications(data.data.notifications || []);
-                setUnreadCount(data.data.unreadCount || 0);
+                const fetchedNotifications = data.data.notifications || [];
+                const count = data.data.unreadCount || 0;
+                setNotifications(fetchedNotifications);
+                setUnreadCount(count);
+
+                // Automatically mark all as read if there are unread notifications
+                if (count > 0) {
+                    markAllAsRead(true);
+                }
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -65,26 +72,38 @@ const Notifications = () => {
         }
     };
 
-    const markAllAsRead = async () => {
+    const markAllAsRead = async (silent = false) => {
         try {
             const token = localStorage.getItem('access_token');
 
             const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/read-all`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userType: 'CONTRACTOR' })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                toast.success('All notifications marked as read');
-                fetchNotifications();
+                if (!silent) {
+                    toast.success('All notifications marked as read');
+                }
+                
+                // Update local state instead of re-fetching to prevent infinite loops
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                setUnreadCount(0);
+
+                // Notify other components (like Header) to update the badge
+                window.dispatchEvent(new Event('notificationsRead'));
             }
         } catch (error) {
             console.error('Error marking all as read:', error);
-            toast.error('Failed to mark all as read');
+            if (!silent) {
+                toast.error('Failed to mark all as read');
+            }
         }
     };
 

@@ -1,4 +1,5 @@
 import User from '../modules/user/models/User.model.js';
+import Admin from '../modules/admin/models/Admin.model.js';
 import { sendPushNotification } from './firebaseAdmin.js';
 
 /**
@@ -157,5 +158,43 @@ export const broadcastNotification = async (payload) => {
         }
     } catch (error) {
         console.error('Error in broadcastNotification:', error);
+    }
+};
+
+/**
+ * Send push notification to all active admins
+ * @param {Object} payload - Notification details { title, body, data }
+ */
+export const sendNotificationToAdmin = async (payload) => {
+    try {
+        const admins = await Admin.find({ isActive: true });
+
+        let allTokens = [];
+        admins.forEach(admin => {
+            if (admin.fcmTokenWeb && admin.fcmTokenWeb.length > 0) {
+                allTokens.push(admin.fcmTokenWeb[admin.fcmTokenWeb.length - 1]);
+            }
+            if (admin.fcmTokenMobile && admin.fcmTokenMobile.length > 0) {
+                allTokens.push(admin.fcmTokenMobile[admin.fcmTokenMobile.length - 1]);
+            }
+        });
+
+        const uniqueTokens = [...new Set(allTokens)].filter(token => !!token);
+
+        if (uniqueTokens.length === 0) {
+            console.log('[ADMIN NOTIFY] No active FCM tokens found for admins');
+            return;
+        }
+
+        const frontendUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        const finalPayload = {
+            ...payload,
+            icon: `${frontendUrl}/logo.png`,
+        };
+
+        console.log(`[ADMIN NOTIFY] Sending notification to ${uniqueTokens.length} admin token(s)`);
+        await sendPushNotification(uniqueTokens, finalPayload);
+    } catch (error) {
+        console.error('Error in sendNotificationToAdmin:', error);
     }
 };

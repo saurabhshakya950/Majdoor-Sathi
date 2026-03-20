@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import ContractorPageHeader from '../components/ContractorPageHeader';
 import { contractorAPI, categoryAPI } from '../../../services/api';
 
@@ -357,7 +358,7 @@ const PostJob = () => {
                         {formData.budgetType === 'Fixed Amount' && (
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Budget Amount (₹) *
+                                    Budget Amount (\u20B9) *
                                 </label>
                                 <input
                                     type="number"
@@ -383,12 +384,10 @@ const PostJob = () => {
                                     onClick={() => setFormData(prev => ({ ...prev, rating: star }))}
                                     className="transition-transform hover:scale-110"
                                 >
-                                    <span className={`text-4xl ${star <= formData.rating
-                                            ? 'text-yellow-400'
+                                    <Star className={`w-10 h-10 ${star <= formData.rating
+                                            ? 'text-yellow-400 fill-yellow-400'
                                             : 'text-gray-300'
-                                        }`}>
-                                        ★
-                                    </span>
+                                        }`} />
                                 </button>
                             ))}
                         </div>

@@ -28,14 +28,14 @@ const FindUser = () => {
         // Auto-refresh every 5 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('ðŸ”„ Auto-refreshing labour application statuses...');
+                console.log('[REFRESH] Auto-refreshing labour application statuses...');
                 loadApplicationStatuses();
             }
         }, 5000);
 
         // Listen for application updates
         const handleApplicationUpdate = () => {
-            console.log('ðŸ“¢ Labour application update event received');
+            console.log('[EVENT] Labour application update event received');
             loadApplicationStatuses();
         };
 
@@ -52,7 +52,7 @@ const FindUser = () => {
             const response = await jobAPI.getMyApplications();
 
             if (response.success) {
-                console.log('âœ… Loaded labour application statuses:', response.data.applications);
+                console.log('[SUCCESS] Loaded labour application statuses:', response.data.applications);
                 setAppliedJobs(response.data.applications);
             }
         } catch (error) {
@@ -157,7 +157,7 @@ const FindUser = () => {
 
     const handleApplyNow = async (jobId) => {
         try {
-            console.log('ðŸ”µ Applying to job:', jobId);
+            console.log('[INFO] Applying to job:', jobId);
 
             // Fetch fresh profile from database
             const token = localStorage.getItem('access_token');
@@ -203,7 +203,7 @@ const FindUser = () => {
                 return;
             }
 
-            console.log('âœ… Profile verified:', { firstName, lastName, city });
+            console.log('[SUCCESS] Profile verified:', { firstName, lastName, city });
 
             // Find the job
             const job = jobs.find(j => j.id === jobId);
@@ -370,9 +370,9 @@ const FindUser = () => {
                                 <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
                                 <button
                                     onClick={handleCloseModal}
-                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                                 >
-                                    Ã—
+                                    <X className="w-6 h-6 text-gray-500" />
                                 </button>
                             </div>
 
@@ -412,7 +412,7 @@ const FindUser = () => {
                                     <p className="text-gray-900 font-medium">
                                         {selectedJob.budgetType === 'Negotiable'
                                             ? 'Negotiable'
-                                            : `â‚¹${selectedJob.budgetAmount}`}
+                                            : `\u20B9${selectedJob.budgetAmount}`}
                                     </p>
                                 </div>
 

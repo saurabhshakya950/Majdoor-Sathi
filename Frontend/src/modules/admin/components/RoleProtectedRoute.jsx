@@ -8,17 +8,17 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
 
     // Validate authentication found
     if (!isAuthenticated) {
-        console.log('🚫 RoleProtectedRoute: No valid authentication found');
+        console.log('[ERROR] RoleProtectedRoute: No valid authentication found');
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
     // Validate role if required
     if (allowedRoles && !allowedRoles.includes(userRole)) {
-        console.log('🚫 RoleProtectedRoute: Role not allowed:', userRole);
+        console.log('[ERROR] RoleProtectedRoute: Role not allowed:', userRole);
         return <Navigate to="/admin/dashboard/home" replace />;
     }
 
-    console.log('✅ RoleProtectedRoute: Access granted for role:', userRole);
+    console.log('[SUCCESS] RoleProtectedRoute: Access granted for role:', userRole);
     return children;
 };
 

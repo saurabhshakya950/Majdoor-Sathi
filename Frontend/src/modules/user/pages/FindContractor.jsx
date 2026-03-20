@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import UserBottomNav from '../components/UserBottomNav';
 import UserHeader from '../components/UserHeader';
 import UserContractorCard from '../components/UserContractorCard';
@@ -29,7 +29,7 @@ const FindContractor = () => {
         // Auto-refresh every 3 seconds when page is visible
         const intervalId = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing contractor hire request status...');
+                console.log('[REFRESH] Auto-refreshing contractor hire request status...');
                 loadHiredState();
             }
         }, 3000);
@@ -44,7 +44,7 @@ const FindContractor = () => {
         // Update when page becomes visible
         const handleVisibilityChange = () => {
             if (!document.hidden) {
-                console.log('👁️ Page visible, reloading cards...');
+                console.log('[VISIBILITY] Page visible, reloading cards...');
                 fetchContractorJobs();
                 loadHiredState();
             }
@@ -52,14 +52,14 @@ const FindContractor = () => {
 
         // Listen for focus event
         const handleFocus = () => {
-            console.log('🎯 Page focused, reloading cards...');
+            console.log('[FOCUS] Page focused, reloading cards...');
             fetchContractorJobs();
             loadHiredState();
         };
 
         // Listen for contractor hire request updates
         const handleContractorHireRequestUpdate = () => {
-            console.log('📢 Contractor hire request update event received');
+            console.log('[EVENT] Contractor hire request update event received');
             loadHiredState();
         };
 
@@ -83,7 +83,7 @@ const FindContractor = () => {
             const response = await contractorAPI.getSentContractorHireRequests();
 
             if (response.success) {
-                console.log('📊 Sent contractor hire requests:', response.data.hireRequests);
+                console.log('[DEBUG] Sent contractor hire requests:', response.data.hireRequests);
 
                 // Create state map from requests
                 const uiStateMap = {};
@@ -113,8 +113,8 @@ const FindContractor = () => {
                     }
                 });
 
-                console.log('✅ Final contractor UI state map:', uiStateMap);
-                console.log('✅ Final contractor requests map:', requestsMap);
+                console.log('[SUCCESS] Final contractor UI state map:', uiStateMap);
+                console.log('[SUCCESS] Final contractor requests map:', requestsMap);
                 setHiredContractors(uiStateMap);
 
                 // Store requests map in state for chat access
@@ -217,7 +217,7 @@ const FindContractor = () => {
                 setHiredContractors(updatedHired);
 
                 alert('Request sent successfully!');
-                console.log('✅ Contractor hire request created:', response.data);
+                console.log('[SUCCESS] Contractor hire request created:', response.data);
             }
         } catch (error) {
             console.error('Failed to create contractor hire request:', error);
@@ -345,9 +345,9 @@ const FindContractor = () => {
                             <h2 className="text-xl font-bold text-gray-900">Contractor Details</h2>
                             <button
                                 onClick={handleCloseModal}
-                                className="text-gray-500 hover:text-gray-700 text-2xl"
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                             >
-                                ×
+                                <X className="w-6 h-6 text-gray-500" />
                             </button>
                         </div>
 
@@ -380,7 +380,7 @@ const FindContractor = () => {
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Rating</label>
                                 <div className="flex items-center gap-1">
-                                    <span className="text-yellow-400">★</span>
+                                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                     <span className="text-gray-900 font-medium">{selectedCard.rating || 0}.0 / 5</span>
                                 </div>
                             </div>
@@ -392,7 +392,7 @@ const FindContractor = () => {
 
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Budget Amount</label>
-                                <p className="text-gray-900 font-medium">₹{selectedCard.budgetAmount}</p>
+                                <p className="text-gray-900 font-medium">{'₹'}{selectedCard.budgetAmount}</p>
                             </div>
 
                             <div>

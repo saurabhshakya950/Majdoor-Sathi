@@ -94,7 +94,7 @@ const LabourPersonalDetails = () => {
             }
 
             // Has token - save to backend with Cloudinary
-            console.log('📤 Updating labour profile with backend API...');
+            console.log('[INFO] Updating labour profile with backend API...');
 
             const updateData = {
                 firstName: formData.firstName,
@@ -109,13 +109,13 @@ const LabourPersonalDetails = () => {
 
             // Add profile photo if it's base64 (new upload)
             if (formData.profileImage && formData.profileImage.startsWith('data:image')) {
-                console.log('📸 Profile photo detected (base64), will upload to Cloudinary');
+                console.log('[INFO] Profile photo detected (base64), will upload to Cloudinary');
                 updateData.profilePhoto = formData.profileImage;
             }
 
             const response = await userAPI.updateProfile(updateData);
 
-            console.log('✅ Profile updated:', response);
+            console.log('[SUCCESS] Profile updated:', response);
 
             // Update localStorage with response data
             if (response.success) {
@@ -143,7 +143,7 @@ const LabourPersonalDetails = () => {
 
             toast.success('Changes saved successfully!');
         } catch (error) {
-            console.error('❌ Error updating profile:', error);
+            console.error('[ERROR] Error updating profile:', error);
             toast.error(error.response?.data?.message || 'Failed to update profile');
         }
     };

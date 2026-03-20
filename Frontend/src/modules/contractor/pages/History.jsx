@@ -33,15 +33,15 @@ const History = () => {
     const loadHistory = async (isSilent = false) => {
         try {
             if (!isSilent) setLoading(true);
-            console.log('🔵 Loading contractor application history from database...');
+            console.log('[INFO] Loading contractor application history from database...');
             const response = await contractorAPI.getContractorApplicationHistory();
 
             if (response.success) {
-                console.log('✅ History loaded:', response.data.history.length, 'items');
+                console.log('[SUCCESS] History loaded:', response.data.history.length, 'items');
                 setHistory(response.data.history);
             }
         } catch (error) {
-            console.error('❌ Failed to load history:', error);
+            console.error('[ERROR] Failed to load history:', error);
             setHistory([]);
         } finally {
             if (!isSilent) setLoading(false);

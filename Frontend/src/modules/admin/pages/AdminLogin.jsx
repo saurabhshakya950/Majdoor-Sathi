@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { HardHat, Lock, User, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminAuthAPI } from '../../../services/admin.api';
+import { getFCMToken } from '../../../services/pushNotificationService';
 import './AdminDashboard.css';
 
 const AdminLogin = () => {
@@ -26,7 +27,7 @@ const AdminLogin = () => {
                     throw new Error('Invalid token received from server');
                 }
 
-                console.log('✅ Login successful, storing auth data...');
+                console.log('[SUCCESS] Login successful, storing auth data...');
                 console.log('   Admin role:', response.data.admin.role);
                 console.log('   Admin username:', response.data.admin.username);
 
@@ -39,9 +40,20 @@ const AdminLogin = () => {
 
                 toast.success('Login successful!');
                 navigate('/admin/dashboard/home');
+
+                // Register FCM Token for admin push notifications (non-blocking)
+                try {
+                    const fcmToken = await getFCMToken();
+                    if (fcmToken) {
+                        await adminAuthAPI.saveFcmToken(fcmToken, 'web');
+                        console.log('[ADMIN] FCM Token registered successfully');
+                    }
+                } catch (fcmErr) {
+                    console.warn('[ADMIN] FCM token registration skipped:', fcmErr.message);
+                }
             }
         } catch (error) {
-            console.error('❌ Login error:', error);
+            console.error('[ERROR] Login error:', error);
             const errorMessage = error.response?.data?.message || error.message || 'Login failed. Please check your credentials.';
             toast.error(errorMessage);
         } finally {

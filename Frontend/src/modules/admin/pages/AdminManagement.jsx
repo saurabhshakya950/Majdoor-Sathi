@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Key, Search, UserCog, Shield, Users as UsersIcon, Briefcase, HardHat, X } from 'lucide-react';
 import { adminManagementAPI } from '../../../services/admin.api';
+import toast from 'react-hot-toast';
 
 const AdminManagement = () => {
     const [admins, setAdmins] = useState([]);
@@ -43,7 +44,7 @@ const AdminManagement = () => {
             }
         } catch (error) {
             console.error('Error fetching admins:', error);
-            alert('Failed to fetch admins');
+            toast.error('Failed to fetch admins');
         } finally {
             setLoading(false);
         }
@@ -65,7 +66,7 @@ const AdminManagement = () => {
         try {
             const response = await adminManagementAPI.createAdmin(formData);
             if (response.success) {
-                alert('Admin created successfully!');
+                toast.success('Admin created successfully!');
                 setShowCreateModal(false);
                 resetForm();
                 fetchAdmins();
@@ -73,7 +74,7 @@ const AdminManagement = () => {
             }
         } catch (error) {
             console.error('Error creating admin:', error);
-            alert(error.response?.data?.message || 'Failed to create admin');
+            toast.error(error.response?.data?.message || 'Failed to create admin');
         }
     };
 
@@ -82,30 +83,30 @@ const AdminManagement = () => {
         try {
             const response = await adminManagementAPI.updateAdmin(selectedAdmin._id, formData);
             if (response.success) {
-                alert('Admin updated successfully!');
+                toast.success('Admin updated successfully!');
                 setShowEditModal(false);
                 resetForm();
                 fetchAdmins();
             }
         } catch (error) {
             console.error('Error updating admin:', error);
-            alert(error.response?.data?.message || 'Failed to update admin');
+            toast.error(error.response?.data?.message || 'Failed to update admin');
         }
     };
 
     const handleDeleteAdmin = async (id, username) => {
-        if (!confirm(`Are you sure you want to delete admin "${username}"?`)) return;
+        if (!window.confirm(`Are you sure you want to delete admin "${username}"?`)) return;
 
         try {
             const response = await adminManagementAPI.deleteAdmin(id);
             if (response.success) {
-                alert('Admin deleted successfully!');
+                toast.success('Admin deleted successfully!');
                 fetchAdmins();
                 fetchStats();
             }
         } catch (error) {
             console.error('Error deleting admin:', error);
-            alert(error.response?.data?.message || 'Failed to delete admin');
+            toast.error(error.response?.data?.message || 'Failed to delete admin');
         }
     };
 
@@ -114,14 +115,14 @@ const AdminManagement = () => {
         try {
             const response = await adminManagementAPI.resetAdminPassword(selectedAdmin._id, newPassword);
             if (response.success) {
-                alert('Password reset successfully!');
+                toast.success('Password reset successfully!');
                 setShowPasswordModal(false);
                 setNewPassword('');
                 setSelectedAdmin(null);
             }
         } catch (error) {
             console.error('Error resetting password:', error);
-            alert(error.response?.data?.message || 'Failed to reset password');
+            toast.error(error.response?.data?.message || 'Failed to reset password');
         }
     };
 

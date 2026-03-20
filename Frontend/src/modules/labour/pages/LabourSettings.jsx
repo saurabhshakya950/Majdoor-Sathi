@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, User, Briefcase, Shield, Phone, Info, LogOut, MessageSquare, X, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Briefcase, Shield, Phone, Info, LogOut, MessageSquare, X, MessageCircle, Star } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
 import toast from 'react-hot-toast';
 import { authAPI } from '../../../services/api';
@@ -161,10 +161,12 @@ const LabourSettings = () => {
                                         onClick={() => setRating(star)}
                                         className="transition-transform hover:scale-110"
                                     >
-                                        <span className={`text-5xl ${star <= rating ? 'text-green-600' : 'text-gray-300'
-                                            }`}>
-                                            â˜…
-                                        </span>
+                                        <Star
+                                            className={`w-12 h-12 transition-all ${star <= rating
+                                                ? 'text-green-600 fill-green-600'
+                                                : 'text-gray-300'
+                                                }`}
+                                        />
                                     </button>
                                 ))}
                             </div>

@@ -1,4 +1,4 @@
-import { MapPin, Briefcase, Phone, Calendar, IndianRupee } from 'lucide-react';
+import { MapPin, Briefcase, Phone, Calendar, IndianRupee, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
 
@@ -20,7 +20,7 @@ const LabourContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0,
         switch (applicationStatus.status) {
             case 'Pending':
                 return {
-                    text: '⏳ Request Sent',
+                    text: '⌛ Request Sent',
                     className: 'flex-1 bg-orange-500 text-white font-bold py-2.5 rounded-lg cursor-not-allowed',
                     disabled: true
                 };
@@ -48,7 +48,7 @@ const LabourContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0,
     const buttonConfig = getButtonConfig();
 
     const handleChatClick = async () => {
-        console.log('🔵 Chat button clicked');
+        console.log('[INFO] Chat button clicked');
         console.log('Current chatId:', chatId);
         console.log('Card ID:', card.id);
         console.log('Card Contractor Name:', card.contractorName);
@@ -59,9 +59,9 @@ const LabourContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0,
             const { contractorAPI, chatAPI } = await import('../../../services/api');
             
             // ALWAYS check for existing chats first (most reliable method)
-            console.log('🔍 Checking for existing chats...');
+            console.log('[INFO] Checking for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
-            console.log('📊 User Chats Response:', chatsResponse);
+            console.log('[DEBUG] User Chats Response:', chatsResponse);
             
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
                 console.log('📋 Available chats:', chatsResponse.data.chats.map(c => ({
@@ -78,45 +78,45 @@ const LabourContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0,
                 });
                 
                 if (existingChat) {
-                    console.log('✅ Found existing chat with contractor:', existingChat._id);
+                    console.log('[SUCCESS] Found existing chat with contractor:', existingChat._id);
                     navigate(`/labour/chat/${existingChat._id}`);
                     return;
                 }
                 
-                console.log('⚠️ No existing chat found with this contractor name');
+                console.log('[INFO] No existing chat found with this contractor name');
             } else {
-                console.log('⚠️ No chats available or API failed');
+                console.log('[INFO] No chats available or API failed');
             }
             
             // If chatId is available in application status, use it
             if (chatId) {
-                console.log('✅ ChatId available in application status, navigating to:', `/labour/chat/${chatId}`);
+                console.log('[SUCCESS] ChatId available in application status, navigating to:', `/labour/chat/${chatId}`);
                 navigate(`/labour/chat/${chatId}`);
                 return;
             }
             
             // Fetch latest application status to get chatId
-            console.log('🔄 Fetching latest application status...');
+            console.log('[REFRESH] Fetching latest application status...');
             const response = await contractorAPI.getLabourApplications();
-            console.log('📊 Applications Response:', response);
+            console.log('[DEBUG] Applications Response:', response);
             
             if (response.success && response.data.applications) {
                 const updatedStatus = response.data.applications[card.id];
                 console.log('📋 Updated Status for card:', updatedStatus);
                 
                 if (updatedStatus?.chatId) {
-                    console.log('✅ ChatId found in updated application, navigating to:', `/labour/chat/${updatedStatus.chatId}`);
+                    console.log('[SUCCESS] ChatId found in updated application, navigating to:', `/labour/chat/${updatedStatus.chatId}`);
                     navigate(`/labour/chat/${updatedStatus.chatId}`);
                     return;
                 }
             }
             
             // If still no chat found, navigate to chat list page
-            console.log('❌ No chat available through any method, redirecting to chat list');
+            console.log('[ERROR] No chat available through any method, redirecting to chat list');
             navigate('/labour/chat');
             
         } catch (error) {
-            console.error('❌ Failed to open chat:', error);
+            console.error('[ERROR] Failed to open chat:', error);
             // On error, still try to navigate to chat list
             navigate('/labour/chat');
         }
@@ -201,9 +201,10 @@ const LabourContractorCard = memo(({ card, onViewDetails, onApplyNow, index = 0,
                         </button>
                         <button
                             onClick={handleChatClick}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-all active:scale-95 text-sm"
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
                         >
-                            💬 Chat
+                            <MessageSquare className="w-4 h-4" />
+                            Chat
                         </button>
                     </div>
                 </div>

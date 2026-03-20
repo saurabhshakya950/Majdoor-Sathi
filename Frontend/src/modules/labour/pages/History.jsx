@@ -18,7 +18,7 @@ const History = () => {
         // Auto-refresh every 10 seconds
         const interval = setInterval(() => {
             if (!document.hidden) {
-                console.log('🔄 Auto-refreshing labour history...');
+                console.log('[REFRESH] Auto-refreshing labour history...');
                 loadHistory();
             }
         }, 10000);
@@ -28,7 +28,7 @@ const History = () => {
 
     const loadHistory = async () => {
         try {
-            console.log('🔵 Loading labour hire request history from database...');
+            console.log('[INFO] Loading labour hire request history from database...');
 
             // Get accepted and declined hire requests
             const acceptedResponse = await labourAPI.getLabourHireRequests({ status: 'accepted' });
@@ -73,11 +73,11 @@ const History = () => {
             // Sort by most recent first
             formattedHistory.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
 
-            console.log('✅ History loaded:', formattedHistory.length, 'items');
-            console.log('📊 History data sample:', formattedHistory[0]);
+            console.log('[SUCCESS] History loaded:', formattedHistory.length, 'items');
+            console.log('[DEBUG] History data sample:', formattedHistory[0]);
             setHistory(formattedHistory);
         } catch (error) {
-            console.error('❌ Failed to load history:', error);
+            console.error('[ERROR] Failed to load history:', error);
             setHistory([]);
         } finally {
             setLoading(false);

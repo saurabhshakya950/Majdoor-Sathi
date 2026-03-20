@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Upload, User } from 'lucide-react';
+import { ChevronLeft, Upload, User, Star } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
 import toast from 'react-hot-toast';
 import { labourAPI } from '../../../services/api';
@@ -247,10 +247,10 @@ const CreateLabourCard = () => {
                                         key={star}
                                         type="button"
                                         onClick={() => handleRating(star)}
-                                        className={`text-3xl ${star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'
+                                        className={`transition-all ${star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'
                                             }`}
                                     >
-                                        ★
+                                        <Star className={`w-10 h-10 ${star <= formData.rating ? 'fill-yellow-400' : ''}`} />
                                     </button>
                                 ))}
                             </div>

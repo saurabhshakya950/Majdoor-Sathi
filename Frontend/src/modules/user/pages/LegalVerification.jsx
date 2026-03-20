@@ -282,19 +282,19 @@ const LegalVerification = () => {
 
                 {verificationStatus === 'submitted' && (
                     <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <p className="text-sm text-blue-700 font-medium">â³ Your verification is pending. Admin will review your documents soon.</p>
+                        <p className="text-sm text-blue-700 font-medium">⏳ Your verification is pending. Admin will review your documents soon.</p>
                     </div>
                 )}
 
                 {verificationStatus === 'verified' && (
                     <div className="mb-4 bg-green-50 border border-green-200 rounded-xl p-4">
-                        <p className="text-sm text-green-700 font-medium">âœ… Your documents have been verified successfully!</p>
+                        <p className="text-sm text-green-700 font-medium">✅ Your documents have been verified successfully!</p>
                     </div>
                 )}
 
                 {verificationStatus === 'rejected' && (
                     <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
-                        <p className="text-sm text-red-700 font-medium">âŒ Your verification was rejected. Please upload correct documents and try again.</p>
+                        <p className="text-sm text-red-700 font-medium">❌ Your verification was rejected. Please upload correct documents and try again.</p>
                     </div>
                 )}
 

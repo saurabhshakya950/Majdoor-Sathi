@@ -148,36 +148,36 @@ const ContractorManagement = () => {
     };
 
     const openActionModal = async (type, contractor) => {
-        console.log('🔵 Opening action modal:', type, 'for contractor:', contractor._id);
+        console.log('[INFO] Opening action modal:', type, 'for contractor:', contractor._id);
         setActionModal({ type, userId: contractor._id, data: [] });
         setLoading(true);
 
         try {
             let response;
             if (type === 'user') {
-                console.log('📡 Calling getContractorUserRequests for contractor:', contractor._id);
+                console.log('[INFO] Calling getContractorUserRequests for contractor:', contractor._id);
                 response = await contractorManagementAPI.getContractorUserRequests(contractor._id);
-                console.log('📦 Full API Response:', JSON.stringify(response, null, 2));
+                console.log('[INFO] Full API Response (User Requests):', JSON.stringify(response, null, 2));
                 
                 // Backend returns response.data.requests
                 const requests = response.data.requests || [];
-                console.log('✅ Setting modal data with', requests.length, 'user requests');
+                console.log('[SUCCESS] Setting modal data with', requests.length, 'user requests');
                 setActionModal({ type, userId: contractor._id, data: requests });
             } else if (type === 'labour') {
-                console.log('📡 Calling getContractorLabourRequests for contractor:', contractor._id);
+                console.log('[INFO] Calling getContractorLabourRequests for contractor:', contractor._id);
                 response = await contractorManagementAPI.getContractorLabourRequests(contractor._id);
-                console.log('📦 Full API Response:', JSON.stringify(response, null, 2));
+                console.log('[INFO] Full API Response (Labour Requests):', JSON.stringify(response, null, 2));
                 
                 // Backend returns response.data.requests
                 const requests = response.data.requests || [];
-                console.log('✅ Setting modal data with', requests.length, 'labour requests');
+                console.log('[SUCCESS] Setting modal data with', requests.length, 'labour requests');
                 setActionModal({ type, userId: contractor._id, data: requests });
             } else if (type === 'feedback') {
                 response = await contractorManagementAPI.getContractorFeedbacks(contractor._id);
                 setActionModal({ type, userId: contractor._id, data: response.data.feedbacks || [] });
             }
         } catch (error) {
-            console.error('❌ Error fetching action data:', error);
+            console.error('[ERROR] Error fetching action data:', error);
             console.error('Error response:', error.response);
             console.error('Error message:', error.message);
             toast.error('Failed to fetch data');

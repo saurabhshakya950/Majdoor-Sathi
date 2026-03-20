@@ -13,20 +13,20 @@ const WorkerRequestCard = memo(({ request, onAccept, onDecline, index = 0, showB
     const time = request.time || 'N/A';
 
     const handleChatClick = async () => {
-        console.log('🔵 Chat button clicked (WorkerRequestCard)');
+        console.log('[INFO] Chat button clicked (WorkerRequestCard)');
 
         try {
             const { chatAPI } = await import('../../../services/api');
 
             // Prefer direct chatId if available
             if (request.chatId) {
-                console.log('✅ Using direct chatId from request');
+                console.log('[SUCCESS] Using direct chatId from request');
                 navigate(`/user/chat/${request.chatId}`);
                 return;
             }
 
             // Fallback: Search for existing chats
-            console.log('🔍 Searching for existing chats...');
+            console.log('[INFO] Searching for existing chats...');
             const chatsResponse = await chatAPI.getUserChats();
 
             if (chatsResponse.success && chatsResponse.data.chats && chatsResponse.data.chats.length > 0) {
@@ -38,7 +38,7 @@ const WorkerRequestCard = memo(({ request, onAccept, onDecline, index = 0, showB
                 });
 
                 if (existingChat) {
-                    console.log('✅ Found existing chat by applicant ID');
+                    console.log('[SUCCESS] Found existing chat by applicant ID');
                     navigate(`/user/chat/${existingChat._id}`);
                     return;
                 }
@@ -51,14 +51,14 @@ const WorkerRequestCard = memo(({ request, onAccept, onDecline, index = 0, showB
                 });
 
                 if (existingChatByName) {
-                    console.log('✅ Found existing chat by name');
+                    console.log('[SUCCESS] Found existing chat by name');
                     navigate(`/user/chat/${existingChatByName._id}`);
                     return;
                 }
             }
 
             // Fallback: Initialize new chat
-            console.log('🚀 Initializing new chat with worker...');
+            console.log('[INFO] Initializing new chat with worker...');
             const initResponse = await chatAPI.initializeChat({
                 participant2Id: request.applicantUserId,
                 participant2Type: 'Labour',
@@ -69,15 +69,15 @@ const WorkerRequestCard = memo(({ request, onAccept, onDecline, index = 0, showB
             });
 
             if (initResponse.success && initResponse.data.chat) {
-                console.log('✅ Chat initialized:', initResponse.data.chat._id);
+                console.log('[SUCCESS] Chat initialized:', initResponse.data.chat._id);
                 navigate(`/user/chat/${initResponse.data.chat._id}`);
                 return;
             }
 
-            console.log('❌ No chat found, navigating to chat list');
+            console.log('[ERROR] No chat found, navigating to chat list');
             navigate('/user/chat');
         } catch (error) {
-            console.error('❌ Failed to open chat:', error);
+            console.error('[ERROR] Failed to open chat:', error);
             navigate('/user/chat');
         }
     };

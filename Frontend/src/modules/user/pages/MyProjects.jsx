@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
 import JobCard from '../components/JobCard';
@@ -172,9 +172,9 @@ const MyProjects = () => {
                             <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
                             <button
                                 onClick={handleCloseModal}
-                                className="text-gray-500 hover:text-gray-700 text-2xl"
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                             >
-                                ×
+                                <X className="w-6 h-6 text-gray-500" />
                             </button>
                         </div>
 
@@ -224,7 +224,7 @@ const MyProjects = () => {
                                 <p className="text-gray-900 font-medium">
                                     {selectedJob.budgetType === 'Negotiable'
                                         ? 'Negotiable'
-                                        : `₹${selectedJob.budgetAmount}`}
+                                        : `\u20B9${selectedJob.budgetAmount}`}
                                 </p>
                             </div>
 

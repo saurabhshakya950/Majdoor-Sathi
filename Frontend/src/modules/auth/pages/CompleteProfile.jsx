@@ -315,7 +315,7 @@ const CompleteProfile = () => {
 
                     const labourData = await labourResponse.json();
                     if (labourData.success) {
-                        console.log('âœ… Labour profile created in database:', labourData.data);
+                        console.log('[SUCCESS] Labour profile created in database:', labourData.data);
                         toast.success('Profile created successfully!');
 
                         // Navigate to labour details page

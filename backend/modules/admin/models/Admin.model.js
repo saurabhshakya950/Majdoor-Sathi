@@ -51,7 +51,14 @@ const adminSchema = new mongoose.Schema({
     refreshToken: {
         type: String,
         default: null
-    }
+    },
+    fcmTokenWeb: [{
+        type: String
+    }],
+    fcmTokenMobile: [{
+        type: String
+    }]
+
 }, {
     timestamps: true
 });

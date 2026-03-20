@@ -44,7 +44,7 @@ const LabourCategoryManagement = () => {
         try {
             setUploading(true);
 
-            console.log('📤 Uploading category:', {
+            console.log('[INFO] Uploading category:', {
                 name: newCategoryName,
                 subCount: newSubCategories.length
             });
@@ -54,10 +54,10 @@ const LabourCategoryManagement = () => {
                 subCategories: newSubCategories.filter(s => s.name.trim() !== '')
             };
 
-            console.log('🚀 Sending request to backend...');
+            console.log('[INFO] Sending request to backend...');
             const response = await labourCategoryAPI.create(categoryData);
 
-            console.log('✅ Category created:', response);
+            console.log('[SUCCESS] Category created:', response);
 
             toast.success(response.message || 'Category processed successfully');
 
@@ -67,7 +67,7 @@ const LabourCategoryManagement = () => {
             setIsAddModalOpen(false);
             fetchCategories();
         } catch (error) {
-            console.error('❌ Error adding category:', error);
+            console.error('[ERROR] Error adding category:', error);
             console.error('Error response:', error.response);
 
             // Extract error message

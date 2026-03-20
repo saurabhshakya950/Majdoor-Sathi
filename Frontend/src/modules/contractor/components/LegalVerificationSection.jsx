@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Shield, Upload, X, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import InfoBox from '../../user/components/InfoBox';
@@ -67,6 +67,11 @@ const LegalVerificationSection = () => {
 
                     if (request.aadhaarFrontUrl && request.aadhaarBackUrl) {
                         setUploadedPhotos([request.aadhaarFrontUrl, request.aadhaarBackUrl]);
+                    }
+
+                    // Update Aadhaar number from verification request
+                    if (request.aadhaarNumber) {
+                        setAadharNumber(request.aadhaarNumber);
                     }
 
                     const verificationData = {
@@ -293,9 +298,20 @@ const LegalVerificationSection = () => {
                 </label>
                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
                     <Shield className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-900 font-medium tracking-wide">
-                        {aadharNumber || 'Not provided'}
-                    </span>
+                    <input
+                        type="text"
+                        value={aadharNumber}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 12);
+                            if (verificationStatus !== 'verified' && verificationStatus !== 'submitted') {
+                                setAadharNumber(val);
+                            }
+                        }}
+                        placeholder="Enter 12 digit Aadhaar number"
+                        readOnly={verificationStatus === 'verified' || verificationStatus === 'submitted'}
+                        className={`w-full bg-transparent text-gray-900 font-medium tracking-wide focus:outline-none ${verificationStatus === 'verified' || verificationStatus === 'submitted' ? 'cursor-not-allowed' : ''
+                            }`}
+                    />
                 </div>
             </div>
 
@@ -362,7 +378,7 @@ const LegalVerificationSection = () => {
             {verificationStatus === 'submitted' && (
                 <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
                     <p className="text-sm text-blue-700 font-medium">
-                        â³ Your verification is pending. Admin will review your documents soon.
+                        ⏳ Your verification is pending. Admin will review your documents soon.
                     </p>
                 </div>
             )}
@@ -370,7 +386,7 @@ const LegalVerificationSection = () => {
             {verificationStatus === 'verified' && (
                 <div className="mb-4 bg-green-50 border border-green-200 rounded-xl p-4">
                     <p className="text-sm text-green-700 font-medium">
-                        âœ… Your documents have been verified successfully!
+                        ✅ Your documents have been verified successfully!
                     </p>
                 </div>
             )}
@@ -378,7 +394,7 @@ const LegalVerificationSection = () => {
             {verificationStatus === 'rejected' && (
                 <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
                     <p className="text-sm text-red-700 font-medium">
-                        âŒ Your verification was rejected. Please upload correct documents and try again.
+                        ❌ Your verification was rejected. Please upload correct documents and try again.
                     </p>
                 </div>
             )}
