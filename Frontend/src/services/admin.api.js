@@ -278,6 +278,16 @@ export const labourCategoryAPI = {
     deleteCategory: async (id) => {
         const response = await adminApi.delete(`/labour-categories/${id}`);
         return response.data;
+    },
+
+    deleteSubCategory: async (categoryId, subId) => {
+        const response = await adminApi.delete(`/labour-categories/${categoryId}/sub/${subId}`);
+        return response.data;
+    },
+
+    updateSubCategory: async (categoryId, subId, data) => {
+        const response = await adminApi.patch(`/labour-categories/${categoryId}/sub/${subId}`, data);
+        return response.data;
     }
 };
 

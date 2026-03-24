@@ -25,7 +25,8 @@ import {
     Zap,
     ShieldCheck,
     ExternalLink,
-    RefreshCw
+    RefreshCw,
+    IndianRupee
 } from 'lucide-react';
 import { Outlet, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 import { adminNotificationAPI } from '../../../services/admin.api';
@@ -355,8 +356,9 @@ export function DashboardHome() {
 
                     <div className="right-panel-item">
                         <h3>Revenue Tracking</h3>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '10px 0' }}>
-                            \u20B9{analytics?.revenue?.total?.toLocaleString() || '0'}
+                        <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '10px 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <IndianRupee size={22} strokeWidth={2.5} />
+                            {analytics?.revenue?.total?.toLocaleString() || '0'}
                         </p>
                         <div style={{ height: '100px', display: 'flex', alignItems: 'flex-end', gap: '8px', marginTop: '16px', position: 'relative' }}>
                             {(() => {

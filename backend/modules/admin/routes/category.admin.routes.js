@@ -4,7 +4,9 @@ import {
     getCategoryById,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    deleteSubCategory,
+    updateSubCategory
 } from '../controllers/category.admin.controller.js';
 import { protectAdmin, isLabourAdmin } from '../middleware/admin.auth.middleware.js';
 import {
@@ -26,5 +28,9 @@ router.route('/:id')
     .get(validateObjectIdParam('id'), getCategoryById)
     .put(validateObjectIdParam('id'), validateUpdateCategory, updateCategory)
     .delete(validateObjectIdParam('id'), deleteCategory);
+
+router.route('/:id/sub/:subId')
+    .patch(validateObjectIdParam('id'), validateObjectIdParam('subId'), updateSubCategory)
+    .delete(validateObjectIdParam('id'), validateObjectIdParam('subId'), deleteSubCategory);
 
 export default router;

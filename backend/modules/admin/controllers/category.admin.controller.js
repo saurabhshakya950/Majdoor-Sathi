@@ -74,13 +74,14 @@ export const createCategory = async (req, res) => {
             });
         }
 
-        // Check if category exists
+        // Check if category exists (using trimmed name for better matching)
+        const trimmedName = name.trim();
         const existingCategory = await LabourCategory.findOne({ 
-            name: { $regex: new RegExp(`^${name}$`, 'i') }
+            name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
         });
 
         if (existingCategory) {
-            console.log('🔄 Category already exists:', name, '- Appending new sub-categories.');
+            console.log('🔄 Category already exists:', trimmedName, '- Updating or adding sub-categories.');
             
             if (!req.body.subCategories || !Array.isArray(req.body.subCategories) || req.body.subCategories.length === 0) {
                 return res.status(400).json({
@@ -89,45 +90,63 @@ export const createCategory = async (req, res) => {
                 });
             }
 
-            let addedCount = 0;
+            let modifiedCount = 0;
             for (const sub of req.body.subCategories) {
                 const subName = sub.name.trim();
-                // Check if subCategory already exists
-                const subExists = existingCategory.subCategories.find(
+
+                // Check if subCategory already exists (Index logic)
+                const subIndex = existingCategory.subCategories.findIndex(
                     s => s.name.toLowerCase() === subName.toLowerCase()
                 );
 
-                if (!subExists) {
-                    let subImage = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
-                    if (sub.image) {
-                        if (sub.image.startsWith('data:image')) {
-                            try {
-                                subImage = await uploadToCloudinary(sub.image, 'rajghar/categories/sub');
-                            } catch (err) {
-                                console.error(`❌ Sub-category image upload failed for ${sub.name}:`, err.message);
-                            }
-                        } else if (sub.image.startsWith('http')) {
-                            subImage = sub.image;
+                let subImage = 'https://cdn-icons-png.flaticon.com/512/4825/4825038.png';
+                
+                // If it already exists, use its current image as base
+                if (subIndex !== -1) {
+                    subImage = existingCategory.subCategories[subIndex].image;
+                }
+
+                if (sub.image) {
+                    if (sub.image.startsWith('data:image')) {
+                        try {
+                            // Upload new image
+                            subImage = await uploadToCloudinary(sub.image, 'rajghar/categories/sub');
+                        } catch (err) {
+                            console.error(`❌ Sub-category image upload failed for ${sub.name}:`, err.message);
+                            // Keep previous image if upload fails
                         }
+                    } else if (sub.image.startsWith('http')) {
+                        subImage = sub.image;
                     }
+                }
+
+                if (subIndex !== -1) {
+                    // Update existing skill if image changed
+                    if (existingCategory.subCategories[subIndex].image !== subImage) {
+                        existingCategory.subCategories[subIndex].image = subImage;
+                        modifiedCount++;
+                    }
+                } else {
+                    // Add as brand new skill
                     existingCategory.subCategories.push({ name: subName, image: subImage });
-                    addedCount++;
+                    modifiedCount++;
                 }
             }
 
-            if (addedCount > 0) {
+            if (modifiedCount > 0) {
                 await existingCategory.save();
-                console.log(`✅ Appended ${addedCount} new sub-categories to ${name}`);
+                console.log(`✅ Processed ${modifiedCount} changes for ${trimmedName}`);
                 
                 return res.status(200).json({
                     success: true,
-                    message: `Successfully added ${addedCount} new skill(s) to ${name}`,
+                    message: `Successfully processed ${modifiedCount} skill(s) in ${trimmedName}`,
                     data: { category: existingCategory }
                 });
             } else {
-                return res.status(400).json({
-                    success: false,
-                    message: 'All provided skills already exist in this category'
+                return res.status(200).json({
+                    success: true,
+                    message: 'No changes detected. Skills are already up to date.',
+                    data: { category: existingCategory }
                 });
             }
         }
@@ -294,7 +313,65 @@ export const updateCategory = async (req, res) => {
     }
 };
 
-// @desc    Delete labour category
+// @desc    Delete sub-category (skill) from a category
+// @route   DELETE /api/admin/labour-categories/:id/sub/:subId
+// @access  Private (SUPER_ADMIN, ADMIN_LABOUR)
+export const deleteSubCategory = async (req, res) => {
+    try {
+        const { id, subId } = req.params;
+
+        const category = await LabourCategory.findById(id);
+
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
+        }
+
+        // Find the sub-category to check for image cleanup
+        const subCategory = category.subCategories.find(s => s._id.toString() === subId);
+
+        if (!subCategory) {
+            return res.status(404).json({
+                success: false,
+                message: 'Skill not found in this category'
+            });
+        }
+
+        // Delete image from Cloudinary if it exists and is not the default icon
+        if (subCategory.image && subCategory.image.includes('cloudinary.com')) {
+            try {
+                await deleteFromCloudinary(subCategory.image);
+            } catch (error) {
+                console.error('Failed to delete sub-category image from Cloudinary:', error.message);
+                // Continue with DB deletion anyway
+            }
+        }
+
+        // Remove sub-category from the array
+        category.subCategories = category.subCategories.filter(s => s._id.toString() !== subId);
+        
+        // Save the updated category
+        // If it was the only sub-category, the category still exists but with an empty list
+        await category.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Skill deleted successfully',
+            data: { category }
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error deleting skill',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Delete labour category (Whole document)
 // @route   DELETE /api/admin/labour-categories/:id
 // @access  Private (SUPER_ADMIN, ADMIN_LABOUR)
 export const deleteCategory = async (req, res) => {
@@ -313,7 +390,7 @@ export const deleteCategory = async (req, res) => {
             try {
                 await deleteFromCloudinary(category.image);
             } catch (error) {
-                console.error('Failed to delete category image from Cloudinary:', error);
+                console.error('Failed to delete category image from Cloudinary:', error.message);
             }
         }
 
@@ -328,6 +405,107 @@ export const deleteCategory = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server error deleting category',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Update sub-category (skill) in a category
+// @route   PATCH /api/admin/labour-categories/:id/sub/:subId
+// @access  Private (SUPER_ADMIN, ADMIN_LABOUR)
+export const updateSubCategory = async (req, res) => {
+    try {
+        console.log('\n🔵 ===== UPDATE SUB-CATEGORY (SKILL) =====');
+        const { id, subId } = req.params;
+        const { name, image } = req.body;
+        
+        console.log(`📦 Targeted Update: Category[${id}] -> Skill[${subId}]`);
+        console.log(`📝 New Name: ${name || 'N/A'}`);
+        console.log(`🖼️ Has New Image: ${!!image && image.startsWith('data:image')}`);
+
+        const category = await LabourCategory.findById(id);
+
+        if (!category) {
+            console.log('❌ Category not found');
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
+        }
+
+        // Find the index of the sub-category
+        const subIndex = category.subCategories.findIndex(s => s._id.toString() === subId);
+
+        if (subIndex === -1) {
+            console.log('❌ Skill (subId) not found in this category array');
+            return res.status(404).json({
+                success: false,
+                message: 'Skill not found in this category'
+            });
+        }
+
+        console.log(`🎯 Found skill at index: ${subIndex}`);
+
+        // Handle sub-category name change
+        if (name && name.trim()) {
+            category.subCategories[subIndex].name = name.trim();
+        }
+
+        // Handle sub-category image update
+        if (image) {
+            if (image.startsWith('data:image')) {
+                // 1. Try to delete old image (Non-blocking)
+                const oldImageUrl = category.subCategories[subIndex].image;
+                if (oldImageUrl && oldImageUrl.includes('cloudinary.com')) {
+                    try {
+                        console.log('🗑️ Attempting to delete old image:', oldImageUrl);
+                        await deleteFromCloudinary(oldImageUrl);
+                        console.log('✅ Old image deletion attempted');
+                    } catch (deleteError) {
+                        console.warn('⚠️ Non-blocking delete error:', deleteError.message);
+                        // We continue even if delete fails
+                    }
+                }
+
+                // 2. Upload new image (Blocking for this update)
+                try {
+                    console.log('📤 Uploading new image to Cloudinary...');
+                    const newImageUrl = await uploadToCloudinary(image, 'rajghar/categories/sub');
+                    category.subCategories[subIndex].image = newImageUrl;
+                    console.log('✅ New image uploaded successfully:', newImageUrl);
+                } catch (uploadError) {
+                    console.error('❌ Sub-category image upload failed:', uploadError.message);
+                    // If upload fails, we don't change the DB but we also don't crash
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to upload new image to Cloudinary',
+                        error: uploadError.message
+                    });
+                }
+            } else if (image.startsWith('http')) {
+                console.log('🔗 Using provided image URL');
+                category.subCategories[subIndex].image = image;
+            }
+        }
+
+        // IMPORTANT: Tell Mongoose that the subCategories array has been modified
+        category.markModified('subCategories');
+        
+        await category.save();
+        console.log('✅ Changes saved to database successfully');
+        console.log('==========================================\n');
+
+        res.status(200).json({
+            success: true,
+            message: 'Skill updated successfully',
+            data: { category }
+        });
+
+    } catch (error) {
+        console.error('❌ UPDATE SUB-CATEGORY ERROR:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error updating skill',
             error: error.message
         });
     }

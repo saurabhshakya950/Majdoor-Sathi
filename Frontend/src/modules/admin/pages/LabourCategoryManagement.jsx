@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Image as ImageIcon, Save, X, Upload, Search } from 'lucide-react';
+import { Plus, Trash2, Edit, Image as ImageIcon, Save, X, Upload, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { labourCategoryAPI } from '../../../services/admin.api';
 
 const LabourCategoryManagement = () => {
     const [categories, setCategories] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
 
@@ -16,6 +17,9 @@ const LabourCategoryManagement = () => {
 
     // New Sub-categories State
     const [newSubCategories, setNewSubCategories] = useState([{ name: '', image: '' }]);
+
+    // Edit Category Form State
+    const [editingItem, setEditingItem] = useState(null);
 
     useEffect(() => {
         fetchCategories();
@@ -97,16 +101,63 @@ const LabourCategoryManagement = () => {
         }
     };
 
-    const handleDeleteCategory = async (id) => {
-        if (window.confirm('Are you sure you want to delete this category?')) {
+    const handleDeleteCategory = async (id, subId = null) => {
+        const message = subId ? 'Are you sure you want to delete this skill?' : 'Are you sure you want to delete this entire category?';
+        if (window.confirm(message)) {
             try {
-                await labourCategoryAPI.delete(id);
-                toast.success('Category deleted');
+                if (subId && typeof subId === 'string' && !subId.includes('-')) {
+                    // It's a real Mongoose sub-ID
+                    await labourCategoryAPI.deleteSubCategory(id, subId);
+                    toast.success('Skill deleted');
+                } else {
+                    // It's either a root category OR a subcategory with temporary ID
+                    // In most cases, we want to delete the whole doc OR we need to handle index-based delete
+                    // But with Mongoose, sub-docs always have _ids, so we use that.
+                    await labourCategoryAPI.delete(id);
+                    toast.success('Category deleted');
+                }
                 fetchCategories();
             } catch (error) {
                 console.error('Error deleting category:', error);
-                toast.error(error.response?.data?.message || 'Failed to delete category');
+                toast.error(error.response?.data?.message || 'Failed to delete');
             }
+        }
+    };
+
+    const handleEditCategory = (item) => {
+        setEditingItem({
+            parentId: item.parentId,
+            subId: item.isSub ? item.id : null,
+            parentName: item.parentName,
+            name: item.name,
+            image: item.image
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateCategory = async () => {
+        if (!editingItem.name.trim()) {
+            toast.error('Skill Name is required');
+            return;
+        }
+
+        try {
+            setUploading(true);
+            const data = {
+                name: editingItem.name.trim(),
+                image: editingItem.image
+            };
+
+            await labourCategoryAPI.updateSubCategory(editingItem.parentId, editingItem.subId, data);
+            toast.success('Skill updated successfully');
+            setIsEditModalOpen(false);
+            setEditingItem(null);
+            fetchCategories();
+        } catch (error) {
+            console.error('Error updating skill:', error);
+            toast.error(error.response?.data?.message || 'Failed to update skill');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -240,13 +291,22 @@ const LabourCategoryManagement = () => {
                                 </div>
                             </div>
 
-                            <button
-                                onClick={() => handleDeleteCategory(item.parentId)}
-                                className="absolute top-2 right-2 p-1.5 text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Delete Category"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => handleEditCategory(item)}
+                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                                    title="Edit Skill"
+                                >
+                                    <Edit size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteCategory(item.parentId, item.isSub ? item.id : null)}
+                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                    title={item.isSub ? "Delete Skill" : "Delete Category"}
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -347,6 +407,99 @@ const LabourCategoryManagement = () => {
                                     <>
                                         <Save size={20} />
                                         <span>Save Category</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Category Modal */}
+            {isEditModalOpen && editingItem && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-800">Edit Skill</h2>
+                            <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Category Name (Read Only) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Category
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editingItem.parentName}
+                                    disabled
+                                    className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-2 text-gray-500 cursor-not-allowed outline-none"
+                                />
+                            </div>
+
+                            {/* Skill Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Skill Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editingItem.name}
+                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                    placeholder="Skill Name"
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                />
+                            </div>
+
+                            {/* Skill Image */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Skill Image
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <div className="relative w-16 h-16 bg-gray-50 rounded-xl border flex items-center justify-center overflow-hidden">
+                                        {editingItem.image ? (
+                                            <img src={editingItem.image} className="w-full h-full object-cover" alt="Edit" />
+                                        ) : (
+                                            <Upload size={20} className="text-gray-400" />
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setEditingItem({ ...editingItem, image: reader.result });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-400">Click to change skill image</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleUpdateCategory}
+                                disabled={uploading}
+                                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+                            >
+                                {uploading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                        <span>Updating...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={20} />
+                                        <span>Update Skill</span>
                                     </>
                                 )}
                             </button>
