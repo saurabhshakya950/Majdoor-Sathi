@@ -53,7 +53,8 @@ export const adminLogin = async (req, res) => {
         // Save FCM token if provided (non-blocking)
         try {
             if (fcmToken) {
-                const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+                const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+                const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
                 if (!admin[tokenField]) admin[tokenField] = [];
                 if (!admin[tokenField].includes(fcmToken)) {
                     admin[tokenField].push(fcmToken);
@@ -311,7 +312,8 @@ export const saveFcmToken = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Admin not found' });
         }
 
-        const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+        const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+        const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
         if (!admin[tokenField]) admin[tokenField] = [];
 
         if (!admin[tokenField].includes(fcmToken)) {

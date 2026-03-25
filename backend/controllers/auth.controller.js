@@ -9,7 +9,8 @@ const otpStore = new Map();
 
 const addFCMTokenToUserObject = (user, fcmToken, platform) => {
     if (!fcmToken) return;
-    const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+    const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+    const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
     if (!user[tokenField]) user[tokenField] = [];
     if (!user[tokenField].includes(fcmToken)) {
         user[tokenField].push(fcmToken);
@@ -494,7 +495,8 @@ export const saveFCMToken = async (req, res, next) => {
         }
 
         // Add token only if not already present (idempotent)
-        const tokenField = platform === 'mobile' ? 'fcmTokenMobile' : 'fcmTokenWeb';
+        const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+        const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
         if (!user[tokenField]) user[tokenField] = [];
 
         const alreadyExists = user[tokenField].includes(fcmToken);
