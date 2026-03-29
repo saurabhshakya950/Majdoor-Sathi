@@ -29,6 +29,33 @@ const OTPVerification = () => {
         setOtp(prev => prev.slice(0, -1));
     };
 
+    const handleResendOTP = async () => {
+        setLoading(true);
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`;
+            const response = await fetch(`${API_URL}/auth/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mobileNumber: phoneNumber })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('OTP Resent Successfully!');
+                setTimer(59); // Reset timer
+                setOtp(''); // Optional: clear old OTP
+            } else {
+                toast.error(data.message || 'Failed to resend OTP');
+            }
+        } catch (error) {
+            console.error('Resend OTP error:', error);
+            toast.error('Connection error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleEnter = async () => {
         if (otp.length === 6) {
             setLoading(true);
@@ -155,10 +182,22 @@ const OTPVerification = () => {
                         </button>
                     </div>
 
-                    {/* Timer text */}
-                    <p className="text-center text-gray-400 text-xs mb-4">
-                        Resend code in 00:{timer.toString().padStart(2, '0')}
-                    </p>
+                    {/* Timer / Resend OTP Logic */}
+                    <div className="text-center mb-4">
+                        {timer > 0 ? (
+                            <p className="text-gray-700 text-xs font-medium">
+                                Resend code in 00:{timer.toString().padStart(2, '0')}
+                            </p>
+                        ) : (
+                            <button
+                                onClick={handleResendOTP}
+                                disabled={loading}
+                                className="text-blue-600 text-xs font-bold hover:underline"
+                            >
+                                {loading ? 'Sending...' : 'Resend OTP'}
+                            </button>
+                        )}
+                    </div>
 
                     {/* Enter Button */}
                     <div className="mb-2">

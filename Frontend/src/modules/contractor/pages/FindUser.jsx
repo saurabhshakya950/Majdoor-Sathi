@@ -433,6 +433,16 @@ const FindUser = () => {
                                 </div>
 
                                 <div>
+                                    <label className="text-sm font-medium text-gray-500">Address</label>
+                                    <p className="text-gray-900 font-medium">{selectedJob.address}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-medium text-gray-500">Mobile Number</label>
+                                    <p className="text-gray-900 font-medium">{selectedJob.mobileNumber}</p>
+                                </div>
+
+                                <div>
                                     <label className="text-sm font-medium text-gray-500">Job Title</label>
                                     <p className="text-gray-900 font-medium">{selectedJob.jobTitle}</p>
                                 </div>

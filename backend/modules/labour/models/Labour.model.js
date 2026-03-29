@@ -104,6 +104,21 @@ const labourSchema = new mongoose.Schema({
             type: String
         }
     },
+    labourCards: [{
+        fullName: { type: String, trim: true },
+        primarySkill: { type: String, trim: true },
+        gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+        mobileNumber: { type: String, trim: true },
+        city: { type: String, trim: true },
+        address: { type: String, trim: true },
+        skills: { type: String, trim: true },
+        experience: { type: String, trim: true, default: '' },
+        previousWorkLocation: { type: String, trim: true, default: '' },
+        availability: { type: String, default: 'Full Time' },
+        availabilityStatus: { type: String, default: 'Available' },
+        rating: { type: Number, default: 0 },
+        photo: { type: String }
+    }],
     isActive: {
         type: Boolean,
         default: true

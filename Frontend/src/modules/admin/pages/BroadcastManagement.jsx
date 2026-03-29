@@ -18,9 +18,7 @@ const BroadcastManagement = () => {
         title: '',
         message: '',
         targetAudience: 'ALL',
-        priority: 'MEDIUM',
-        scheduledAt: '',
-        expiresAt: ''
+        priority: 'MEDIUM'
     });
 
     useEffect(() => {
@@ -63,18 +61,14 @@ const BroadcastManagement = () => {
                 title: broadcast.title,
                 message: broadcast.message,
                 targetAudience: broadcast.targetAudience,
-                priority: broadcast.priority,
-                scheduledAt: broadcast.scheduledAt ? new Date(broadcast.scheduledAt).toISOString().slice(0, 16) : '',
-                expiresAt: broadcast.expiresAt ? new Date(broadcast.expiresAt).toISOString().slice(0, 16) : ''
+                priority: broadcast.priority
             });
         } else {
             setFormData({
                 title: '',
                 message: '',
                 targetAudience: 'ALL',
-                priority: 'MEDIUM',
-                scheduledAt: '',
-                expiresAt: ''
+                priority: 'MEDIUM'
             });
         }
 
@@ -88,9 +82,7 @@ const BroadcastManagement = () => {
             title: '',
             message: '',
             targetAudience: 'ALL',
-            priority: 'MEDIUM',
-            scheduledAt: '',
-            expiresAt: ''
+            priority: 'MEDIUM'
         });
     };
 
@@ -106,9 +98,7 @@ const BroadcastManagement = () => {
             setLoading(true);
 
             const submitData = {
-                ...formData,
-                scheduledAt: formData.scheduledAt || null,
-                expiresAt: formData.expiresAt || null
+                ...formData
             };
 
             console.log('Submitting broadcast:', submitData);
@@ -177,7 +167,6 @@ const BroadcastManagement = () => {
     const getStatusBadge = (status) => {
         const badges = {
             DRAFT: { color: 'gray', icon: <Edit size={14} />, text: 'Draft' },
-            SCHEDULED: { color: 'blue', icon: <Clock size={14} />, text: 'Scheduled' },
             SENDING: { color: 'orange', icon: <Clock size={14} />, text: 'Sending...' },
             SENT: { color: 'green', icon: <CheckCircle size={14} />, text: 'Sent' },
             FAILED: { color: 'red', icon: <XCircle size={14} />, text: 'Failed' }
@@ -258,15 +247,6 @@ const BroadcastManagement = () => {
                         </div>
                     </div>
                     <div className="broadcast-stat-card">
-                        <div className="stat-icon-wrapper orange">
-                            <Clock size={28} />
-                        </div>
-                        <div className="stat-details">
-                            <p className="stat-label">Scheduled</p>
-                            <h2 className="stat-value">{stats.scheduled}</h2>
-                        </div>
-                    </div>
-                    <div className="broadcast-stat-card">
                         <div className="stat-icon-wrapper purple">
                             <Users size={28} />
                         </div>
@@ -290,7 +270,6 @@ const BroadcastManagement = () => {
                         >
                             <option value="">All Status</option>
                             <option value="DRAFT">Draft</option>
-                            <option value="SCHEDULED">Scheduled</option>
                             <option value="SENT">Sent</option>
                             <option value="FAILED">Failed</option>
                         </select>
@@ -405,10 +384,7 @@ const BroadcastManagement = () => {
                                         {broadcast.sentAt && (
                                             <span>Sent: {new Date(broadcast.sentAt).toLocaleString()}</span>
                                         )}
-                                        {broadcast.scheduledAt && broadcast.status === 'SCHEDULED' && (
-                                            <span>Scheduled: {new Date(broadcast.scheduledAt).toLocaleString()}</span>
-                                        )}
-                                        {!broadcast.sentAt && !broadcast.scheduledAt && (
+                                        {!broadcast.sentAt && (
                                             <span>Created: {new Date(broadcast.createdAt).toLocaleString()}</span>
                                         )}
                                     </div>
@@ -498,27 +474,6 @@ const BroadcastManagement = () => {
                                 </div>
                             </div>
 
-                            <div className="broadcast-form-row">
-                                <div className="broadcast-form-group">
-                                    <label className="broadcast-form-label">Schedule At (Optional)</label>
-                                    <input
-                                        type="datetime-local"
-                                        className="broadcast-form-input"
-                                        value={formData.scheduledAt}
-                                        onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="broadcast-form-group">
-                                    <label className="broadcast-form-label">Expires At (Optional)</label>
-                                    <input
-                                        type="datetime-local"
-                                        className="broadcast-form-input"
-                                        value={formData.expiresAt}
-                                        onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                                    />
-                                </div>
-                            </div>
 
                             <div className="broadcast-modal-actions">
                                 <button type="button" className="broadcast-btn-cancel" onClick={handleCloseModal}>

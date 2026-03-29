@@ -110,6 +110,59 @@ const MyProjects = () => {
         }
     };
 
+    const handleDeleteJob = async (jobId) => {
+        // Confirmation Toast
+        toast((t) => (
+            <div className="flex flex-col gap-3 p-1">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <X className="w-5 h-5 text-red-500" />
+                    </div>
+                    <p className="font-semibold text-gray-800">Delete this project?</p>
+                </div>
+                <p className="text-sm text-gray-600 px-1">This action cannot be undone and will remove the job for everyone.</p>
+                <div className="flex gap-3 mt-1">
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const response = await jobAPI.deleteJob(jobId);
+                                if (response.success) {
+                                    setJobs(prev => prev.filter(j => j.id !== jobId));
+                                    toast.success('Job deleted permanently', {
+                                        icon: '🗑️',
+                                        style: { borderRadius: '10px', background: '#333', color: '#fff' }
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Delete error:', error);
+                                toast.error('Failed to delete job');
+                            }
+                        }}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg text-sm transition-all active:scale-95"
+                    >
+                        Delete
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-sm transition-all active:scale-95"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 6000,
+            position: 'top-center',
+            style: {
+                borderRadius: '16px',
+                padding: '12px',
+                minWidth: '280px',
+                border: '1px solid #fee2e2'
+            }
+        });
+    };
+
     const handleCloseModal = () => {
         setSelectedJob(null);
     };
@@ -158,6 +211,7 @@ const MyProjects = () => {
                                 index={index}
                                 onViewDetails={handleViewDetails}
                                 onToggleJobStatus={handleToggleJobStatus}
+                                onDelete={handleDeleteJob}
                             />
                         ))
                     )}
@@ -224,7 +278,7 @@ const MyProjects = () => {
                                 <p className="text-gray-900 font-medium">
                                     {selectedJob.budgetType === 'Negotiable'
                                         ? 'Negotiable'
-                                        : `\u20B9${selectedJob.budgetAmount}`}
+                                        : `₹${selectedJob.budgetAmount}`}
                                 </p>
                             </div>
 

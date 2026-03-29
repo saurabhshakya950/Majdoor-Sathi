@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import ContractorProfileCard from '../components/ContractorProfileCard';
 import { contractorAPI } from '../../../services/api';
 
@@ -91,6 +92,58 @@ const MyProjects = () => {
         setSelectedCard(null);
     };
 
+    const handleDeleteCard = (cardId) => {
+        toast((t) => (
+            <div className="flex flex-col gap-3 p-1">
+                <p className="font-bold text-gray-900 border-b pb-2">Delete Project?</p>
+                <p className="text-sm text-gray-600">This will permanently remove this project card. Are you sure?</p>
+                <div className="flex gap-2 justify-end mt-1">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                const response = await contractorAPI.deleteContractorJob(cardId);
+                                if (response.success) {
+                                    setCards(prev => prev.filter(c => c.id !== cardId));
+                                    toast.success('Project deleted successfully', {
+                                        icon: '🗑️',
+                                        style: {
+                                            borderRadius: '12px',
+                                            background: '#333',
+                                            color: '#fff',
+                                        }
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Delete error:', error);
+                                toast.error('Failed to delete project');
+                            }
+                        }}
+                        className="px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 5000,
+            position: 'top-center',
+            style: {
+                minWidth: '300px',
+                background: '#fff',
+                padding: '16px',
+                borderRadius: '16px',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            }
+        });
+    };
+
     const handlePostJob = () => {
         navigate('/contractor/post-job');
     };
@@ -144,12 +197,13 @@ const MyProjects = () => {
                         </div>
                     ) : (
                         cards.map((card) => (
-                            <ContractorProfileCard
-                                key={card.id}
-                                data={card}
-                                onViewDetails={() => handleViewDetails(card)}
-                                onToggleAvailability={handleToggleAvailability}
-                            />
+                                    <ContractorProfileCard
+                                        key={card.id}
+                                        data={card}
+                                        onViewDetails={() => handleViewDetails(card)}
+                                        onToggleAvailability={handleToggleAvailability}
+                                        onDelete={handleDeleteCard}
+                                    />
                         ))
                     )}
                 </div>
@@ -220,9 +274,9 @@ const MyProjects = () => {
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Budget</label>
                                 <p className="text-gray-900 font-medium">
-                                    {selectedCard.budgetType === 'Negotiable'
-                                        ? 'Negotiable'
-                                        : `\u20B9${selectedCard.budgetAmount}`}
+                                    {selectedCard.budgetType === 'Negotiable' 
+                                        ? 'Negotiable' 
+                                        : `₹${selectedCard.budgetAmount}`}
                                 </p>
                             </div>
 

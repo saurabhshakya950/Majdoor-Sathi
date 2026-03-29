@@ -7,6 +7,11 @@ const hireRequestSchema = new mongoose.Schema({
         ref: 'Labour',
         required: true
     },
+    cardId: {
+        type: String, // String to handle both ObjectId and UI fallback IDs securely
+        required: false,
+        default: null
+    },
     labourName: {
         type: String,
         required: true

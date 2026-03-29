@@ -18,8 +18,8 @@ const AdminSettings = () => {
     const [cmsContent, setCmsContent] = useState({
         aboutUs: '',
         contactUs: '',
-        termsAndConditions: '',
-        privacyPolicy: ''
+        terms: '',
+        privacy: ''
     });
 
     useEffect(() => {
@@ -116,12 +116,12 @@ const AdminSettings = () => {
                 updates.push(cmsAPI.update('contactUs', { value: cmsContent.contactUs }));
             }
             
-            if (cmsContent.termsAndConditions && cmsContent.termsAndConditions.trim()) {
-                updates.push(cmsAPI.update('terms', { value: cmsContent.termsAndConditions }));
+            if (cmsContent.terms && cmsContent.terms.trim()) {
+                updates.push(cmsAPI.update('terms', { value: cmsContent.terms }));
             }
             
-            if (cmsContent.privacyPolicy && cmsContent.privacyPolicy.trim()) {
-                updates.push(cmsAPI.update('privacy', { value: cmsContent.privacyPolicy }));
+            if (cmsContent.privacy && cmsContent.privacy.trim()) {
+                updates.push(cmsAPI.update('privacy', { value: cmsContent.privacy }));
             }
 
             // Check if there's at least one field to update
@@ -275,10 +275,10 @@ const AdminSettings = () => {
                                     <label>Terms & Conditions</label>
                                     <textarea
                                         rows="10"
-                                        value={cmsContent.termsAndConditions}
+                                        value={cmsContent.terms}
                                         onChange={(e) => setCmsContent({
                                             ...cmsContent,
-                                            termsAndConditions: e.target.value
+                                            terms: e.target.value
                                         })}
                                         placeholder="Enter terms and conditions..."
                                         style={{ whiteSpace: 'pre-wrap' }}
@@ -288,10 +288,10 @@ const AdminSettings = () => {
                                     <label>Privacy Policy</label>
                                     <textarea
                                         rows="10"
-                                        value={cmsContent.privacyPolicy}
+                                        value={cmsContent.privacy}
                                         onChange={(e) => setCmsContent({
                                             ...cmsContent,
-                                            privacyPolicy: e.target.value
+                                            privacy: e.target.value
                                         })}
                                         placeholder="Enter privacy policy..."
                                         style={{ whiteSpace: 'pre-wrap' }}

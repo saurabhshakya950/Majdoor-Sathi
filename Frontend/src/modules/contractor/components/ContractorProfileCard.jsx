@@ -1,6 +1,6 @@
-import { MapPin, Briefcase, Calendar, Phone, Star } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, Phone, Star, X } from 'lucide-react';
 
-const ContractorProfileCard = ({ data, onViewDetails, onToggleAvailability }) => {
+const ContractorProfileCard = ({ data, onViewDetails, onToggleAvailability, onDelete }) => {
     // Safety check - if data is not available, return null
     if (!data || !data.contractorName) {
         return null;
@@ -14,7 +14,19 @@ const ContractorProfileCard = ({ data, onViewDetails, onToggleAvailability }) =>
     const isAvailable = data.availabilityStatus === 'Available';
 
     return (
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-4 relative">
+        <div className="bg-white rounded-2xl shadow-md p-4 mb-4 relative overflow-visible">
+            {/* Delete Icon - Absolute Top Right Corner */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(data.id);
+                }}
+                className="absolute -top-2 -right-2 p-1.5 bg-white shadow-md border rounded-full hover:bg-gray-100 transition-colors z-20 active:scale-95"
+                title="Delete Project"
+            >
+                <X className="w-4 h-4 text-red-500" />
+            </button>
+
             {/* Status Badge - Top Right Corner (Current Status) */}
             <div className="absolute top-4 right-4">
                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${

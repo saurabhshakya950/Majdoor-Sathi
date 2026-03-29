@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Delete, X, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 
@@ -65,12 +65,30 @@ const MobileInput = () => {
                         </p>
                     </div>
 
-                    {/* Number Display */}
+                    {/* Number Display / Input for Paste */}
                     <div className="flex items-center justify-center py-6">
                         <span className="text-3xl text-gray-400 mr-4">+91</span>
-                        <span className="text-3xl text-gray-900 font-semibold tracking-wider min-h-[36px]">
-                            {phoneNumber}
-                        </span>
+                        <input
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setPhoneNumber(val);
+                            }}
+                            onPaste={(e) => {
+                                const pastedData = e.clipboardData.getData('Text');
+                                // Remove +91 or 91 if present at start
+                                let cleanNum = pastedData.replace(/\D/g, '');
+                                if (cleanNum.startsWith('91') && cleanNum.length > 10) {
+                                    cleanNum = cleanNum.slice(2);
+                                }
+                                setPhoneNumber(cleanNum.slice(0, 10));
+                                e.preventDefault();
+                            }}
+                            className="bg-transparent text-3xl text-gray-900 font-semibold tracking-wider min-h-[36px] w-[180px] border-none outline-none focus:ring-0 p-0 m-0"
+                            placeholder=""
+                            autoFocus
+                        />
                     </div>
                 </div>
 
@@ -113,10 +131,6 @@ const MobileInput = () => {
                         </button>
                     </div>
 
-                    {/* Footer Text */}
-                    <p className="text-center text-[10px] text-gray-400 px-4 leading-tight">
-                        By continuing, you agree to our <span className="text-blue-500">terms & conditions</span> and <span className="text-blue-500">privacy policy</span>
-                    </p>
                 </div>
             </div>
         </div>

@@ -11,11 +11,8 @@ const addFCMTokenToUserObject = (user, fcmToken, platform) => {
     if (!fcmToken) return;
     const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
     const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-    if (!user[tokenField]) user[tokenField] = [];
-    if (!user[tokenField].includes(fcmToken)) {
-        user[tokenField].push(fcmToken);
-        if (user[tokenField].length > 5) user[tokenField] = user[tokenField].slice(-5);
-    }
+    // Always keep only the most recent token (Single Token Refresh Logic)
+    user[tokenField] = [fcmToken];
 };
 
 // Helper to save FCM token
@@ -497,17 +494,9 @@ export const saveFCMToken = async (req, res, next) => {
         // Add token only if not already present (idempotent)
         const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
         const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-        if (!user[tokenField]) user[tokenField] = [];
-
-        const alreadyExists = user[tokenField].includes(fcmToken);
-        if (!alreadyExists) {
-            user[tokenField].push(fcmToken);
-            // Keep only last 5 tokens per platform
-            if (user[tokenField].length > 5) {
-                user[tokenField] = user[tokenField].slice(-5);
-            }
-            await user.save();
-        }
+        // Single Token Refresh Logic: Replace all old tokens with the new one
+        user[tokenField] = [fcmToken];
+        await user.save();
 
         res.status(200).json({
             success: true,

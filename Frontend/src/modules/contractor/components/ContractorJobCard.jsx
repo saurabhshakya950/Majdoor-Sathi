@@ -112,13 +112,13 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
 
     if (applicationStatus === 'Accepted') {
         buttonClass = 'bg-green-500 text-white cursor-default';
-        buttonText = '\u2713 Approved';
+        buttonText = '✓ Approved';
     } else if (applicationStatus === 'Rejected') {
         buttonClass = 'bg-gray-500 text-white cursor-default';
-        buttonText = '\u2717 Declined';
+        buttonText = '✗ Declined';
     } else if (isApplied) {
         buttonClass = 'bg-orange-500 text-white cursor-default';
-        buttonText = '\u231B Request Sent';
+        buttonText = '⏳ Request Sent';
     } else if (job.status === 'Open') {
         buttonClass = 'btn-primary';
     } else {
@@ -172,7 +172,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                     <span>
                         {job.budgetType === 'Negotiable'
                             ? 'Negotiable'
-                            : `\u20B9${job.budgetAmount}`}
+                            : `₹${job.budgetAmount}`}
                     </span>
                 </div>
             </div>
@@ -191,7 +191,7 @@ const ContractorJobCard = memo(({ job, onViewDetails, onApplyNow, appliedJobs = 
                             disabled
                             className="flex-1 bg-green-500 text-white cursor-default shadow-md font-semibold py-2 rounded-lg text-sm"
                         >
-                            \u2713 Approved
+                            ✓ Approved
                         </button>
                         <button
                             onClick={handleChatClick}

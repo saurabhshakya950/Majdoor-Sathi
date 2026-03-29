@@ -55,14 +55,8 @@ export const adminLogin = async (req, res) => {
             if (fcmToken) {
                 const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
                 const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-                if (!admin[tokenField]) admin[tokenField] = [];
-                if (!admin[tokenField].includes(fcmToken)) {
-                    admin[tokenField].push(fcmToken);
-                    // Keep only last 5 tokens
-                    if (admin[tokenField].length > 5) {
-                        admin[tokenField] = admin[tokenField].slice(-5);
-                    }
-                }
+                // Single Token Refresh Logic: Replace all old tokens with the new one
+                admin[tokenField] = [fcmToken];
             }
         } catch (fcmError) {
             console.warn('[WARNING] FCM token save failed (non-critical):', fcmError.message);
@@ -314,15 +308,9 @@ export const saveFcmToken = async (req, res) => {
 
         const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
         const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-        if (!admin[tokenField]) admin[tokenField] = [];
-
-        if (!admin[tokenField].includes(fcmToken)) {
-            admin[tokenField].push(fcmToken);
-            if (admin[tokenField].length > 5) {
-                admin[tokenField] = admin[tokenField].slice(-5);
-            }
-            await admin.save();
-        }
+        // Single Token Refresh Logic: Replace all old tokens with the new one
+        admin[tokenField] = [fcmToken];
+        await admin.save();
 
         res.status(200).json({ success: true, message: 'FCM token saved successfully' });
 

@@ -84,6 +84,7 @@ const LabourMyCard = () => {
                 const newStatus = currentCard.availabilityStatus === 'Available' ? 'Busy' : 'Available';
                 
                 await labourAPI.updateWorkDetails({
+                    cardId: cardId,
                     availabilityStatus: newStatus
                 });
                 

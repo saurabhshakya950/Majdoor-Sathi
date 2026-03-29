@@ -279,7 +279,7 @@ const PostJob = () => {
 
                         {formData.budgetType === 'Fixed Amount' && (
                             <FormInput
-                                label="Budget Amount (\u20B9)"
+                                label="Budget Amount (₹)"
                                 name="budgetAmount"
                                 type="number"
                                 value={formData.budgetAmount}

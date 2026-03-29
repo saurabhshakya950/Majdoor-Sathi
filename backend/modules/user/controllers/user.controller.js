@@ -1,5 +1,7 @@
 import User from '../models/User.model.js';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../../utils/cloudinary.utils.js';
+import Notification from '../../../models/Notification.model.js';
+import Admin from '../../admin/models/Admin.model.js';
 
 export const getProfile = async (req, res, next) => {
     try {
@@ -53,25 +55,16 @@ export const updateProfile = async (req, res, next) => {
                 });
             }
         }
-
-        // 2. Identify role for identity isolation
+        // 2. Identify role
         const userType = req.user.userType;
         const isContractor = userType === 'Contractor';
         const isLabour = userType === 'Labour';
 
-        // Prepare separate updates for User model and role model
-        // To maintain Role-Based Identity Isolation, we don't sync names to the User model for Contractors/Labourers
+        // Prepare updates (Sync names to both User and Role models)
         const userModelUpdates = { ...updates };
         const roleModelUpdates = { ...updates };
 
-        if (isContractor || isLabour) {
-            console.log(`🛡️ Role-Based Identity Isolation: Preventing name sync to User model for ${userType}`);
-            delete userModelUpdates.firstName;
-            delete userModelUpdates.middleName;
-            delete userModelUpdates.lastName;
-        }
-
-        // 3. Update User model (Location, Type, Gender, etc.)
+        // 3. Update User model (Names, Location, Type, Gender, etc.)
         const user = await User.findByIdAndUpdate(
             req.user._id,
             userModelUpdates,
@@ -177,6 +170,29 @@ export const submitFeedback = async (req, res, next) => {
             givenBy: req.user._id,
             givenByModel: 'User'
         });
+
+        // Trigger Admin Notification
+        try {
+            const superAdmin = await Admin.findOne({ role: 'SUPER_ADMIN' });
+            if (superAdmin) {
+                await Notification.create({
+                    user: superAdmin._id,
+                    userType: 'ADMIN',
+                    title: 'New Feedback Received',
+                    message: `${req.user.firstName || 'A user'} has submitted a new feedback.`,
+                    type: 'info',
+                    priority: 'MEDIUM',
+                    metadata: {
+                        type: 'FEEDBACK_RECEIVED',
+                        senderId: req.user._id,
+                        senderRole: 'USER',
+                        feedbackId: feedback._id
+                    }
+                });
+            }
+        } catch (notifErr) {
+            console.error('Error creating admin notification:', notifErr.message);
+        }
 
         res.status(201).json({
             success: true,

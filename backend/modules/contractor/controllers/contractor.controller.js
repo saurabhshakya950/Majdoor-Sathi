@@ -4,6 +4,9 @@ import User from '../../user/models/User.model.js';
 import Labour from '../../labour/models/Labour.model.js';
 import { sendNotificationToUser, sendNotificationToMultipleUsers } from '../../../utils/notificationHelper.js';
 import ContractorHireRequest from '../models/ContractorHireRequest.model.js';
+import Notification from '../../../models/Notification.model.js';
+import Admin from '../../admin/models/Admin.model.js';
+import Feedback from '../../admin/models/Feedback.model.js';
 
 // @desc    Create contractor profile (during registration)
 // @route   POST /api/contractor/profile
@@ -1399,6 +1402,8 @@ export const getContractorApplicationHistory = async (req, res, next) => {
                         date: formattedDate,
                         time: formattedTime,
                         status: app.status.toLowerCase(),
+                        chatId: app.chatId,
+                        applicantUserId: app.labour.user?._id,
                         type: 'worker'
                     });
                 }
@@ -1438,6 +1443,8 @@ export const getContractorApplicationHistory = async (req, res, next) => {
                 date: formattedDate,
                 time: formattedTime,
                 status: req.status,
+                chatId: req.chatId,
+                requesterUserId: req.requesterId,
                 type: 'user'
             });
         });
@@ -1504,6 +1511,29 @@ export const submitFeedback = async (req, res, next) => {
             givenBy: req.user._id,
             givenByModel: 'User'
         });
+
+        // Trigger Admin Notification
+        try {
+            const superAdmin = await Admin.findOne({ role: 'SUPER_ADMIN' });
+            if (superAdmin) {
+                await Notification.create({
+                    user: superAdmin._id,
+                    userType: 'ADMIN',
+                    title: 'New Feedback Received (Contractor)',
+                    message: `${contractor.businessName || contractor.firstName || 'A contractor'} has submitted a new feedback.`,
+                    type: 'info',
+                    priority: 'MEDIUM',
+                    metadata: {
+                        type: 'FEEDBACK_RECEIVED',
+                        senderId: contractor._id, // Send contractor model Id as they represent the entity in management
+                        senderRole: 'CONTRACTOR',
+                        feedbackId: feedback._id
+                    }
+                });
+            }
+        } catch (notifErr) {
+            console.error('Error creating admin notification:', notifErr.message);
+        }
 
         res.status(201).json({
             success: true,

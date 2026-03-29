@@ -4,6 +4,9 @@ import User from '../../user/models/User.model.js';
 import Contractor from '../../contractor/models/Contractor.model.js';
 import { uploadToCloudinary, uploadMultipleToCloudinary, deleteFromCloudinary } from '../../../utils/cloudinary.utils.js';
 import { sendNotificationToUser } from '../../../utils/notificationHelper.js';
+import Notification from '../../../models/Notification.model.js';
+import Admin from '../../admin/models/Admin.model.js';
+import Feedback from '../../admin/models/Feedback.model.js';
 
 // @desc    Create labour profile during registration
 // @route   POST /api/labour/create-profile
@@ -161,7 +164,7 @@ export const createLabourProfile = async (req, res) => {
 export const updateWorkDetails = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { skillType, experience, previousWorkLocation, workPhotos, availabilityStatus, availability } = req.body;
+        const { skillType, experience, previousWorkLocation, workPhotos, availabilityStatus, availability, cardId } = req.body;
 
         const labour = await Labour.findOne({ user: userId });
         if (!labour) {
@@ -208,6 +211,17 @@ export const updateWorkDetails = async (req, res) => {
         if (previousWorkLocation) labour.previousWorkLocation = previousWorkLocation;
         if (availabilityStatus) labour.availabilityStatus = availabilityStatus;
         if (availability) labour.availability = availability;
+
+        // Specific Card Update support
+        if (cardId && labour.labourCards && labour.labourCards.length > 0) {
+            const cardItem = labour.labourCards.id(cardId);
+            if (cardItem) {
+                if (availabilityStatus) cardItem.availabilityStatus = availabilityStatus;
+                if (availability) cardItem.availability = availability;
+                if (skillType) cardItem.primarySkill = skillType;
+                if (experience) cardItem.experience = experience;
+            }
+        }
 
         await labour.save();
 
@@ -280,8 +294,9 @@ export const createLabourCard = async (req, res) => {
         // Update labour card details
         labour.hasLabourCard = true;
         
-        // Update labourCardDetails object
+        // Update labourCardDetails object (Legacy support) & push to array
         if (labourCardDetails) {
+            // Legacy support
             labour.labourCardDetails = {
                 fullName: labourCardDetails.fullName,
                 gender: labourCardDetails.gender,
@@ -291,6 +306,26 @@ export const createLabourCard = async (req, res) => {
                 skills: labourCardDetails.skills,
                 photo: labourCardDetails.photo
             };
+
+            // Add new card into our array
+            if (!labour.labourCards) {
+                labour.labourCards = [];
+            }
+            labour.labourCards.push({
+                fullName: labourCardDetails.fullName,
+                primarySkill: skillType || labourCardDetails.skills,
+                gender: labourCardDetails.gender,
+                mobileNumber: labourCardDetails.mobileNumber,
+                city: labourCardDetails.city,
+                address: labourCardDetails.address,
+                skills: labourCardDetails.skills,
+                experience: experience || '',
+                previousWorkLocation: previousWorkLocation || '',
+                availability: availability || 'Available',
+                availabilityStatus: availabilityStatus || 'Available',
+                rating: rating || 0,
+                photo: labourCardDetails.photo
+            });
         }
         
         // Update other labour fields
@@ -472,7 +507,7 @@ export const getLabourVerificationStatus = async (req, res) => {
 // @access  Private
 export const createHireRequest = async (req, res) => {
     try {
-        const { labourId, requesterModel } = req.body;
+        const { labourId, requesterModel, cardId, labourName, labourSkill, labourPhone, labourCity } = req.body;
         const userId = req.user._id;
 
         // Validate requester model
@@ -494,12 +529,25 @@ export const createHireRequest = async (req, res) => {
 
         // Get requester details
         let requester;
+        let finalRequesterName = 'Unknown';
         if (requesterModel === 'User') {
             requester = await User.findById(userId);
-        } else {
-            requester = await Contractor.findOne({ user: userId }).populate('user');
             if (requester) {
-                requester = requester.user;
+                const first = requester.firstName || '';
+                const last = requester.lastName || '';
+                finalRequesterName = `${first} ${last}`.trim() || 'User';
+                if (finalRequesterName === 'null null') finalRequesterName = 'User';
+            }
+        } else {
+            const contractor = await Contractor.findOne({ user: userId }).populate('user');
+            if (contractor) {
+                requester = contractor.user;
+                const cFirst = contractor.firstName || requester?.firstName || '';
+                const cLast = contractor.lastName || requester?.lastName || '';
+                finalRequesterName = `${cFirst} ${cLast}`.trim();
+                if (!finalRequesterName || finalRequesterName === 'null null') {
+                    finalRequesterName = contractor.businessName || 'Contractor';
+                }
             }
         }
 
@@ -510,13 +558,16 @@ export const createHireRequest = async (req, res) => {
             });
         }
 
-        // Check if request already exists
-        const existingRequest = await HireRequest.findOne({
+        // Check if request already exists for this specific card
+        const existingQuery = {
             labourId,
             requesterId: userId,
             requesterModel,
             status: 'pending'
-        });
+        };
+        if (cardId) existingQuery.cardId = cardId;
+
+        const existingRequest = await HireRequest.findOne(existingQuery);
 
         if (existingRequest) {
             return res.status(400).json({
@@ -528,13 +579,14 @@ export const createHireRequest = async (req, res) => {
         // Create hire request
         const hireRequest = await HireRequest.create({
             labourId,
-            labourName: labour.labourCardDetails?.fullName || `${labour.user.firstName} ${labour.user.lastName}`,
-            labourSkill: labour.skillType || 'General',
-            labourPhone: labour.labourCardDetails?.mobileNumber || labour.user.mobileNumber,
-            labourCity: labour.labourCardDetails?.city || labour.user.city || 'N/A',
+            cardId: cardId || null,
+            labourName: labourName || labour.labourCardDetails?.fullName || `${labour.user.firstName} ${labour.user.lastName}`,
+            labourSkill: labourSkill || labour.skillType || 'General',
+            labourPhone: labourPhone || labour.labourCardDetails?.mobileNumber || labour.user.mobileNumber,
+            labourCity: labourCity || labour.labourCardDetails?.city || labour.user.city || 'N/A',
             requesterId: userId,
             requesterModel,
-            requesterName: `${requester.firstName} ${requester.lastName}`,
+            requesterName: finalRequesterName,
             requesterPhone: requester.mobileNumber,
             requesterLocation: requester.city || 'N/A'
         });
@@ -543,7 +595,7 @@ export const createHireRequest = async (req, res) => {
         if (labour.user && labour.user._id) {
             await sendNotificationToUser(labour.user._id.toString(), {
                 title: 'New Hire Request',
-                body: `${requester.firstName} ${requester.lastName} wants to hire you for ${labour.skillType || 'General'} work.`,
+                body: `${finalRequesterName} wants to hire you for ${labourSkill || labour.skillType || 'General'} work.`,
                 data: {
                     type: 'hire_request',
                     id: hireRequest._id.toString(),
@@ -1018,6 +1070,29 @@ export const submitFeedback = async (req, res, next) => {
             givenBy: req.user._id,
             givenByModel: 'User'
         });
+
+        // Trigger Admin Notification
+        try {
+            const superAdmin = await Admin.findOne({ role: 'SUPER_ADMIN' });
+            if (superAdmin) {
+                await Notification.create({
+                    user: superAdmin._id,
+                    userType: 'ADMIN',
+                    title: 'New Feedback Received (Labour)',
+                    message: `${labour.firstName || 'A labour'} has submitted a new feedback.`,
+                    type: 'info',
+                    priority: 'MEDIUM',
+                    metadata: {
+                        type: 'FEEDBACK_RECEIVED',
+                        senderId: labour._id, // Send labour model Id as they represent the entity in management
+                        senderRole: 'LABOUR',
+                        feedbackId: feedback._id
+                    }
+                });
+            }
+        } catch (notifErr) {
+            console.error('Error creating admin notification:', notifErr.message);
+        }
 
         res.status(201).json({
             success: true,

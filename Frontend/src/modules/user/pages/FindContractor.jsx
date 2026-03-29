@@ -368,6 +368,11 @@ const FindContractor = () => {
                             </div>
 
                             <div>
+                                <label className="text-sm font-medium text-gray-500">Address</label>
+                                <p className="text-gray-900 font-medium">{selectedCard.address}</p>
+                            </div>
+
+                            <div>
                                 <label className="text-sm font-medium text-gray-500">Primary Work Category</label>
                                 <p className="text-gray-900 font-medium">{selectedCard.primaryWorkCategory}</p>
                             </div>

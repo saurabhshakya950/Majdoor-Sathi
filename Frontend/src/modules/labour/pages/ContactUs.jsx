@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import LabourBottomNav from '../components/LabourBottomNav';
+import CollapsibleSection from '../../user/components/CollapsibleSection';
 import toast from 'react-hot-toast';
 
 const ContactUs = () => {
@@ -14,6 +15,8 @@ const ContactUs = () => {
     });
 
     const [contactInfo, setContactInfo] = useState('');
+    const [termsContent, setTermsContent] = useState('');
+    const [privacyContent, setPrivacyContent] = useState('');
 
     useEffect(() => {
         // Auto-fill name from profile
@@ -25,20 +28,35 @@ const ContactUs = () => {
             }));
         }
 
-        fetchContactContent();
+        fetchCMSContent();
     }, []);
 
-    const fetchContactContent = async () => {
+    const fetchCMSContent = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/contactUs`);
-            const data = await response.json();
-            
-            if (data.success && data.data.content) {
-                setContactInfo(data.data.content);
+            const [contactRes, termsRes, privacyRes] = await Promise.all([
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/contactUs`),
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/terms`),
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/privacy`)
+            ]);
+
+            const contactData = await contactRes.json();
+            const termsData = await termsRes.json();
+            const privacyData = await privacyRes.json();
+
+            if (contactData.success && contactData.data.content) {
+                setContactInfo(contactData.data.content);
+            }
+
+            if (termsData.success && termsData.data.content) {
+                setTermsContent(termsData.data.content);
+            }
+
+            if (privacyData.success && privacyData.data.content) {
+                setPrivacyContent(privacyData.data.content);
             }
         } catch (error) {
-            console.error('Error fetching Contact Us content:', error);
+            console.error('Error fetching CMS content:', error);
         } finally {
             setLoading(false);
         }
@@ -49,7 +67,7 @@ const ContactUs = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formData.phoneNumber.trim()) {
@@ -62,16 +80,36 @@ const ContactUs = () => {
             return;
         }
 
-        // Show success message
-        toast.success('Thanks for contacting us. Our support team will get back to you soon.');
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/notifications/contact-inquiry`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    phone: formData.phoneNumber,
+                    message: formData.message,
+                    senderRole: 'labour'
+                })
+            });
 
-        // Reset form
-        setFormData(prev => ({
-            ...prev,
-            phoneNumber: '',
-            message: ''
-        }));
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Thanks for contacting us. Our support team will get back to you soon.');
+                setFormData(prev => ({
+                    ...prev,
+                    phoneNumber: '',
+                    message: ''
+                }));
+            } else {
+                toast.error(data.message || 'Failed to send inquiry');
+            }
+        } catch (error) {
+            console.error('Inquiry error:', error);
+            toast.error('Something went wrong. Please try again.');
+        }
     };
+
 
     return (
         <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
@@ -87,7 +125,7 @@ const ContactUs = () => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 pb-20">
+            <div className="flex-1 overflow-y-auto p-4 pb-12 space-y-4">
                 {loading ? (
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
@@ -96,7 +134,7 @@ const ContactUs = () => {
                     <>
                         {/* Contact Details */}
                         {contactInfo && (
-                            <div className="bg-white rounded-2xl p-6 mb-4 shadow-sm">
+                            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
                                 <h2 className="text-lg font-bold text-gray-900 mb-4">Get in Touch</h2>
                                 <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                                     {contactInfo}
@@ -105,7 +143,7 @@ const ContactUs = () => {
                         )}
 
                         {/* Contact Form */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm">
+                        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Send us a Message</h2>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
@@ -164,6 +202,29 @@ const ContactUs = () => {
                                     Submit
                                 </button>
                             </form>
+                        </div>
+
+                        {/* Policies Section */}
+                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+                            <h2 className="text-lg font-bold text-gray-900 p-4 pb-2 border-b border-gray-100">Policies</h2>
+
+                            {/* Privacy Policy */}
+                            {privacyContent && (
+                                <CollapsibleSection title="Privacy Policy">
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {privacyContent}
+                                    </div>
+                                </CollapsibleSection>
+                            )}
+
+                            {/* Terms & Conditions */}
+                            {termsContent && (
+                                <CollapsibleSection title="Terms & Conditions">
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {termsContent}
+                                    </div>
+                                </CollapsibleSection>
+                            )}
                         </div>
                     </>
                 )}

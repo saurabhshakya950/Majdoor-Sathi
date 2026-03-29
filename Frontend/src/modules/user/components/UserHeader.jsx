@@ -2,12 +2,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
+import SubscriptionComingSoon from '../../../components/SubscriptionComingSoon';
 
 const UserHeader = memo(() => {
     const navigate = useNavigate();
     const location = useLocation();
     const [userName, setUserName] = useState('');
     const [notificationCount, setNotificationCount] = useState(0);
+    const [isSubModalOpen, setIsSubModalOpen] = useState(false);
 
     useEffect(() => {
         // Load name from localStorage immediately for instant display
@@ -122,7 +124,7 @@ const UserHeader = memo(() => {
     }, [location]);
 
     const handleSubscription = () => {
-        navigate('/user/subscription');
+        setIsSubModalOpen(true);
     };
 
     const handleNotifications = () => {
@@ -173,6 +175,12 @@ const UserHeader = memo(() => {
                     </button>
                 </div>
             </div>
+
+            <SubscriptionComingSoon 
+                isOpen={isSubModalOpen} 
+                onClose={() => setIsSubModalOpen(false)} 
+                type="USER" 
+            />
         </div>
     );
 });

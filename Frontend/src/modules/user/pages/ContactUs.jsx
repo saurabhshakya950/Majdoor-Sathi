@@ -32,7 +32,7 @@ const ContactUs = () => {
     const fetchCMSContent = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch all CMS content in parallel
             const [contactRes, termsRes, privacyRes] = await Promise.all([
                 fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/cms/contactUs`),
@@ -67,64 +67,64 @@ const ContactUs = () => {
             <PageHeader title="Contact us" backPath="/user/settings" sticky />
 
             <div className="flex-1 overflow-y-auto">
-                <div className="p-4 pb-8 space-y-6">
-                {loading ? (
-                    <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Contact Information */}
-                        {contactData && (
-                            <div className="bg-white rounded-xl p-6 shadow-sm">
-                                <h2 className="text-lg font-bold text-gray-900 mb-4">Get in Touch</h2>
-                                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                    {contactData}
+                <div className="p-4 pb-4 space-y-4">
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Contact Information */}
+                            {contactData && (
+                                <div className="bg-white rounded-xl p-4 shadow-sm">
+                                    <h2 className="text-lg font-bold text-gray-900 mb-4">Get in Touch</h2>
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {contactData}
+                                    </div>
                                 </div>
+                            )}
+
+                            {/* Contact Form */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm">
+                                <h2 className="text-lg font-bold text-gray-900 mb-2">Send us a Message</h2>
+                                <p className="text-gray-600 mb-6 text-sm">
+                                    Fill out the form below and we'll get back to you as soon as possible.
+                                </p>
+                                <ContactForm initialData={initialFormData} />
                             </div>
-                        )}
 
-                        {/* Contact Form */}
-                        <div className="bg-white rounded-xl p-6 shadow-sm">
-                            <h2 className="text-lg font-bold text-gray-900 mb-2">Send us a Message</h2>
-                            <p className="text-gray-600 mb-6 text-sm">
-                                Fill out the form below and we'll get back to you as soon as possible.
-                            </p>
-                            <ContactForm initialData={initialFormData} />
-                        </div>
+                            <InfoBox
+                                variant="info"
+                                message="We typically respond within 24-48 hours during working days."
+                            />
 
-                        <InfoBox
-                            variant="info"
-                            message="We typically respond within 24-48 hours during working days."
-                        />
+                            {/* Policies Section */}
+                            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <h2 className="text-lg font-bold text-gray-900 p-4 pb-2 border-b border-gray-100">Policies</h2>
 
-                        {/* Policies Section */}
-                        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                            <h2 className="text-lg font-bold text-gray-900 p-6 pb-4">Policies</h2>
+                                {/* Privacy Policy */}
+                                {privacyContent && (
+                                    <CollapsibleSection title="Privacy Policy">
+                                        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {privacyContent}
+                                        </div>
+                                    </CollapsibleSection>
+                                )}
 
-                            {/* Terms & Conditions */}
-                            {termsContent && (
-                                <CollapsibleSection title="Terms & Conditions">
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                        {termsContent}
-                                    </div>
-                                </CollapsibleSection>
-                            )}
-
-                            {/* Privacy Policy */}
-                            {privacyContent && (
-                                <CollapsibleSection title="Privacy Policy">
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                        {privacyContent}
-                                    </div>
-                                </CollapsibleSection>
-                            )}
-                        </div>
-                    </>
-                )}
+                                {/* Terms & Conditions */}
+                                {termsContent && (
+                                    <CollapsibleSection title="Terms & Conditions">
+                                        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {termsContent}
+                                        </div>
+                                    </CollapsibleSection>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
-    </div>
     );
 };
 

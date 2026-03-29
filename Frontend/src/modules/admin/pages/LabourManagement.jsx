@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, X, HardHat, Briefcase, MessageSquare, Star, Users, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import { labourManagementAPI } from '../../../services/admin.api';
 
 const LabourManagement = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const highlightId = searchParams.get('highlightId');
     const [labours, setLabours] = useState([]);
     const [filteredLabours, setFilteredLabours] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 5, total: 0 });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentLabour, setCurrentLabour] = useState(null);
@@ -179,6 +182,13 @@ const LabourManagement = () => {
             } else if (type === 'feedback') {
                 response = await labourManagementAPI.getLabourFeedbacks(labour._id);
                 setActionModal({ type, userId: labour._id, data: response.data.feedbacks || [] });
+
+                // Clear the count locally so badge disappears immediately
+                setLabours(prev => prev.map(l => l._id === labour._id ? { ...l, unreadFeedbackCount: 0 } : l));
+                setFilteredLabours(prev => prev.map(l => l._id === labour._id ? { ...l, unreadFeedbackCount: 0 } : l));
+
+                // Clear the highlight from URL as the user is now viewing the feedback
+                setSearchParams({});
             }
         } catch (error) {
             console.error('[ERROR] Error fetching action data:', error);
@@ -240,7 +250,7 @@ const LabourManagement = () => {
                     </thead>
                     <tbody>
                         {filteredLabours.map(labour => (
-                            <tr key={labour._id}>
+                            <tr key={labour._id} className={highlightId === labour._id ? 'highlight-row' : ''}>
                                 <td>{getFullName(labour)}</td>
                                 <td>{labour.skillType || labour.trade || 'N/A'}</td>
                                 <td>{labour.user?.mobileNumber || labour.mobileNumber || 'N/A'}</td>
@@ -258,8 +268,16 @@ const LabourManagement = () => {
                                         <button className="action-icon-btn contractor" title="Contractor Action" onClick={() => openActionModal('contractor', labour)}>
                                             <Briefcase size={18} />
                                         </button>
-                                        <button className="action-icon-btn feedback" title="Feedback" onClick={() => openActionModal('feedback', labour)}>
+                                        <button 
+                                            className="action-icon-btn feedback" 
+                                            title="Feedback" 
+                                            onClick={() => openActionModal('feedback', labour)}
+                                            style={{ position: 'relative' }}
+                                        >
                                             <MessageSquare size={18} />
+                                            {labour.unreadFeedbackCount > 0 && (
+                                                <span className="feedback-notif-badge">{labour.unreadFeedbackCount}</span>
+                                            )}
                                         </button>
                                     </div>
                                 </td>
@@ -276,25 +294,35 @@ const LabourManagement = () => {
                     </tbody>
                 </table>
 
-                {/* Pagination */}
+                {/* Numerical Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                    <div className="admin-pagination">
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                             disabled={pagination.page === 1}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Previous Page"
                         >
-                            Previous
+                            &laquo;
                         </button>
-                        <span style={{ padding: '8px 16px' }}>
-                            Page {pagination.page} of {pagination.totalPages}
-                        </span>
+                        
+                        {[...Array(pagination.totalPages)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                className={`pagi-btn ${pagination.page === i + 1 ? 'active' : ''}`}
+                                onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                             disabled={pagination.page === pagination.totalPages}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Next Page"
                         >
-                            Next
+                            &raquo;
                         </button>
                     </div>
                 )}
@@ -615,6 +643,33 @@ const LabourManagement = () => {
                     color: #475569;
                     margin: 0;
                     line-height: 1.4;
+                }
+                .highlight-row {
+                    background-color: #fff9db !important;
+                    animation: pulse-highlight 2s infinite;
+                }
+                @keyframes pulse-highlight {
+                    0% { background-color: #fff9db; }
+                    50% { background-color: #fff3bf; }
+                    100% { background-color: #fff9db; }
+                }
+                .feedback-notif-badge {
+                    position: absolute;
+                    top: -6px;
+                    right: -6px;
+                    background: #ef4444;
+                    color: white;
+                    font-size: 10px;
+                    font-weight: 800;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    z-index: 10;
                 }
             `}</style>
         </div>

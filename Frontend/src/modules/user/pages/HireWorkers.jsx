@@ -44,20 +44,20 @@ const HireWorkers = () => {
                     const uiStateMap = {};
                     const chatIdMap = {};
                     response.data.hireRequests.forEach(req => {
-                        const labourId = req.labourId; // Already a string from backend
+                        const trackingId = req.cardId || req.labourId; // Use specific card ID if available, otherwise fallback to labour profile ID
 
-                        console.log(`Mapping labourId: ${labourId} → status: ${req.status}, chatId: ${req.chatId}`);
+                        console.log(`Mapping trackingId: ${trackingId} → status: ${req.status}, chatId: ${req.chatId}`);
 
                         // Map status to UI states
                         if (req.status === 'accepted') {
-                            uiStateMap[labourId] = 'approved';
+                            uiStateMap[trackingId] = 'approved';
                             if (req.chatId) {
-                                chatIdMap[labourId] = req.chatId;
+                                chatIdMap[trackingId] = req.chatId;
                             }
                         } else if (req.status === 'declined') {
-                            uiStateMap[labourId] = 'declined';
+                            uiStateMap[trackingId] = 'declined';
                         } else {
-                            uiStateMap[labourId] = 'pending';
+                            uiStateMap[trackingId] = 'pending';
                         }
                     });
 
@@ -114,24 +114,53 @@ const HireWorkers = () => {
             const response = await labourAPI.browseLabourCards();
 
             if (response.success && response.data.labours) {
-                // Transform API data
-                let dbCards = response.data.labours.map(labour => ({
-                    id: labour._id,
-                    fullName: labour.labourCardDetails?.fullName || '',
-                    primarySkill: labour.skillType,
-                    rating: labour.rating || 0,
-                    gender: labour.labourCardDetails?.gender || '',
-                    mobileNumber: labour.labourCardDetails?.mobileNumber || '',
-                    city: labour.labourCardDetails?.city || '',
-                    address: labour.labourCardDetails?.address || '',
-                    skills: labour.labourCardDetails?.skills || labour.skillType,
-                    experience: labour.experience || '',
-                    previousWorkLocation: labour.previousWorkLocation || '',
-                    availability: labour.availability || 'Full Time',
-                    availabilityStatus: labour.availabilityStatus || 'Available',
-                    createdAt: labour.createdAt,
-                    userId: labour.user // Store user ID for filtering
-                }));
+                // Transform API data to flatten multiple cards per labourer
+                let dbCards = [];
+                response.data.labours.forEach(labour => {
+                    // If user has multiple new schema cards
+                    if (labour.labourCards && labour.labourCards.length > 0) {
+                        labour.labourCards.forEach(card => {
+                            dbCards.push({
+                                uniqueKey: card._id || `${labour._id}-${Math.random()}`,
+                                id: labour._id, // Used for hiring to identify the labour user profile
+                                userId: labour.user?._id || labour.user,
+                                fullName: card.fullName || '',
+                                primarySkill: card.primarySkill || card.skills || labour.skillType,
+                                rating: card.rating || 0,
+                                gender: card.gender || '',
+                                mobileNumber: card.mobileNumber || '',
+                                city: card.city || '',
+                                address: card.address || '',
+                                skills: card.skills || card.primarySkill || labour.skillType,
+                                experience: card.experience || '',
+                                previousWorkLocation: card.previousWorkLocation || '',
+                                availability: card.availability || 'Full Time',
+                                availabilityStatus: card.availabilityStatus || 'Available',
+                                createdAt: labour.createdAt
+                            });
+                        });
+                    } else if (labour.hasLabourCard) {
+                        // Fallback constraint for backward compatibility
+                        dbCards.push({
+                            uniqueKey: labour._id,
+                            id: labour._id,
+                            userId: labour.user?._id || labour.user,
+                            fullName: labour.labourCardDetails?.fullName || '',
+                            primarySkill: labour.skillType,
+                            rating: labour.rating || 0,
+                            gender: labour.labourCardDetails?.gender || '',
+                            mobileNumber: labour.labourCardDetails?.mobileNumber || '',
+                            city: labour.labourCardDetails?.city || '',
+                            address: labour.labourCardDetails?.address || '',
+                            skills: labour.labourCardDetails?.skills || labour.skillType,
+                            experience: labour.experience || '',
+                            previousWorkLocation: labour.previousWorkLocation || '',
+                            availability: labour.availability || 'Full Time',
+                            availabilityStatus: labour.availabilityStatus || 'Available',
+                            createdAt: labour.createdAt
+                        });
+                    }
+                });
 
                 // Filter out logged-in labour's own card if they're a Labour user
                 if (userType === 'Labour' && userId) {
@@ -251,6 +280,7 @@ const HireWorkers = () => {
             // Create request object for API
             const requestData = {
                 labourId: card.id,
+                cardId: card.uniqueKey,
                 labourName: card.fullName,
                 labourSkill: card.primarySkill,
                 labourPhone: card.mobileNumber,
@@ -268,8 +298,8 @@ const HireWorkers = () => {
             const response = await labourAPI.createHireRequest(requestData);
 
             if (response.success) {
-                // Update button state immediately
-                const updatedHired = { ...hiredWorkers, [card.id]: 'pending' };
+                // Update button state immediately using tracking ID
+                const updatedHired = { ...hiredWorkers, [card.uniqueKey]: 'pending' };
                 setHiredWorkers(updatedHired);
 
                 // Show success message
@@ -383,7 +413,7 @@ const HireWorkers = () => {
                     ) : (
                         <div className="space-y-4">
                             {filteredCards.map((card, index) => (
-                                <div key={card.id} className="premium-card card-fade-in">
+                                <div key={card.uniqueKey || card.id} className="premium-card card-fade-in">
                                     {/* Header */}
                                     <div className="flex items-start gap-3 mb-3">
                                         <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
@@ -444,21 +474,21 @@ const HireWorkers = () => {
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => handleViewDetails(card)}
-                                            className="flex-1 btn-secondary"
+                                            className={`flex-1 btn-secondary transition-all ${(hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'approved' ? '!py-1.5 !px-1 !text-xs h-[38px]' : ''}`}
                                         >
                                             View Details
                                         </button>
-                                        {hiredWorkers[card.id] === 'approved' ? (
+                                        {(hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'approved' ? (
                                             <>
                                                 <button
                                                     disabled
-                                                    className="flex-1 bg-green-500 text-white cursor-default shadow-lg font-bold py-3 rounded-lg"
+                                                    className="flex-1 flex items-center justify-center gap-1 bg-green-500 text-white cursor-default shadow-sm font-bold py-1.5 px-1 text-xs rounded-lg whitespace-nowrap h-[38px]"
                                                 >
                                                     ✓ Approved
                                                 </button>
                                                 <button
                                                     onClick={async () => {
-                                                        const directChatId = chatIds[card.id];
+                                                        const directChatId = chatIds[card.uniqueKey] || chatIds[card.id];
                                                         if (directChatId) {
                                                             navigate(`/user/chat/${directChatId}`);
                                                             return;
@@ -505,7 +535,7 @@ const HireWorkers = () => {
                                                             navigate('/user/chat');
                                                         }
                                                     }}
-                                                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all active:scale-95"
+                                                    className="flex-1 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-1 text-xs rounded-lg transition-all active:scale-95 h-[38px]"
                                                 >
                                                     Chat
                                                 </button>
@@ -513,18 +543,18 @@ const HireWorkers = () => {
                                         ) : (
                                             <button
                                                 onClick={() => handleHireWorker(card)}
-                                                disabled={hiredWorkers[card.id]}
-                                                className={`flex-1 font-bold py-3 rounded-lg transition-all ${hiredWorkers[card.id] === 'declined'
+                                                disabled={hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]}
+                                                className={`flex-1 font-bold py-3 rounded-lg transition-all ${(hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'declined'
                                                     ? 'bg-gray-400 text-white cursor-not-allowed'
-                                                    : hiredWorkers[card.id] === 'pending'
+                                                    : (hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'pending'
                                                         ? 'bg-orange-500 text-white cursor-not-allowed'
                                                         : 'btn-primary hover:bg-yellow-500 active:scale-95'
                                                     }`}
                                             >
-                                                {hiredWorkers[card.id] === 'declined'
-                                                    ? '\u2717 Declined'
-                                                    : hiredWorkers[card.id] === 'pending'
-                                                        ? '\u231B Request Sent'
+                                                {(hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'declined'
+                                                    ? '✗ Declined'
+                                                    : (hiredWorkers[card.uniqueKey] || hiredWorkers[card.id]) === 'pending'
+                                                        ? '⏳ Request Sent'
                                                         : 'Hire Worker'}
                                             </button>
                                         )}

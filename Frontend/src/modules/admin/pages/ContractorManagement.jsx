@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, X, Briefcase, HardHat, MessageSquare, Star, Users, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import { contractorManagementAPI } from '../../../services/admin.api';
 
 const ContractorManagement = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const highlightId = searchParams.get('highlightId');
     const [contractors, setContractors] = useState([]);
     const [filteredContractors, setFilteredContractors] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 5, total: 0 });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentContractor, setCurrentContractor] = useState(null);
@@ -175,6 +178,13 @@ const ContractorManagement = () => {
             } else if (type === 'feedback') {
                 response = await contractorManagementAPI.getContractorFeedbacks(contractor._id);
                 setActionModal({ type, userId: contractor._id, data: response.data.feedbacks || [] });
+
+                // Clear the count locally so badge disappears immediately
+                setContractors(prev => prev.map(c => c._id === contractor._id ? { ...c, unreadFeedbackCount: 0 } : c));
+                setFilteredContractors(prev => prev.map(c => c._id === contractor._id ? { ...c, unreadFeedbackCount: 0 } : c));
+
+                // Clear the highlight from URL as the user is now viewing the feedback
+                setSearchParams({});
             }
         } catch (error) {
             console.error('[ERROR] Error fetching action data:', error);
@@ -236,7 +246,7 @@ const ContractorManagement = () => {
                     </thead>
                     <tbody>
                         {filteredContractors.map(contractor => (
-                            <tr key={contractor._id}>
+                            <tr key={contractor._id} className={highlightId === contractor._id ? 'highlight-row' : ''}>
                                 <td>{getFullName(contractor)}</td>
                                 <td>{contractor.businessName || 'N/A'}</td>
                                 <td>{contractor.user?.mobileNumber || contractor.mobileNumber || 'N/A'}</td>
@@ -254,8 +264,16 @@ const ContractorManagement = () => {
                                         <button className="action-icon-btn labour" title="Labour Action" onClick={() => openActionModal('labour', contractor)}>
                                             <HardHat size={18} />
                                         </button>
-                                        <button className="action-icon-btn feedback" title="Feedback" onClick={() => openActionModal('feedback', contractor)}>
+                                        <button 
+                                            className="action-icon-btn feedback" 
+                                            title="Feedback" 
+                                            onClick={() => openActionModal('feedback', contractor)}
+                                            style={{ position: 'relative' }}
+                                        >
                                             <MessageSquare size={18} />
+                                            {contractor.unreadFeedbackCount > 0 && (
+                                                <span className="feedback-notif-badge">{contractor.unreadFeedbackCount}</span>
+                                            )}
                                         </button>
                                     </div>
                                 </td>
@@ -272,25 +290,35 @@ const ContractorManagement = () => {
                     </tbody>
                 </table>
 
-                {/* Pagination */}
+                {/* Numerical Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                    <div className="admin-pagination">
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                             disabled={pagination.page === 1}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Previous Page"
                         >
-                            Previous
+                            &laquo;
                         </button>
-                        <span style={{ padding: '8px 16px' }}>
-                            Page {pagination.page} of {pagination.totalPages}
-                        </span>
+                        
+                        {[...Array(pagination.totalPages)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                className={`pagi-btn ${pagination.page === i + 1 ? 'active' : ''}`}
+                                onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                             disabled={pagination.page === pagination.totalPages}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Next Page"
                         >
-                            Next
+                            &raquo;
                         </button>
                     </div>
                 )}
@@ -610,6 +638,33 @@ const ContractorManagement = () => {
                     color: #475569;
                     margin: 0;
                     line-height: 1.4;
+                }
+                .highlight-row {
+                    background-color: #fff9db !important;
+                    animation: pulse-highlight 2s infinite;
+                }
+                @keyframes pulse-highlight {
+                    0% { background-color: #fff9db; }
+                    50% { background-color: #fff3bf; }
+                    100% { background-color: #fff9db; }
+                }
+                .feedback-notif-badge {
+                    position: absolute;
+                    top: -6px;
+                    right: -6px;
+                    background: #ef4444;
+                    color: white;
+                    font-size: 10px;
+                    font-weight: 800;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    z-index: 10;
                 }
             `}</style>
         </div>

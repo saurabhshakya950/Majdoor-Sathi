@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, X, Briefcase, HardHat, MessageSquare, Star, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import { userManagementAPI } from '../../../services/admin.api';
 
 const UserManagement = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const highlightId = searchParams.get('highlightId');
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 5, total: 0 });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
@@ -179,6 +182,13 @@ const UserManagement = () => {
             } else if (type === 'feedback') {
                 response = await userManagementAPI.getUserFeedbacks(user._id);
                 setActionModal({ type, userId: user._id, data: response.data.feedbacks || [] });
+                
+                // Clear the count locally so badge disappears immediately
+                setUsers(prev => prev.map(u => u._id === user._id ? { ...u, unreadFeedbackCount: 0 } : u));
+                setFilteredUsers(prev => prev.map(u => u._id === user._id ? { ...u, unreadFeedbackCount: 0 } : u));
+
+                // Clear the highlight from URL as the user is now viewing the feedback
+                setSearchParams({});
             }
         } catch (error) {
             console.error('[ERROR] Error fetching action data:', error);
@@ -235,7 +245,7 @@ const UserManagement = () => {
                     </thead>
                     <tbody>
                         {filteredUsers.map(user => (
-                            <tr key={user._id}>
+                            <tr key={user._id} className={highlightId === user._id ? 'highlight-row' : ''}>
                                 <td>{getFullName(user)}</td>
                                 <td>{user.mobileNumber}</td>
                                 <td>{user.city || 'N/A'}</td>
@@ -252,8 +262,16 @@ const UserManagement = () => {
                                         <button className="action-icon-btn labour" title="Labour Action" onClick={() => openActionModal('labour', user)}>
                                             <HardHat size={18} />
                                         </button>
-                                        <button className="action-icon-btn feedback" title="User Feedback" onClick={() => openActionModal('feedback', user)}>
+                                        <button 
+                                            className="action-icon-btn feedback" 
+                                            title="User Feedback" 
+                                            onClick={() => openActionModal('feedback', user)}
+                                            style={{ position: 'relative' }}
+                                        >
                                             <MessageSquare size={18} />
+                                            {user.unreadFeedbackCount > 0 && (
+                                                <span className="feedback-notif-badge">{user.unreadFeedbackCount}</span>
+                                            )}
                                         </button>
                                     </div>
                                 </td>
@@ -270,25 +288,35 @@ const UserManagement = () => {
                     </tbody>
                 </table>
 
-                {/* Pagination */}
+                {/* Numerical Pagination */}
                 {pagination.totalPages > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                    <div className="admin-pagination">
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                             disabled={pagination.page === 1}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Previous Page"
                         >
-                            Previous
+                            &laquo;
                         </button>
-                        <span style={{ padding: '8px 16px' }}>
-                            Page {pagination.page} of {pagination.totalPages}
-                        </span>
+                        
+                        {[...Array(pagination.totalPages)].map((_, i) => (
+                            <button
+                                key={i + 1}
+                                className={`pagi-btn ${pagination.page === i + 1 ? 'active' : ''}`}
+                                onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+
                         <button 
                             onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                             disabled={pagination.page === pagination.totalPages}
-                            className="crud-btn"
+                            className="pagi-btn"
+                            title="Next Page"
                         >
-                            Next
+                            &raquo;
                         </button>
                     </div>
                 )}
@@ -652,6 +680,33 @@ const UserManagement = () => {
                 .detail-row strong {
                     color: #1e293b;
                     min-width: 90px;
+                }
+                .highlight-row {
+                    background-color: #fff9db !important;
+                    animation: pulse-highlight 2s infinite;
+                }
+                @keyframes pulse-highlight {
+                    0% { background-color: #fff9db; }
+                    50% { background-color: #fff3bf; }
+                    100% { background-color: #fff9db; }
+                }
+                .feedback-notif-badge {
+                    position: absolute;
+                    top: -6px;
+                    right: -6px;
+                    background: #ef4444;
+                    color: white;
+                    font-size: 10px;
+                    font-weight: 800;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    z-index: 10;
                 }
             `}</style>
         </div>

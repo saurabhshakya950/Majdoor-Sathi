@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Phone, Calendar, Clock, Bell, Crown } from 'lucide-react';
+import { MapPin, Phone, Calendar, Clock, Bell, Crown, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ContractorBottomNav from '../components/ContractorBottomNav';
 import { contractorAPI } from '../../../services/api';
@@ -45,6 +45,44 @@ const History = () => {
             setHistory([]);
         } finally {
             if (!isSilent) setLoading(false);
+        }
+    };
+
+    const handleChatClick = async (request) => {
+        console.log('[INFO] Chat button clicked (Contractor History)');
+        
+        try {
+            const { chatAPI } = await import('../../../services/api');
+
+            // Prefer direct chatId if available
+            if (request.chatId) {
+                console.log('[SUCCESS] Using existing chatId:', request.chatId);
+                navigate(`/contractor/chat/${request.chatId}`);
+                return;
+            }
+
+            // Fallback: Initialize new chat
+            console.log('[INFO] Initializing new chat...');
+            const initResponse = await chatAPI.initializeChat({
+                participant2Id: request.applicantUserId || request.requesterUserId,
+                participant2Type: request.type === 'worker' ? 'Labour' : 'User',
+                participant2Name: request.workerName,
+                participant2Phone: request.phoneNumber,
+                requestId: request.id || request._id,
+                requestType: 'ContractorHireRequest'
+            });
+
+            if (initResponse.success && initResponse.data.chat) {
+                console.log('[SUCCESS] Chat initialized:', initResponse.data.chat._id);
+                navigate(`/contractor/chat/${initResponse.data.chat._id}`);
+                return;
+            }
+
+            console.log('[ERROR] No chat found, navigating to chat list');
+            navigate('/contractor/chat');
+        } catch (error) {
+            console.error('[ERROR] Failed to open chat:', error);
+            navigate('/contractor/chat');
         }
     };
 
@@ -215,6 +253,16 @@ const History = () => {
                                             <p className="text-xs text-gray-500 mb-1">Request Type</p>
                                             <p className="font-semibold text-gray-900">Contractor Hire Request</p>
                                         </div>
+                                    )}
+                                    {/* Chat Button for Accepted Status */}
+                                    {request.status === 'accepted' && (
+                                        <button
+                                            onClick={() => handleChatClick(request)}
+                                            className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
+                                        >
+                                            <MessageCircle className="w-5 h-5" />
+                                            <span>Chat with {request.type === 'worker' ? 'Worker' : 'Customer'}</span>
+                                        </button>
                                     )}
                                 </div>
                             ))}

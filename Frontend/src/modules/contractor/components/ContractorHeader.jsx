@@ -2,12 +2,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
+import SubscriptionComingSoon from '../../../components/SubscriptionComingSoon';
 
 const ContractorHeader = memo(() => {
     const navigate = useNavigate();
     const location = useLocation();
     const [contractorName, setContractorName] = useState('');
     const [notificationCount, setNotificationCount] = useState(0);
+    const [isSubModalOpen, setIsSubModalOpen] = useState(false);
 
     useEffect(() => {
         // Load name from localStorage immediately for instant display
@@ -134,7 +136,7 @@ const ContractorHeader = memo(() => {
     };
 
     const handleSubscription = () => {
-        navigate('/contractor/subscription');
+        setIsSubModalOpen(true);
     };
 
     return (
@@ -181,6 +183,12 @@ const ContractorHeader = memo(() => {
                     </button>
                 </div>
             </div>
+
+            <SubscriptionComingSoon 
+                isOpen={isSubModalOpen} 
+                onClose={() => setIsSubModalOpen(false)} 
+                type="CONTRACTOR" 
+            />
         </div>
     );
 });

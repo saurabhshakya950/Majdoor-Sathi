@@ -103,7 +103,7 @@ export const createBroadcast = async (req, res) => {
         let recipientCount = 0;
         switch (targetAudience) {
             case 'USERS':
-                recipientCount = await User.countDocuments();
+                recipientCount = await User.countDocuments({ userType: { $in: ['User', null] } });
                 break;
             case 'LABOUR':
                 recipientCount = await Labour.countDocuments();
@@ -297,37 +297,35 @@ export const sendBroadcast = async (req, res) => {
         
         switch (broadcast.targetAudience) {
             case 'USERS':
-                const usersOnly = await User.find({}, '_id');
+                const usersOnly = await User.find({ userType: { $in: ['User', null] } }, '_id');
                 recipients = usersOnly.map(u => ({ userId: u._id, userType: 'USER' }));
                 console.log('👥 USER recipients:', recipients.length);
                 break;
+
             case 'LABOUR':
-                // Send to all users as LABOUR type (they can view it in labour panel)
-                const usersForLabour = await User.find({}, '_id');
+                const usersForLabour = await User.find({ userType: 'Labour' }, '_id');
                 recipients = usersForLabour.map(u => ({ userId: u._id, userType: 'LABOUR' }));
                 console.log('🔨 LABOUR recipients:', recipients.length);
                 break;
+
             case 'CONTRACTORS':
-                // Send to all users as CONTRACTOR type (they can view it in contractor panel)
-                const usersForContractor = await User.find({}, '_id');
-                recipients = usersForContractor.map(u => ({ userId: u._id, userType: 'CONTRACTOR' }));
+                const contractorsOnly = await User.find({ userType: 'Contractor' }, '_id');
+                recipients = contractorsOnly.map(u => ({ userId: u._id, userType: 'CONTRACTOR' }));
                 console.log('🏗️ CONTRACTOR recipients:', recipients.length);
                 break;
+
             case 'ALL':
             default:
-                // Send to all users for all three roles
                 const allUsers = await User.find({}, '_id');
                 console.log('👥 Total users in database:', allUsers.length);
                 
+                // For 'ALL', we send to everyone in all three roles so they see it wherever they are
                 const userRecipients = allUsers.map(u => ({ userId: u._id, userType: 'USER' }));
                 const labourRecipients = allUsers.map(u => ({ userId: u._id, userType: 'LABOUR' }));
                 const contractorRecipients = allUsers.map(u => ({ userId: u._id, userType: 'CONTRACTOR' }));
                 
                 recipients = [...userRecipients, ...labourRecipients, ...contractorRecipients];
                 console.log('📊 Total recipients (3x users):', recipients.length);
-                console.log('   - USER:', userRecipients.length);
-                console.log('   - LABOUR:', labourRecipients.length);
-                console.log('   - CONTRACTOR:', contractorRecipients.length);
                 break;
         }
 

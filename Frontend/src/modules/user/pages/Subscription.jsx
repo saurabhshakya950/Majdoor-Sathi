@@ -1,101 +1,40 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Crown } from 'lucide-react';
-import toast from 'react-hot-toast';
 import PageHeader from '../components/PageHeader';
-import BillingCycleToggle from '../components/BillingCycleToggle';
-import SubscriptionPlanCard from '../components/SubscriptionPlanCard';
-import InfoBox from '../components/InfoBox';
+import SubscriptionComingSoon from '../../../components/SubscriptionComingSoon';
 
 const Subscription = () => {
-    const navigate = useNavigate();
-    const [currentPlan, setCurrentPlan] = useState('free');
-    const [billingCycle, setBillingCycle] = useState('monthly');
-
-    useEffect(() => {
-        const savedPlan = localStorage.getItem('subscription_plan') || 'free';
-        setCurrentPlan(savedPlan);
-    }, []);
-
-    const plans = [
-        {
-            id: 'free',
-            name: 'Free Plan',
-            description: 'Perfect for getting started',
-            monthlyPrice: 0,
-            yearlyPrice: 0,
-            color: 'gray',
-            features: [
-                { text: 'View labour profiles', included: true },
-                { text: 'View contractor profiles', included: true },
-                { text: 'Post limited jobs (1-2 jobs)', included: true },
-                { text: 'Receive basic requests', included: true },
-                { text: 'Unlimited job posting', included: false },
-                { text: 'Priority visibility', included: false },
-                { text: 'Direct contact access', included: false },
-                { text: 'Faster response time', included: false }
-            ]
-        },
-        {
-            id: 'premium',
-            name: 'Premium User Plan',
-            description: 'Best for active users',
-            monthlyPrice: 499,
-            yearlyPrice: 4999,
-            color: 'yellow',
-            popular: true,
-            features: [
-                { text: 'View labour profiles', included: true },
-                { text: 'View contractor profiles', included: true },
-                { text: 'Unlimited job posting', included: true },
-                { text: 'Priority visibility to labours & contractors', included: true },
-                { text: 'Direct contact access (call/chat)', included: true },
-                { text: 'Faster response time', included: true },
-                { text: 'Highlighted user profile', included: true },
-                { text: '24/7 Priority support', included: true }
-            ]
-        }
-    ];
-
-    const handleSubscribe = (planId) => {
-        if (planId === currentPlan) return;
-
-        localStorage.setItem('subscription_plan', planId);
-        setCurrentPlan(planId);
-        toast.success('Subscription activated successfully');
-    };
+    // Page state to show the modal automatically on this page
+    const [isModalOpen, setIsModalOpen] = useState(true);
 
     return (
-        <div className="bg-gray-50 flex flex-col overflow-hidden" style={{ height: '100dvh', minHeight: '-webkit-fill-available' }}>
+        <div className="bg-gray-50 flex flex-col min-h-screen">
             <PageHeader title="Subscription Plans" icon={Crown} sticky />
 
-            <div className="flex-1 overflow-y-auto">
-                <div className="p-4 pb-8">
-                    <BillingCycleToggle
-                        billingCycle={billingCycle}
-                        onChange={setBillingCycle}
-                    />
-
-                    <div className="space-y-4 mt-6">
-                        {plans.map((plan) => (
-                            <SubscriptionPlanCard
-                                key={plan.id}
-                                plan={plan}
-                                billingCycle={billingCycle}
-                                isCurrentPlan={currentPlan === plan.id}
-                                onSubscribe={handleSubscribe}
-                            />
-                        ))}
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 max-w-sm w-full">
+                    <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Crown className="w-10 h-10 text-yellow-600 animate-pulse" />
                     </div>
-
-                    <div className="mt-6">
-                        <InfoBox
-                            variant="info"
-                            message="💡 You can upgrade or downgrade your plan anytime. Changes take effect immediately."
-                        />
-                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Premium Plans Coming Soon</h2>
+                    <p className="text-gray-500 mb-6 text-sm">
+                        We are currently offering all premium features for free. Enjoy the full experience!
+                    </p>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="w-full py-3 px-6 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-all"
+                    >
+                        Learn More
+                    </button>
                 </div>
             </div>
+
+            {/* This modal provides the detailed information and 'Shake' effect */}
+            <SubscriptionComingSoon 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                type="USER" 
+            />
         </div>
     );
 };

@@ -39,13 +39,26 @@ export const getAllUsers = async (req, res) => {
 
         const total = await User.countDocuments(query);
 
+        // Fetch unread feedback counts for each user
+        const usersWithCounts = await Promise.all(users.map(async (user) => {
+            const unreadCount = await Feedback.countDocuments({
+                entityId: user._id,
+                entityType: 'user',
+                isRead: false
+            });
+            return {
+                ...user.toObject(),
+                unreadFeedbackCount: unreadCount
+            };
+        }));
+
         console.log('✅ Found', users.length, 'users out of', total, 'total');
         console.log('===========================\n');
 
         res.status(200).json({
             success: true,
             data: {
-                users,
+                users: usersWithCounts,
                 total,
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -286,6 +299,12 @@ export const getUserFeedbacks = async (req, res) => {
             entityId: req.params.id,
             entityType: 'user'
         }).sort({ createdAt: -1 });
+
+        // Mark as read
+        await Feedback.updateMany(
+            { entityId: req.params.id, entityType: 'user', isRead: false },
+            { isRead: true }
+        );
 
         res.status(200).json({
             success: true,

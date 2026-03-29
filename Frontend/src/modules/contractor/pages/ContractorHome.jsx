@@ -107,7 +107,7 @@ const ContractorHome = () => {
                         <div className="flex items-center gap-2">
                             <h3 className="text-lg font-bold text-gray-900">Categories</h3>
                         </div>
-                        {filteredItems.length > 4 && (
+                        {filteredItems.length > 8 && (
                             <button
                                 onClick={handleSeeAllClick}
                                 className="text-blue-500 font-semibold text-sm hover:text-blue-600 transition-colors"
@@ -129,7 +129,7 @@ const ContractorHome = () => {
                         <div className="grid grid-cols-4 gap-4">
                             {displayedItems.map((item) => (
                                 <button
-                                    key={item._id || item.name}
+                                    key={item.id}
                                     onClick={() => handleCategoryClick(item)}
                                     className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white shadow-sm hover:shadow-md transition-all active:scale-95 border border-transparent hover:border-orange-200"
                                 >

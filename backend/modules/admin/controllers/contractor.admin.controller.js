@@ -49,10 +49,23 @@ export const getAllContractors = async (req, res) => {
 
         const total = await Contractor.countDocuments(query);
 
+        // Fetch unread feedback counts for each contractor
+        const contractorsWithCounts = await Promise.all(contractors.map(async (contractor) => {
+            const unreadCount = await Feedback.countDocuments({
+                entityId: contractor._id,
+                entityType: 'contractor',
+                isRead: false
+            });
+            return {
+                ...contractor.toObject(),
+                unreadFeedbackCount: unreadCount
+            };
+        }));
+
         res.status(200).json({
             success: true,
             data: {
-                contractors,
+                contractors: contractorsWithCounts,
                 total,
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -404,6 +417,12 @@ export const getContractorFeedbacks = async (req, res) => {
             entityId: req.params.id,
             entityType: 'contractor'
         }).sort({ createdAt: -1 });
+
+        // Mark as read
+        await Feedback.updateMany(
+            { entityId: req.params.id, entityType: 'contractor', isRead: false },
+            { isRead: true }
+        );
 
         res.status(200).json({
             success: true,

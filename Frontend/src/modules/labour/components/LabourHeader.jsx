@@ -2,12 +2,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, memo } from 'react';
 import { Crown, Bell } from 'lucide-react';
 import logo from '../../../assets/Majdoor Sathi.png';
+import SubscriptionComingSoon from '../../../components/SubscriptionComingSoon';
 
 const LabourHeader = memo(() => {
     const navigate = useNavigate();
     const location = useLocation();
     const [labourName, setLabourName] = useState('');
     const [notificationCount, setNotificationCount] = useState(0);
+    const [isSubModalOpen, setIsSubModalOpen] = useState(false);
 
     useEffect(() => {
         // Load name from localStorage immediately for instant display
@@ -136,7 +138,7 @@ const LabourHeader = memo(() => {
     };
 
     const handleSubscription = () => {
-        navigate('/labour/subscription');
+        setIsSubModalOpen(true);
     };
 
     return (
@@ -183,6 +185,12 @@ const LabourHeader = memo(() => {
                     </button>
                 </div>
             </div>
+
+            <SubscriptionComingSoon 
+                isOpen={isSubModalOpen} 
+                onClose={() => setIsSubModalOpen(false)} 
+                type="LABOUR" 
+            />
         </div>
     );
 });

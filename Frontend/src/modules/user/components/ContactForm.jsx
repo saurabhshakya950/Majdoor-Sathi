@@ -13,27 +13,50 @@ const ContactForm = ({ initialData = {} }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.fullName.trim()) {
             toast.error('Please enter your name');
             return;
         }
-        
+
         if (!formData.contact.trim()) {
             toast.error('Please enter your email or phone number');
             return;
         }
-        
+
         if (!formData.message.trim()) {
             toast.error('Please enter your message');
             return;
         }
 
-        toast.success("Thanks for contacting us, we'll get back to you soon.");
-        setFormData(prev => ({ ...prev, message: '' }));
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/notifications/contact-inquiry`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    phone: formData.contact,
+                    message: formData.message,
+                    senderRole: 'user'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success("Thanks for contacting us, we'll get back to you soon.");
+                setFormData(prev => ({ ...prev, message: '' }));
+            } else {
+                toast.error(data.message || 'Failed to submit inquiry');
+            }
+        } catch (error) {
+            console.error('Inquiry submission error:', error);
+            toast.error('Something went wrong. Please try again.');
+        }
     };
+
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">

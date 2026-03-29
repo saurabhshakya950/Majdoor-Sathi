@@ -358,7 +358,7 @@ const PostJob = () => {
                         {formData.budgetType === 'Fixed Amount' && (
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Budget Amount (\u20B9) *
+                                    Budget Amount (₹) *
                                 </label>
                                 <input
                                     type="number"

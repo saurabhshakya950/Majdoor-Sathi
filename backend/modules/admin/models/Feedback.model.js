@@ -34,6 +34,10 @@ const feedbackSchema = new mongoose.Schema({
     givenByModel: {
         type: String,
         enum: ['User', 'Labour', 'Contractor']
+    },
+    isRead: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

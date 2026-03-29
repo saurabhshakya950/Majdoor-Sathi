@@ -35,15 +35,15 @@ const SubscriptionPlanCard = ({
                 </div>
 
                 <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                            \u20B9{price}
-                        <span className="text-gray-600">
+                    <div className="flex items-baseline gap-2 text-3xl font-bold text-gray-900">
+                            ₹{price}
+                        <span className="text-gray-600 font-normal text-base">
                             /{billingCycle === 'monthly' ? 'month' : 'year'}
                         </span>
                     </div>
                     {billingCycle === 'yearly' && plan.id === 'premium' && (
                         <p className="text-sm text-green-600 mt-1">
-                            Save \u20B9{(plan.monthlyPrice * 12) - plan.yearlyPrice} per year
+                            Save ₹{(plan.monthlyPrice * 12) - plan.yearlyPrice} per year
                         </p>
                     )}
                 </div>

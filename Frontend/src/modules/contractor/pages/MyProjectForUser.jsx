@@ -22,6 +22,7 @@ const MyProjectForUser = () => {
         primaryWorkCategory: '',
         experience: '',
         contactNo: '',
+        address: '',
         budgetAmount: ''
     });
 
@@ -59,6 +60,7 @@ const MyProjectForUser = () => {
                                 primaryWorkCategory: job.labourSkill || 'Other',
                                 experience: job.experience || '0',
                                 contactNo: job.phoneNumber || 'N/A',
+                                address: job.address || 'N/A',
                                 budgetAmount: job.budgetAmount || '0',
                                 rating: job.rating || 0,
                                 availabilityStatus: job.profileStatus === 'Active' ? 'Available' : 'Closed',
@@ -133,6 +135,10 @@ const MyProjectForUser = () => {
             toast.error('Contact number is required');
             return;
         }
+        if (!formData.address.trim()) {
+            toast.error('Address is required');
+            return;
+        }
         if (!formData.budgetAmount.trim()) {
             toast.error('Budget amount is required');
             return;
@@ -159,7 +165,7 @@ const MyProjectForUser = () => {
                     contractorName: formData.contractorName,
                     phoneNumber: formData.contactNo,
                     city: formData.city,
-                    address: formData.city, // Using city as address
+                    address: formData.address,
                     businessType: mappedBusinessType,
                     businessName: formData.contractorName,
                     labourSkill: mappedSkill,
@@ -191,6 +197,7 @@ const MyProjectForUser = () => {
                         primaryWorkCategory: '',
                         experience: '',
                         contactNo: '',
+                        address: '',
                         budgetAmount: ''
                     });
                     setRating(0);
@@ -225,6 +232,7 @@ const MyProjectForUser = () => {
                     primaryWorkCategory: '',
                     experience: '',
                     contactNo: '',
+                    address: '',
                     budgetAmount: ''
                 });
                 setRating(0);
@@ -390,6 +398,21 @@ const MyProjectForUser = () => {
                                     className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none"
                                 />
                             </div>
+
+                            {/* Address */}
+                            <div className="mb-3">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Address <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    placeholder="Enter full address"
+                                    rows={3}
+                                    className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none resize-none"
+                                />
+                            </div>
                         </div>
 
                         {/* Work & Skills Info */}
@@ -481,7 +504,7 @@ const MyProjectForUser = () => {
                             {/* Budget Amount */}
                             <div className="mb-3">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Budget Amount (\u20B9) <span className="text-red-500">*</span>
+                                    Budget Amount (₹) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -553,6 +576,10 @@ const MyProjectForUser = () => {
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">City / Location</p>
                                     <p className="text-base font-semibold text-gray-900">{selectedCard.city}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Address</p>
+                                    <p className="text-base font-semibold text-gray-900">{selectedCard.address}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 mb-1">Primary Work Category</p>

@@ -174,3 +174,30 @@ html {
 .snap-center {
   scroll-snap-align: center;
 }
+
+/* Shake Animation for Subscription Modal */
+@keyframes shake {
+  0%, 100% { transform: translateX(0) scale(1.05); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) scale(1.05); }
+  20%, 40%, 60%, 80% { transform: translateX(5px) scale(1.05); }
+}
+
+.animate-shake {
+  animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Pulse animation for the Crown icon */
+@keyframes pulse-crown {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(234, 179, 8, 0)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.6)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(234, 179, 8, 0)); }
+}
+
+.animate-pulse-crown {
+  animation: pulse-crown 2s infinite ease-in-out;
+}
+
+/* Glow animation for text */
+.text-glow {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}

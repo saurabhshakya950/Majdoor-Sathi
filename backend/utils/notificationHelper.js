@@ -61,14 +61,14 @@ export const sendNotificationToMultipleUsers = async (userIds, payload) => {
     try {
         const users = await User.find({ _id: { $in: userIds } });
         
-        // Collect only the most recent token from each user to prevent duplicates
+        // Collect all active tokens from all users (both mobile and web platforms)
         let allTokens = [];
         users.forEach(user => {
-            if (user.fcmTokenWeb && user.fcmTokenWeb.length > 0) {
-                allTokens.push(user.fcmTokenWeb[user.fcmTokenWeb.length - 1]);
+            if (user.fcmTokenWeb && Array.isArray(user.fcmTokenWeb)) {
+                allTokens.push(...user.fcmTokenWeb);
             }
-            if (user.fcmTokenMobile && user.fcmTokenMobile.length > 0) {
-                allTokens.push(user.fcmTokenMobile[user.fcmTokenMobile.length - 1]);
+            if (user.fcmTokenMobile && Array.isArray(user.fcmTokenMobile)) {
+                allTokens.push(...user.fcmTokenMobile);
             }
         });
 

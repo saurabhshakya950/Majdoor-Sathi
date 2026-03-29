@@ -47,12 +47,25 @@ export const getAllLabours = async (req, res) => {
 
         const total = await Labour.countDocuments(query);
 
+        // Fetch unread feedback counts for each labour
+        const laboursWithCounts = await Promise.all(labours.map(async (labour) => {
+            const unreadCount = await Feedback.countDocuments({
+                entityId: labour._id,
+                entityType: 'labour',
+                isRead: false
+            });
+            return {
+                ...labour.toObject(),
+                unreadFeedbackCount: unreadCount
+            };
+        }));
+
         console.log('===========================\n');
 
         res.status(200).json({
             success: true,
             data: {
-                labours,
+                labours: laboursWithCounts,
                 total,
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -372,6 +385,12 @@ export const getLabourFeedbacks = async (req, res) => {
             entityId: req.params.id,
             entityType: 'labour'
         }).sort({ createdAt: -1 });
+
+        // Mark as read
+        await Feedback.updateMany(
+            { entityId: req.params.id, entityType: 'labour', isRead: false },
+            { isRead: true }
+        );
 
         res.status(200).json({
             success: true,

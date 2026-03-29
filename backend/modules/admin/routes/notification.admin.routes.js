@@ -1,6 +1,8 @@
 import express from 'express';
 import { protectAdmin } from '../middleware/admin.auth.middleware.js';
 import Notification from '../../../models/Notification.model.js';
+import Admin from '../models/Admin.model.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -57,6 +59,58 @@ router.patch('/read-all', protectAdmin, async (req, res) => {
         res.status(200).json({ success: true, message: 'All notifications marked as read' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to mark all notifications', error: error.message });
+    }
+});
+
+// @desc   Create a contact inquiry notification
+// @route  POST /api/admin/notifications/contact-inquiry
+// @access Public (No login required to contact support)
+router.post('/contact-inquiry', async (req, res) => {
+    try {
+        const { name, phone, message, senderRole } = req.body;
+
+        if (!name || !phone || !message) {
+            return res.status(400).json({ success: false, message: 'Missing fields' });
+        }
+
+        // Auto-assign to SUPER_ADMIN
+        const superAdmin = await Admin.findOne({ role: 'SUPER_ADMIN' });
+        if (!superAdmin) {
+            return res.status(404).json({ success: false, message: 'Super Admin not found' });
+        }
+
+        const notification = new Notification({
+            user: superAdmin._id,
+            userType: 'ADMIN',
+            title: `New Inquiry from ${senderRole || 'User'}`,
+            message: message.substring(0, 80) + '...',
+            type: 'info',
+            priority: 'HIGH',
+            metadata: {
+                type: 'CONTACT_INQUIRY',
+                name,
+                phone,
+                message,
+                senderRole: (senderRole || 'User').toUpperCase()
+            }
+        });
+
+        await notification.save();
+        res.status(201).json({ success: true, message: 'Inquiry sent' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error', error: error.message });
+    }
+});
+
+// @desc   Delete a notification
+// @route  DELETE /api/admin/notifications/:id
+// @access Private (Admin)
+router.delete('/:id', protectAdmin, async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.status(200).json({ success: true, message: 'Notification deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to delete notification', error: error.message });
     }
 });
 

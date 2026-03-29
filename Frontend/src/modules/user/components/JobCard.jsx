@@ -1,11 +1,23 @@
-import { MapPin, Briefcase, Calendar, IndianRupee, Phone } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, IndianRupee, Phone, X } from 'lucide-react';
 import { memo } from 'react';
 
-const JobCard = memo(({ job, onViewDetails, onToggleJobStatus, index = 0 }) => {
+const JobCard = memo(({ job, onViewDetails, onToggleJobStatus, onDelete, index = 0 }) => {
     return (
-        <div className="premium-card card-fade-in" style={{ animationDelay: `${index * 0.05}s` }}>
+        <div className="premium-card card-fade-in relative" style={{ animationDelay: `${index * 0.05}s` }}>
+            {/* Delete Button */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(job.id);
+                }}
+                className="absolute top-3 right-3 p-1.5 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-all duration-200 z-10 shadow-sm active:scale-90"
+                title="Delete Job"
+            >
+                <X className="w-4 h-4" />
+            </button>
+
             {/* Header with User Info and Status */}
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-3 pr-8">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
                         <span className="text-lg font-bold text-gray-900">
@@ -50,7 +62,7 @@ const JobCard = memo(({ job, onViewDetails, onToggleJobStatus, index = 0 }) => {
                     <span>
                         {job.budgetType === 'Negotiable' 
                             ? 'Negotiable' 
-                            : `\u20B9${job.budgetAmount}`}
+                            : `₹${job.budgetAmount}`}
                     </span>
                 </div>
             </div>

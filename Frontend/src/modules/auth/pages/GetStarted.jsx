@@ -132,7 +132,23 @@ const GetStarted = () => {
 
                     {/* CTA Button */}
                     <button
-                        onClick={() => navigate('/select-language')}
+                        onClick={() => {
+                            const token = localStorage.getItem('access_token');
+                            const userType = localStorage.getItem('user_type');
+                            
+                            if (token && userType) {
+                                // Redirect based on role instead of going to login flow
+                                const routes = {
+                                    'User': '/user/home',
+                                    'Contractor': '/contractor/home',
+                                    'Labour': '/labour/find-user' // or wherever their home is
+                                };
+                                navigate(routes[userType] || '/user/home');
+                            } else {
+                                // Go to normal login flows
+                                navigate('/select-language');
+                            }
+                        }}
                         className="w-full max-w-md bg-white text-gray-900 font-bold py-4 px-6 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group"
                     >
                         <span className="text-lg">Get Started</span>

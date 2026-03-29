@@ -552,6 +552,11 @@ export const adminNotificationAPI = {
         const response = await adminApi.patch('/notifications/read-all');
         return response.data;
     },
+    
+    deleteNotification: async (id) => {
+        const response = await adminApi.delete(`/notifications/${id}`);
+        return response.data;
+    },
 
     saveFcmToken: async (fcmToken, platform = 'web') => {
         const response = await adminApi.post('/auth/fcm-token', { fcmToken, platform });
