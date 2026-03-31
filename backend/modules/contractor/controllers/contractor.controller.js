@@ -30,16 +30,26 @@ export const createContractorProfile = async (req, res, next) => {
             aadharNumber
         } = req.body;
 
-        // Update User model with basic details only (location/type)
+        // Update User model with personal details so push notifications and admin panel work correctly
         const user = await User.findById(req.user._id);
         if (user) {
+            // Sync name fields — required for push notifications (e.g. "Raju has accepted your request")
+            if (firstName) user.firstName = firstName;
+            if (middleName !== undefined) user.middleName = middleName;
+            if (lastName) user.lastName = lastName;
+            if (gender) user.gender = gender;
+            if (dob) user.dob = dob;
+
+            // Sync location info
             if (city) user.city = city;
             if (state) user.state = state;
             if (address) user.address = address;
             if (!user.userType) user.userType = 'Contractor';
-            
+
             await user.save();
-            console.log('✅ User details updated (Location/Type):', {
+            console.log('✅ User details updated (Name/Location/Type):', {
+                firstName: user.firstName,
+                lastName: user.lastName,
                 city: user.city,
                 userType: user.userType
             });

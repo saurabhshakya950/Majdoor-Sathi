@@ -3,12 +3,21 @@ import fs from 'fs';
 
 // Function to ensure Cloudinary is configured
 const ensureCloudinaryConfig = () => {
-    if (!cloudinary.config().cloud_name) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+
+    if (!cloudinary.config().cloud_name || cloudinary.config().cloud_name !== cloudName) {
+        console.log(`\n⚙️  Configuring Cloudinary...`);
+        console.log(`☁️  Cloud Name: ${cloudName}`);
+        
         cloudinary.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-            api_key: process.env.CLOUDINARY_API_KEY,
-            api_secret: process.env.CLOUDINARY_API_SECRET
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret
         });
+        
+        console.log('✅ Cloudinary credentials loaded and trimmed.');
     }
 };
 
@@ -36,7 +45,7 @@ export const uploadToCloudinary = async (imageData, folder = 'rajghar') => {
             throw new Error('Cloudinary configuration is incomplete. Please check environment variables.');
         }
         
-        console.log(`✅ Cloudinary Config: ${process.env.CLOUDINARY_CLOUD_NAME}`);
+        console.log(`✅ Cloudinary Config Active: ${cloudinary.config().cloud_name}`);
         
         // Check if imageData is a file path
         const isFilePath = typeof imageData === 'string' && !imageData.startsWith('data:') && !imageData.startsWith('http');

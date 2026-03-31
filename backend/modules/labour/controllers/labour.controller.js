@@ -59,18 +59,26 @@ export const createLabourProfile = async (req, res) => {
             console.log('✅ Found user by mobile:', userId);
         }
 
-        // Update User model with basic details only if needed (don't sync names to avoid leakage)
+        // Update User model with personal details so push notifications and admin panel work correctly
         const user = await User.findById(userId);
         if (user) {
             // Only update userType if not set
             if (!user.userType) user.userType = 'Labour';
-            
+
+            // Sync name fields — required for push notifications (e.g. "Aryan has accepted your request")
+            if (firstName) user.firstName = firstName;
+            if (middleName !== undefined) user.middleName = middleName;
+            if (lastName) user.lastName = lastName;
+            if (gender) user.gender = gender;
+
             // Sync city/state as general location info is usually shared
             if (city) user.city = city;
             if (state) user.state = state;
-            
+
             await user.save();
-            console.log('✅ User model updated (Type/Location):', {
+            console.log('✅ User model updated (Name/Type/Location):', {
+                firstName: user.firstName,
+                lastName: user.lastName,
                 city: user.city,
                 userType: user.userType
             });
