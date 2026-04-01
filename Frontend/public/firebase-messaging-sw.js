@@ -18,27 +18,39 @@ firebase.initializeApp(firebaseConfig);
 // Get messaging instance
 const messaging = firebase.messaging();
 
+// 🔥 Force the Service Worker to update immediately
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message', payload);
+  console.log('[firebase-messaging-sw.js] Received background message (Enhanced):', payload);
   
-  // ⚠️ IMPORTANT: FCM automatically shows the notification if the payload 
-  // contains a 'notification' property. Calling registration.showNotification 
-  // here causes a DUPLICATE notification. 
+  // 🔥 Extract notification data with prioritized fallbacks
+  // FCM sends parameters either in notification object or inside data object
+  const title = payload.notification?.title || payload.data?.title || 'Majdoor Sathi Message 📢';
+  const body = payload.notification?.body || payload.data?.body || 'New update from Majdoor Sathi';
+  const icon = payload.notification?.icon || payload.data?.icon || '/MajdoorSathiLogo.png';
   
-  // Only call showNotification if you are sending a 'data-only' message
-  // and need to construct the notification manually.
-  
-  /*
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: payload.notification.icon || '/logo.png',
-    data: payload.data
-  };
+  console.log(`[firebase-messaging-sw.js] Dispatching: "${title}" - "${body}"`);
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-  */
+  const options = {
+      body: body,
+      icon: icon,
+      data: payload.data || {},
+      tag: payload.data?.collapseKey || 'general_notification',
+      vibrate: [200, 100, 200],
+      requireInteraction: true // Keep it showing until the user clicks it!
+  };
+  
+  return self.registration.showNotification(title, options)
+    .then(() => console.log('[firebase-messaging-sw.js] Notification successfully displayed! ✅'))
+    .catch((err) => console.error('[firebase-messaging-sw.js] CRITICAL: Display failed ❌', err));
 });
 
 // Handle notification click

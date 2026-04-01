@@ -83,19 +83,31 @@ export const sendPushNotification = async (tokens, payload) => {
         const results = await Promise.all(
             messages.map(msg => 
                 admin.messaging().send(msg)
-                    .then(res => ({ success: true, res }))
-                    .catch(error => ({ success: false, error }))
+                    .then(res => ({ success: true, res, token: msg.token }))
+                    .catch(error => {
+                        console.error(`❌ FCM Send Error for token ${msg.token.substring(0, 10)}...:`, error.message);
+                        return { success: false, error, token: msg.token };
+                    })
             )
         );
 
         const successCount = results.filter(r => r.success).length;
-        const failureCount = results.length - successCount;
+        const failures = results.filter(r => !r.success);
+        const failureCount = failures.length;
+
+        // Collect failed tokens for cleanup
+        const failedTokens = failures.map(f => f.token);
 
         console.log(`🚀 Push Notification Summary: ${successCount} sent, ${failureCount} failed.`);
         
-        return { successCount, failureCount };
+        if (failureCount > 0) {
+            console.log('⚠️ Some notifications failed. Returning failed tokens for cleanup.');
+        }
+        
+        return { successCount, failureCount, failedTokens };
     } catch (error) {
         console.error('CRITICAL: Error in push notification delivery:', error);
+        return { successCount: 0, failureCount: 0, failedTokens: [] };
     }
 };
 

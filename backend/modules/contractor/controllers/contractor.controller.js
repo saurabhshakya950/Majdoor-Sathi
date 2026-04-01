@@ -57,6 +57,7 @@ export const createContractorProfile = async (req, res, next) => {
 
         // Check if contractor profile already exists
         let contractor = await Contractor.findOne({ user: req.user._id });
+        const isNewContractor = !contractor;
 
         if (!contractor) {
             console.log('✨ Creating new contractor profile...');
@@ -90,6 +91,17 @@ export const createContractorProfile = async (req, res, next) => {
         await contractor.populate('user', 'firstName lastName mobileNumber city state gender');
 
         console.log('===========================\n');
+
+        // 🎉 Send Welcome notification for first-time profile creation for 'Contractor' role
+        if (isNewContractor) {
+            console.log(`📣 Sending Profile Completion notification to Contractor: ${req.user._id}`);
+            const userName = firstName || user.firstName || 'Contractor';
+            sendNotificationToUser(req.user._id.toString(), {
+                title: `Welcome to Majdoor Sathi, ${userName}!`,
+                body: 'Your contractor profile is ready! Start exploring and listing your projects today.',
+                data: { type: 'registration_welcome', link: '/contractor/home' }
+            }).catch(err => console.error('Contractor welcome notification failed:', err.message));
+        }
 
         res.status(201).json({
             success: true,
@@ -679,17 +691,20 @@ export const createContractorHireRequest = async (req, res) => {
             requesterLocation: requester.city || 'N/A'
         });
 
-        // Send push notification to Contractor
+        // 🎉 Send push notification to Contractor
         if (contractorWithUser.user && contractorWithUser.user._id) {
-            await sendNotificationToUser(contractorWithUser.user._id.toString(), {
-                title: 'New Hire Request',
-                body: `${requester.firstName} ${requester.lastName} wants to hire you for a project.`,
+            console.log(`📣 Sending hire request alert to Contractor: ${contractorWithUser.user._id}`);
+            const requesterName = getSafeName(requester, 'A User');
+            
+            sendNotificationToUser(contractorWithUser.user._id.toString(), {
+                title: 'New Hire Request 🤝',
+                body: `${requesterName} wants to hire you for a project!`,
                 data: {
                     type: 'contractor_hire_request',
                     id: hireRequest._id.toString(),
                     link: '/contractor/requests'
                 }
-            });
+            }).catch(err => console.error('Contractor hire request notification failed:', err.message));
         }
 
         console.log('✅ Hire request created:', hireRequest._id);
@@ -907,18 +922,28 @@ export const updateContractorHireRequestStatus = async (req, res) => {
 
         await hireRequest.save();
 
-        // Send push notification to Requester (User)
+        // 🎉 Send push notification to Requester (User)
         if (hireRequest.requesterId) {
-            await sendNotificationToUser(hireRequest.requesterId.toString(), {
-                title: `Hire Request ${status === 'accepted' ? 'Accepted' : 'Declined'}`,
-                body: `${contractor.user.firstName} ${contractor.user.lastName} has ${status} your hire request.`,
+            console.log(`📣 Sending status update to Requester (User): ${hireRequest.requesterId} -> ${status}`);
+            const contractorName = getSafeName(contractor.user, 'Contractor');
+            
+            let notificationBody = '';
+            if (status === 'accepted') {
+                notificationBody = `${contractorName} has accepted your hire request! ✨`;
+            } else {
+                notificationBody = `Your hire request has been declined by ${contractorName}.`;
+            }
+
+            sendNotificationToUser(hireRequest.requesterId.toString(), {
+                title: `Hire Request ${status.charAt(0).toUpperCase() + status.slice(1)} 🛠️`,
+                body: notificationBody,
                 data: {
                     type: 'contractor_hire_request_update',
                     requestId: hireRequest._id.toString(),
                     status: status,
                     link: '/user/requests'
                 }
-            });
+            }).catch(err => console.error('Contractor hire request update notification failed:', err.message));
         }
 
         console.log('✅ Contractor hire request updated successfully');
@@ -1038,17 +1063,24 @@ export const applyToContractorJob = async (req, res, next) => {
 
         await job.save();
 
-        // Send push notification to Contractor (Job Owner)
+        // 🎉 Send push notification to Contractor (Job Owner)
         if (job.user) {
-            await sendNotificationToUser(job.user.toString(), {
-                title: 'New Job Application',
-                body: `${labour.user.firstName} ${labour.user.lastName} has applied for your requirement: ${job.labourSkill}`,
+            console.log(`📣 Sending application alert to Contractor: ${job.user}`);
+            // Smart name check to avoid "null null"
+            const firstName = req.user.firstName || '';
+            const lastName = req.user.lastName || '';
+            const workerName = (firstName + ' ' + lastName).trim() || 'A Worker';
+            const jobTitle = job.jobTitle || job.labourSkill || 'Requirement';
+            
+            sendNotificationToUser(job.user.toString(), {
+                title: 'New Worker Application 📋',
+                body: `${workerName} has applied for your ${jobTitle} job!`,
                 data: {
                     type: 'contractor_job_application',
                     jobId: job._id.toString(),
                     link: '/contractor/requests'
                 }
-            });
+            }).catch(err => console.error('Contractor job app notification failed:', err.message));
         }
 
         console.log('✅ Application submitted successfully');
@@ -1307,11 +1339,22 @@ export const updateContractorJobApplicationStatus = async (req, res, next) => {
 
         await job.save();
 
-        // Send push notification to Applicant (Labour)
+        // 🎉 Send push notification to Applicant (Labour)
         if (application.labour && application.labour.user) {
-            await sendNotificationToUser(application.labour.user._id.toString(), {
-                title: `Application ${req.body.status}`,
-                body: `Your application for ${job.labourSkill} has been ${req.body.status.toLowerCase()}.`,
+            console.log(`📣 Sending status update to Applicant (Labour): ${application.labour.user._id} -> ${req.body.status}`);
+            const contractorName = req.user.firstName || 'The Contractor';
+            const jobTitle = job.jobTitle || job.labourSkill || 'Job';
+
+            let notificationBody = '';
+            if (req.body.status === 'Accepted') {
+                notificationBody = `Your application for ${jobTitle} has been accepted by ${contractorName}! 🤝`;
+            } else {
+                notificationBody = `Your application for ${jobTitle} has been declined.`;
+            }
+
+            sendNotificationToUser(application.labour.user._id.toString(), {
+                title: `Application ${req.body.status} ✨`,
+                body: notificationBody,
                 data: {
                     type: 'contractor_job_application_update',
                     jobId: job._id.toString(),
@@ -1319,7 +1362,7 @@ export const updateContractorJobApplicationStatus = async (req, res, next) => {
                     status: req.body.status,
                     link: '/labour/requests'
                 }
-            });
+            }).catch(err => console.error('Contractor job app status notification failed:', err.message));
         }
 
         console.log('✅ Application status updated');

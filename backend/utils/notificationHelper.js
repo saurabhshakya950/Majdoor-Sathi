@@ -15,20 +15,21 @@ export const sendNotificationToUser = async (userId, payload) => {
             return;
         }
 
-        // Only send to the most recent token for each platform to avoid duplicates
-        const tokens = [];
-        if (user.fcmTokenWeb && user.fcmTokenWeb.length > 0) {
-            tokens.push(user.fcmTokenWeb[user.fcmTokenWeb.length - 1]);
+        // 🚀 Collect ALL tokens from both platforms for reliable delivery
+        // This ensures that if the user has multiple active sessions (browsers/devices), they receive it on all of them.
+        let tokens = [];
+        if (user.fcmTokenWeb && Array.isArray(user.fcmTokenWeb)) {
+            tokens.push(...user.fcmTokenWeb);
         }
-        if (user.fcmTokenMobile && user.fcmTokenMobile.length > 0) {
-            tokens.push(user.fcmTokenMobile[user.fcmTokenMobile.length - 1]);
+        if (user.fcmTokenMobile && Array.isArray(user.fcmTokenMobile)) {
+            tokens.push(...user.fcmTokenMobile);
         }
 
         // Remove duplicates and empty tokens
         const uniqueTokens = [...new Set(tokens)].filter(token => !!token);
 
         if (uniqueTokens.length === 0) {
-            console.log(`No active FCM tokens found for user ${userId}`);
+            console.log(`❌ Notification aborted: No active FCM tokens found for user ${userId}`);
             return;
         }
 
@@ -36,17 +37,35 @@ export const sendNotificationToUser = async (userId, payload) => {
         // Check both payload and payload.data for a type
         const notificationType = payload.type || (payload.data && payload.data.type) || 'general';
         const collapseKey = notificationType + '_' + userId;
-        const frontendUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        
+        // Fix: Use localhost during development, otherwise use the first origin from CORS_ORIGIN
+        const originUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        const frontendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : originUrl;
+
+        // 🔥 Specific Push logic for BROADCAST type - doesn't affect DB
+        let pushTitle = payload.title;
+        let pushBody = payload.body;
+
+        if (payload.data?.type === 'BROADCAST' || payload.type === 'BROADCAST') {
+            pushTitle = 'admin send new broascast message 📢';
+            pushBody = `${payload.title}: ${payload.body}`;
+        }
 
         // Add default logo if not provided
         const finalPayload = {
             ...payload,
-            icon: `${frontendUrl}/logo.png`,
+            title: pushTitle,
+            body: pushBody,
+            icon: payload.icon || `${frontendUrl}/MajdoorSathiLogo.png`,
             collapseKey: payload.collapseKey || collapseKey
         };
 
         console.log(`Sending notification to user ${userId} with ${uniqueTokens.length} tokens`);
-        await sendPushNotification(uniqueTokens, finalPayload);
+        const { failedTokens } = await sendPushNotification(uniqueTokens, finalPayload);
+        
+        if (failedTokens && failedTokens.length > 0) {
+            await cleanupInvalidTokens(failedTokens);
+        }
     } catch (error) {
         console.error(`Error in sendNotificationToUser for ${userId}:`, error);
     }
@@ -81,16 +100,34 @@ export const sendNotificationToMultipleUsers = async (userIds, payload) => {
 
         const notificationType = payload.type || (payload.data && payload.data.type) || 'multiple';
         const collapseKey = notificationType + '_group';
-        const frontendUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        
+        // Fix: Use localhost during development
+        const originUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        const frontendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : originUrl;
+
+        // 🔥 Specific Push logic for BROADCAST type - doesn't affect DB
+        let pushTitle = payload.title;
+        let pushBody = payload.body;
+
+        if (payload.data?.type === 'BROADCAST' || payload.type === 'BROADCAST') {
+            pushTitle = 'admin send new broascast message 📢';
+            pushBody = `${payload.title}: ${payload.body}`;
+        }
 
         // Add default logo if not provided
         const finalPayload = {
             ...payload,
-            icon: `${frontendUrl}/logo.png`,
+            title: pushTitle,
+            body: pushBody,
+            icon: payload.icon || `${frontendUrl}/MajdoorSathiLogo.png`,
             collapseKey: payload.collapseKey || collapseKey
         };
 
-        await sendPushNotification(uniqueTokens, finalPayload);
+        const { failedTokens } = await sendPushNotification(uniqueTokens, finalPayload);
+        
+        if (failedTokens && failedTokens.length > 0) {
+            await cleanupInvalidTokens(failedTokens);
+        }
     } catch (error) {
         console.error('Error in sendNotificationToMultipleUsers:', error);
     }
@@ -113,13 +150,14 @@ export const broadcastNotification = async (payload) => {
 
         console.log(`📣 Broadcasting to ${users.length} unique users`);
 
+        // 🚀 Collect ALL active tokens for broadcast from every user
         let allTokens = [];
         users.forEach(user => {
-            if (user.fcmTokenWeb && user.fcmTokenWeb.length > 0) {
-                allTokens.push(user.fcmTokenWeb[user.fcmTokenWeb.length - 1]);
+            if (user.fcmTokenWeb && Array.isArray(user.fcmTokenWeb)) {
+                allTokens.push(...user.fcmTokenWeb);
             }
-            if (user.fcmTokenMobile && user.fcmTokenMobile.length > 0) {
-                allTokens.push(user.fcmTokenMobile[user.fcmTokenMobile.length - 1]);
+            if (user.fcmTokenMobile && Array.isArray(user.fcmTokenMobile)) {
+                allTokens.push(...user.fcmTokenMobile);
             }
         });
 
@@ -139,14 +177,16 @@ export const broadcastNotification = async (payload) => {
         const broadcastId = payload.broadcastId || Date.now().toString();
         const collapseKey = `broadcast_${broadcastId}`;
         
-        // Try to get frontend URL from CORS_ORIGIN for absolute icon path
-        // This helps browsers load the logo reliably
-        const frontendUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
-        const absoluteIconUrl = `${frontendUrl}/logo.png`;
+        // Fix: Use localhost during development
+        const originUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        const frontendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : originUrl;
+        const absoluteIconUrl = `${frontendUrl}/MajdoorSathiLogo.png`;
 
         const finalPayload = {
             ...payload,
-            icon: absoluteIconUrl,
+            title: 'admin send new broascast message 📢',
+            body: `${payload.title}: ${payload.body}`,
+            icon: payload.icon || absoluteIconUrl,
             collapseKey: collapseKey
         };
 
@@ -154,7 +194,11 @@ export const broadcastNotification = async (payload) => {
 
         for (let i = 0; i < uniqueTokens.length; i += batchSize) {
             const batch = uniqueTokens.slice(i, i + batchSize);
-            await sendPushNotification(batch, finalPayload);
+            const { failedTokens } = await sendPushNotification(batch, finalPayload);
+            
+            if (failedTokens && failedTokens.length > 0) {
+                await cleanupInvalidTokens(failedTokens);
+            }
         }
     } catch (error) {
         console.error('Error in broadcastNotification:', error);
@@ -186,15 +230,56 @@ export const sendNotificationToAdmin = async (payload) => {
             return;
         }
 
-        const frontendUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        // Fix: Use localhost during development
+        const originUrl = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',')[0];
+        const frontendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : originUrl;
+        
         const finalPayload = {
             ...payload,
-            icon: `${frontendUrl}/logo.png`,
+            icon: payload.icon || `${frontendUrl}/MajdoorSathiLogo.png`,
         };
 
         console.log(`[ADMIN NOTIFY] Sending notification to ${uniqueTokens.length} admin token(s)`);
-        await sendPushNotification(uniqueTokens, finalPayload);
+        const { failedTokens } = await sendPushNotification(uniqueTokens, finalPayload);
+        
+        if (failedTokens && failedTokens.length > 0) {
+            // We need to implement cleanup for admins too if they have fcm tokens
+            await Admin.updateMany(
+                {},
+                { 
+                    $pull: { 
+                        fcmTokenWeb: { $in: failedTokens },
+                        fcmTokenMobile: { $in: failedTokens }
+                    } 
+                }
+            );
+        }
     } catch (error) {
         console.error('Error in sendNotificationToAdmin:', error);
+    }
+};
+/**
+ * Remove invalid FCM tokens from all users
+ * @param {Array<string>} failedTokens - List of tokens that failed with NotRegistered error
+ */
+const cleanupInvalidTokens = async (failedTokens) => {
+    try {
+        if (!failedTokens || failedTokens.length === 0) return;
+        
+        console.log(`🧹 Cleaning up ${failedTokens.length} invalid tokens...`);
+        
+        await User.updateMany(
+            {},
+            { 
+                $pull: { 
+                    fcmTokenWeb: { $in: failedTokens },
+                    fcmTokenMobile: { $in: failedTokens }
+                } 
+            }
+        );
+        
+        console.log('✅ Token cleanup complete');
+    } catch (error) {
+        console.error('Error during token cleanup:', error);
     }
 };

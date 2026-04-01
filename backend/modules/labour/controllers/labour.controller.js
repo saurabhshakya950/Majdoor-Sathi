@@ -149,6 +149,17 @@ export const createLabourProfile = async (req, res) => {
         console.log('✅ Labour profile created:', labour._id);
         console.log('===========================\n');
 
+        // 🎉 Send Welcome notification for first-time profile creation for 'Labour' role
+        if (!existingLabour) {
+            console.log(`📣 Sending Profile Completion notification to Labour: ${userId}`);
+            const userName = firstName || user.firstName || 'Labour';
+            sendNotificationToUser(userId.toString(), {
+                title: `Welcome to Majdoor Sathi, ${userName}!`,
+                body: 'Your labour profile is now active! Start looking for work in your city today.',
+                data: { type: 'registration_welcome', link: '/labour/dashboard' }
+            }).catch(err => console.error('Labour welcome notification failed:', err.message));
+        }
+
         res.status(201).json({
             success: true,
             message: 'Labour profile created successfully',
@@ -599,17 +610,21 @@ export const createHireRequest = async (req, res) => {
             requesterLocation: requester.city || 'N/A'
         });
 
-        // Send push notification to Labour
+        // 🎉 Send push notification to Labour
         if (labour.user && labour.user._id) {
-            await sendNotificationToUser(labour.user._id.toString(), {
-                title: 'New Hire Request',
-                body: `${finalRequesterName} wants to hire you for ${labourSkill || labour.skillType || 'General'} work.`,
+            console.log(`📣 Sending hire request alert to Labour: ${labour.user._id}`);
+            const requesterName = finalRequesterName || 'A User';
+            const skillName = labourSkill || labour.skillType || 'General';
+            
+            sendNotificationToUser(labour.user._id.toString(), {
+                title: 'New Hire Request 🤝',
+                body: `${requesterName} wants to hire you for ${skillName} work.`,
                 data: {
                     type: 'hire_request',
                     id: hireRequest._id.toString(),
                     link: '/labour/requests'
                 }
-            });
+            }).catch(err => console.error('Hire request notification failed:', err.message));
         }
 
         res.status(201).json({
@@ -833,18 +848,28 @@ export const updateHireRequestStatus = async (req, res) => {
 
         await hireRequest.save();
 
-        // Send push notification to Requester (User/Contractor)
+        // 🎉 Send push notification to Requester (User/Contractor)
         if (hireRequest.requesterId) {
-            await sendNotificationToUser(hireRequest.requesterId.toString(), {
-                title: `Hire Request ${status === 'accepted' ? 'Accepted' : 'Declined'}`,
-                body: `${labour.user.firstName} ${labour.user.lastName} has ${status} your hire request.`,
+            console.log(`📣 Sending status update to Requester: ${hireRequest.requesterId} -> ${status}`);
+            const labourName = `${labour.user.firstName} ${labour.user.lastName}`.trim() || 'Labour';
+            
+            let notificationBody = '';
+            if (status === 'accepted') {
+                notificationBody = `${labourName} has accepted your hire request! ✨`;
+            } else {
+                notificationBody = `Your hire request has been declined by ${labourName}.`;
+            }
+
+            sendNotificationToUser(hireRequest.requesterId.toString(), {
+                title: `Hire Request ${status.charAt(0).toUpperCase() + status.slice(1)} 🛠️`,
+                body: notificationBody,
                 data: {
                     type: 'hire_request_update',
                     requestId: hireRequest._id.toString(),
                     status: status,
                     link: hireRequest.requesterModel === 'User' ? '/user/requests' : '/contractor/requests'
                 }
-            });
+            }).catch(err => console.error('Hire request status notification failed:', err.message));
         }
 
         console.log('✅ Hire request updated successfully');

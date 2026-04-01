@@ -3,6 +3,7 @@ import Labour from '../modules/labour/models/Labour.model.js';
 import Contractor from '../modules/contractor/models/Contractor.model.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.utils.js';
 import { generateOTP, sendOTP } from '../utils/sms.utils.js';
+import { sendNotificationToUser } from '../utils/notificationHelper.js';
 
 // Temporary OTP storage (in production, use Redis or database)
 const otpStore = new Map();
@@ -11,8 +12,44 @@ const addFCMTokenToUserObject = (user, fcmToken, platform) => {
     if (!fcmToken) return;
     const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
     const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-    // Always keep only the most recent token (Single Token Refresh Logic)
-    user[tokenField] = [fcmToken];
+    
+    // Ensure the field is an array
+    if (!Array.isArray(user[tokenField])) {
+        user[tokenField] = [];
+    }
+
+    // Smart Token Management: Add if not exists, and limit to 5 most recent tokens
+    if (!user[tokenField].includes(fcmToken)) {
+        user[tokenField].push(fcmToken);
+        // Keep only the most recent 5 tokens for this platform to avoid bloated records
+        if (user[tokenField].length > 5) {
+            user[tokenField].shift(); 
+        }
+    }
+};
+
+/**
+ * 🛡️ SECURITY: Remove FCM token from all other users to ensure individuality.
+ * This prevents "Cross-User Notification Leakage" on shared devices.
+ */
+const removeFCMTokenFromOthers = async (userId, fcmToken) => {
+    if (!fcmToken) return;
+    try {
+        const result = await User.updateMany(
+            { _id: { $ne: userId } },
+            { 
+                $pull: { 
+                    fcmTokenWeb: fcmToken, 
+                    fcmTokenMobile: fcmToken 
+                } 
+            }
+        );
+        if (result.modifiedCount > 0) {
+            console.log(`🧹 Cleaned up ${result.modifiedCount} stale token links for other users.`);
+        }
+    } catch (error) {
+        console.error('Error in removeFCMTokenFromOthers:', error.message);
+    }
 };
 
 // Helper to save FCM token
@@ -134,6 +171,9 @@ export const verifyOTPAndLogin = async (req, res, next) => {
         // Success - clear OTP and proceed with login/registration
         otpStore.delete(mobileNumber);
 
+        console.log(`📱 Received FCM Token: ${fcmToken ? 'YES' : 'NO'}`);
+        console.log(`📱 Platform: ${platform || 'web'}`);
+
         let user = await User.findOne({ mobileNumber });
 
         if (!user) {
@@ -152,7 +192,10 @@ export const verifyOTPAndLogin = async (req, res, next) => {
         user.refreshToken = refreshToken;
         
         // Add FCM token to user object before saving (one single DB write)
-        addFCMTokenToUserObject(user, fcmToken, platform);
+        if (fcmToken) {
+            await removeFCMTokenFromOthers(user._id, fcmToken);
+            addFCMTokenToUserObject(user, fcmToken, platform);
+        }
         
         await user.save();
 
@@ -175,6 +218,20 @@ export const verifyOTPAndLogin = async (req, res, next) => {
                 firstName = contractorProfile.firstName;
                 lastName = contractorProfile.lastName;
             }
+        }
+
+        // 🎉 Send Welcome Back notification for 'User', 'Contractor', and 'Labour' roles
+        if (['User', 'Contractor', 'Labour'].includes(user.userType)) {
+            console.log(`📣 Sending Login notification to ${user.userType}: ${user._id}`);
+            const userName = firstName || user.firstName || user.userType;
+            const dashboardLink = user.userType === 'User' ? '/user/dashboard' : 
+                                 user.userType === 'Contractor' ? '/contractor/home' : '/labour/dashboard';
+            
+            sendNotificationToUser(user._id.toString(), {
+                title: `Welcome Back, ${userName}!`,
+                body: `Glad to see you again. Check out the latest updates for you!`,
+                data: { type: 'login_welcome', link: dashboardLink }
+            }).catch(err => console.error('Welcome notification failed:', err.message));
         }
 
         res.status(200).json({
@@ -206,6 +263,7 @@ export const login = async (req, res, next) => {
         
         const { mobileNumber, fcmToken, platform } = req.body;
         console.log('📱 Mobile Number:', mobileNumber);
+        console.log(`📱 Received FCM Token: ${fcmToken ? 'YES' : 'NO'}`);
 
         let user = await User.findOne({ mobileNumber });
 
@@ -227,7 +285,10 @@ export const login = async (req, res, next) => {
         user.refreshToken = refreshToken;
         
         // Add FCM token to user object before saving (one single DB write)
-        addFCMTokenToUserObject(user, fcmToken, platform);
+        if (fcmToken) {
+            await removeFCMTokenFromOthers(user._id, fcmToken);
+            addFCMTokenToUserObject(user, fcmToken, platform);
+        }
         
         await user.save();
 
@@ -249,6 +310,22 @@ export const login = async (req, res, next) => {
                 firstName = contractorProfile.firstName;
                 lastName = contractorProfile.lastName;
             }
+        }
+
+        console.log('✅ Login successful for:', mobileNumber);
+
+        // 🎉 Send Welcome Back notification for 'User', 'Contractor', and 'Labour' roles
+        if (['User', 'Contractor', 'Labour'].includes(user.userType)) {
+            console.log(`📣 Sending Login notification to ${user.userType}: ${user._id}`);
+            const userName = firstName || user.firstName || user.userType;
+            const dashboardLink = user.userType === 'User' ? '/user/dashboard' : 
+                                 user.userType === 'Contractor' ? '/contractor/home' : '/labour/dashboard';
+
+            sendNotificationToUser(user._id.toString(), {
+                title: `Welcome Back, ${userName}!`,
+                body: `Glad to see you again. Check out the latest updates for you!`,
+                data: { type: 'login_welcome', link: dashboardLink }
+            }).catch(err => console.error('Welcome notification failed:', err.message));
         }
 
         console.log('===========================\n');
@@ -300,6 +377,7 @@ export const register = async (req, res, next) => {
 
         console.log('📱 Mobile Number:', mobileNumber);
         console.log('👤 User Type:', userType);
+        console.log(`📱 Received FCM Token: ${fcmToken ? 'YES' : 'NO'}`);
         console.log('📝 Name:', firstName, middleName, lastName);
 
         let user = await User.findOne({ mobileNumber });
@@ -388,7 +466,10 @@ export const register = async (req, res, next) => {
         user.refreshToken = refreshToken;
         
         // Add FCM token to user object before saving (one single DB write)
-        addFCMTokenToUserObject(user, fcmToken, platform);
+        if (fcmToken) {
+            await removeFCMTokenFromOthers(user._id, fcmToken);
+            addFCMTokenToUserObject(user, fcmToken, platform);
+        }
         
         await user.save();
 
@@ -420,8 +501,22 @@ export const register = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
     try {
-        req.user.refreshToken = null;
-        await req.user.save();
+        const { fcmToken, platform } = req.body;
+        const user = req.user;
+
+        // 🧹 Cleanup FCM token on logout to prevent notifications to this device after logout
+        if (fcmToken && user) {
+            const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+            const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
+            
+            if (Array.isArray(user[tokenField])) {
+                user[tokenField] = user[tokenField].filter(t => t !== fcmToken);
+                console.log(`🚫 Unlinked FCM token from user ${user._id} on logout.`);
+            }
+        }
+
+        user.refreshToken = null;
+        await user.save();
 
         res.status(200).json({
             success: true,
@@ -491,11 +586,25 @@ export const saveFCMToken = async (req, res, next) => {
             });
         }
 
-        // Add token only if not already present (idempotent)
+        // Smart Token Storage: Add token if not present, and limit to top 5
         const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
         const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
-        // Single Token Refresh Logic: Replace all old tokens with the new one
-        user[tokenField] = [fcmToken];
+
+        if (!Array.isArray(user[tokenField])) {
+            user[tokenField] = [];
+        }
+
+        if (!user[tokenField].includes(fcmToken)) {
+            // Ensure this token only belongs to this user now
+            await removeFCMTokenFromOthers(user._id, fcmToken);
+            
+            user[tokenField].push(fcmToken);
+            // Limit to 5 tokens per platform to maintain performance
+            if (user[tokenField].length > 5) {
+                user[tokenField].shift();
+            }
+        }
+        
         await user.save();
 
         res.status(200).json({

@@ -277,17 +277,22 @@ export const applyToJob = async (req, res, next) => {
 
         await job.save();
 
-        // Send push notification to Job Owner (User)
+        // 🎉 Send push notification to Job Owner (User)
         if (job.user) {
-            await sendNotificationToUser(job.user.toString(), {
-                title: 'New Job Application',
-                body: `${req.body.applicantName} has applied for your job: ${job.jobTitle}`,
+            console.log(`📣 Sending application alert to Job Owner: ${job.user}`);
+            const applicantRole = req.body.applicantType || 'Worker';
+            const applicantName = req.body.applicantName || req.user.firstName || 'Someone';
+            const jobName = job.jobTitle || job.category || 'Job';
+            
+            sendNotificationToUser(job.user.toString(), {
+                title: 'New Job Application 📋',
+                body: `${applicantName} (${applicantRole}) has applied for your ${jobName} job!`,
                 data: {
                     type: 'job_application',
                     jobId: job._id.toString(),
-                    link: '/user/requests' // Assuming this is where users see applications
+                    link: '/user/requests'
                 }
-            });
+            }).catch(err => console.error('Job application notification failed:', err.message));
         }
 
         console.log('✅ Application submitted successfully');
@@ -702,11 +707,22 @@ export const updateApplicationStatus = async (req, res, next) => {
 
         await job.save();
 
-        // Send push notification to Applicant
+        // 🎉 Send push notification to Applicant (Contractor/Labour)
         if (application.applicant) {
-            await sendNotificationToUser(application.applicant.toString(), {
-                title: `Application ${req.body.status}`,
-                body: `Your application for ${job.jobTitle} has been ${req.body.status.toLowerCase()}.`,
+            console.log(`📣 Sending status update to Applicant: ${application.applicant} -> ${req.body.status}`);
+            const jobName = job.jobTitle || job.category || 'Job';
+            const ownerName = job.user.firstName || 'The User';
+            
+            let notificationBody = '';
+            if (req.body.status === 'Accepted') {
+                notificationBody = `Your application for ${jobName} has been accepted by ${ownerName}! 🤝`;
+            } else {
+                notificationBody = `Your application for ${jobName} has been declined.`;
+            }
+
+            sendNotificationToUser(application.applicant.toString(), {
+                title: `Application ${req.body.status} ✨`,
+                body: notificationBody,
                 data: {
                     type: 'job_application_update',
                     jobId: job._id.toString(),
@@ -714,7 +730,7 @@ export const updateApplicationStatus = async (req, res, next) => {
                     status: req.body.status,
                     link: application.applicantType === 'Labour' ? '/labour/requests' : '/contractor/requests'
                 }
-            });
+            }).catch(err => console.error('Application status notification failed:', err.message));
         }
 
         console.log('✅ Application status updated successfully');

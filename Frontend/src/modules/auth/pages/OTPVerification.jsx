@@ -16,6 +16,10 @@ const OTPVerification = () => {
         const interval = setInterval(() => {
             setTimer((prev) => (prev > 0 ? prev - 1 : 0));
         }, 1000);
+
+        // Pre-fetch FCM token as soon as user lands on OTP page for zero-latency login
+        getFCMToken().catch(() => {});
+
         return () => clearInterval(interval);
     }, []);
 
@@ -60,10 +64,10 @@ const OTPVerification = () => {
         if (otp.length === 6) {
             setLoading(true);
             try {
-                // Get FCM token if possible (with 2s timeout to prevent blocking login)
+                // Get FCM token if possible
                 const fcmToken = await Promise.race([
                     getFCMToken(),
-                    new Promise(resolve => setTimeout(() => resolve(null), 2000))
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000))
                 ]);
 
                 // Call real verify OTP API

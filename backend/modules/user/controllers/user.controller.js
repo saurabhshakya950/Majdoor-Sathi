@@ -101,6 +101,18 @@ export const updateProfile = async (req, res, next) => {
         console.log('✅ Profile update successful');
         console.log('=============================\n');
 
+        // 5. Send Welcome notification for 'User' role if first profile completion
+        if (updates.userType === 'User') {
+            console.log(`📣 Sending Profile Completion notification to User: ${user._id}`);
+            const { sendNotificationToUser } = await import('../../../utils/notificationHelper.js');
+            const userName = updates.firstName || user.firstName || 'User';
+            sendNotificationToUser(user._id.toString(), {
+                title: `Welcome to Majdoor Sathi, ${userName}!`,
+                body: 'Your profile is complete! Start finding the best work opportunities today.',
+                data: { type: 'registration_welcome', link: '/user/dashboard' }
+            }).catch(err => console.error('Registration welcome notification failed:', err.message));
+        }
+
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',

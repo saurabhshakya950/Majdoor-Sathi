@@ -53,6 +53,12 @@ export const adminLogin = async (req, res) => {
         // Save FCM token if provided (non-blocking)
         try {
             if (fcmToken) {
+                // 🛡️ SECURITY: Snatch token from any other admin to ensure uniqueness
+                await Admin.updateMany(
+                    { _id: { $ne: admin._id } },
+                    { $pull: { fcmTokenWeb: fcmToken, fcmTokenMobile: fcmToken } }
+                );
+
                 const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
                 const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
                 // Single Token Refresh Logic: Replace all old tokens with the new one
@@ -103,9 +109,21 @@ export const adminLogin = async (req, res) => {
 // @access  Private
 export const adminLogout = async (req, res) => {
     try {
+        const { fcmToken, platform } = req.body;
         const admin = await Admin.findById(req.admin._id);
         
         if (admin) {
+            // 🧹 Cleanup FCM token on logout
+            if (fcmToken) {
+                const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
+                const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
+                
+                if (Array.isArray(admin[tokenField])) {
+                    admin[tokenField] = admin[tokenField].filter(t => t !== fcmToken);
+                    console.log(`🚫 Unlinked FCM token from admin ${admin._id} on logout.`);
+                }
+            }
+
             admin.refreshToken = null;
             await admin.save();
         }
@@ -308,6 +326,13 @@ export const saveFcmToken = async (req, res) => {
 
         const isMobile = ['mobile', 'app', 'android', 'ios'].includes(platform?.toLowerCase());
         const tokenField = isMobile ? 'fcmTokenMobile' : 'fcmTokenWeb';
+        
+        // 🛡️ SECURITY: Snatch token from any other admin
+        await Admin.updateMany(
+            { _id: { $ne: admin._id } },
+            { $pull: { fcmTokenWeb: fcmToken, fcmTokenMobile: fcmToken } }
+        );
+
         // Single Token Refresh Logic: Replace all old tokens with the new one
         admin[tokenField] = [fcmToken];
         await admin.save();

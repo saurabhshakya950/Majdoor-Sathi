@@ -47,15 +47,17 @@ export const getFCMToken = async () => {
         });
 
         if (token) {
-            console.log('FCM Token generated:', token);
             localStorage.setItem('fcm_token_web', token);
             return token;
         } else {
-            console.log('No registration token available. Request permission to generate one.');
             return null;
         }
     } catch (error) {
-        console.error('An error occurred while retrieving token:', error);
+        if (error.message && error.message.includes('Failed to fetch')) {
+            console.warn('📡 FCM Connectivity issue: Unable to reach Google servers. This usually resolves automatically or with a refresh.');
+        } else {
+            console.error('An error occurred while retrieving token:', error);
+        }
         return null;
     }
 };
@@ -99,8 +101,8 @@ export const initializePushNotifications = () => {
             const { title, body, icon } = payload.notification;
             new Notification(title, {
                 body,
-                icon: icon || '/logo.png', // Default to logo.png
-                badge: '/logo.png',
+                icon: icon || '/MajdoorSathiLogo.png',
+                badge: '/MajdoorSathiLogo.png',
                 data: payload.data
             });
         }
