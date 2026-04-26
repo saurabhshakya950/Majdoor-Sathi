@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Search, FileText, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { contractorAPI, jobAPI } from '../../../services/api';
 
 const ContractorBottomNav = () => {
     const navigate = useNavigate();
@@ -8,28 +9,37 @@ const ContractorBottomNav = () => {
     const [requestCount, setRequestCount] = useState(0);
 
     useEffect(() => {
-        // Calculate total requests from localStorage
-        const calculateRequests = () => {
+        const fetchRequestCounts = async () => {
             try {
-                // Get user requests
-                const userRequests = JSON.parse(localStorage.getItem('contractor_user_requests') || '[]');
-                // Get worker requests
-                const workerRequests = JSON.parse(localStorage.getItem('contractor_worker_requests') || '[]');
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
 
-                const total = userRequests.length + workerRequests.length;
-                setRequestCount(total);
+                // 1. Fetch Hire Requests from Users
+                const hireRes = await contractorAPI.getContractorHireRequests();
+                const pendingUserRequests = hireRes.success 
+                    ? hireRes.data.requests.filter(r => r.status === 'Pending').length 
+                    : 0;
+
+                // 2. Fetch Labour Applications for Contractor's Jobs
+                const jobsRes = await contractorAPI.getContractorJobs();
+                let pendingWorkerApps = 0;
+                if (jobsRes.success && jobsRes.data.jobs) {
+                    jobsRes.data.jobs.forEach(job => {
+                        if (job.applications) {
+                            pendingWorkerApps += job.applications.filter(a => a.status === 'Pending').length;
+                        }
+                    });
+                }
+
+                setRequestCount(pendingUserRequests + pendingWorkerApps);
             } catch (error) {
-                console.error('Error calculating requests:', error);
-                setRequestCount(0);
+                console.error('Error fetching contractor request counts:', error);
             }
         };
 
-        calculateRequests();
-
-        // Listen for storage changes
-        window.addEventListener('storage', calculateRequests);
-
-        return () => window.removeEventListener('storage', calculateRequests);
+        fetchRequestCounts();
+        const interval = setInterval(fetchRequestCounts, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const navItems = [
@@ -50,7 +60,13 @@ const ContractorBottomNav = () => {
                     return (
                         <button
                             key={item.path}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => {
+                                if (isActive) {
+                                    window.location.reload();
+                                } else {
+                                    navigate(item.path);
+                                }
+                            }}
                             className={`flex flex-col items-center justify-center flex-1 h-full transition-colors relative ${isActive ? 'text-yellow-400' : 'text-white'
                                 }`}
                         >

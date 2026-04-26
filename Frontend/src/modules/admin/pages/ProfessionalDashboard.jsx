@@ -47,11 +47,7 @@ export function AnalyticsCard({ icon, title, value, bg, onClick }) {
                 <h3>{title}</h3>
                 <p>{value}</p>
             </div>
-            {onClick && (
-                <div className="card-arrow" style={{ marginLeft: 'auto', opacity: 0.3 }}>
-                    <MoreVertical size={16} />
-                </div>
-            )}
+            {/* Three dots removed as per request */}
         </div>
     );
 }
@@ -318,7 +314,13 @@ export function DashboardHome() {
                                     </div>
                                 </div>
                             </div>
-                            <button className="crud-btn btn-add" style={{ padding: '6px 12px', margin: 0 }}>Verify</button>
+                            <button 
+                                className="crud-btn btn-add" 
+                                style={{ padding: '6px 12px', margin: 0 }}
+                                onClick={() => navigate('/admin/dashboard/verification')}
+                            >
+                                Verify
+                            </button>
                         </div>
                     </div>
 
@@ -326,7 +328,13 @@ export function DashboardHome() {
                         <h3>Dispute Center</h3>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                             <span style={{ fontSize: '0.9rem' }}>Open Cases: {analytics?.disputes?.openCases || 0}</span>
-                            <button className="crud-btn btn-edit" style={{ background: '#3b82f6', color: 'white' }}>Review Disputes</button>
+                            <button 
+                                className="crud-btn btn-edit" 
+                                style={{ background: '#3b82f6', color: 'white' }}
+                                onClick={() => navigate('/admin/dashboard/verification')}
+                            >
+                                Review Disputes
+                            </button>
                         </div>
                     </div>
 
@@ -390,7 +398,13 @@ export function DashboardHome() {
                     <div className="right-panel-item">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={18} color="#f97316" /> Broadcast Message</h3>
                         <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '10px 0' }}>Send to All Users</p>
-                        <button className="crud-btn" style={{ width: '100%', border: '1px solid #ddd', background: 'none' }}>Draft Message</button>
+                        <button 
+                            className="crud-btn" 
+                            style={{ width: '100%', border: '1px solid #ddd', background: 'none' }}
+                            onClick={() => navigate('/admin/dashboard/broadcasts')}
+                        >
+                            Draft Message
+                        </button>
                     </div>
                 </div>
             </div>
@@ -692,16 +706,6 @@ const ProfessionalDashboard = () => {
                         </NavLink>
                     )}
 
-                    {hasAccess(['SUPER_ADMIN']) && (
-                        <NavLink
-                            to="/admin/dashboard/admins"
-                            onClick={closeMobileMenu}
-                            className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
-                        >
-                            <UserCog size={20} />
-                            <span>Admin Management</span>
-                        </NavLink>
-                    )}
 
                     <NavLink
                         to="/admin/dashboard/settings"

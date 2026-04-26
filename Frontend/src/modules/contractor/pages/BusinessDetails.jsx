@@ -38,6 +38,19 @@ const BusinessDetails = () => {
             toast.error('Please enter address line 1');
             return false;
         }
+
+        // Validate city format (alphabet only)
+        if (formData.city && !/^[a-zA-Z\s]+$/.test(formData.city.trim())) {
+            toast.error('City name can only contain letters');
+            return false;
+        }
+
+        // Validate state format (alphabet only)
+        if (formData.state && !/^[a-zA-Z\s]+$/.test(formData.state.trim())) {
+            toast.error('State name can only contain letters');
+            return false;
+        }
+
         return true;
     };
 

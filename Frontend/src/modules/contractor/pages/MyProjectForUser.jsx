@@ -38,6 +38,20 @@ const MyProjectForUser = () => {
         'Fabrication',
         'Renovation'
     ];
+    
+    const experienceOptions = [
+        'NA',
+        '1 Year',
+        '2 Years',
+        '3 Years',
+        '4 Years',
+        '5 Years',
+        '6 Years',
+        '7 Years',
+        '8 Years',
+        '9 Years',
+        '10+ Years'
+    ];
 
     // Load contractor cards from database
     const loadCards = async (isSilent = false) => {
@@ -115,32 +129,56 @@ const MyProjectForUser = () => {
 
     const handleCreateCard = async () => {
         // Validation
+        const nameRegex = /^[a-zA-Z\s]+$/;
+
         if (!formData.contractorName.trim()) {
             toast.error('Contractor name is required');
             return;
         }
+        if (!nameRegex.test(formData.contractorName.trim())) {
+            toast.error('Contractor name can only contain letters');
+            return;
+        }
+
         if (!formData.city.trim()) {
             toast.error('City/Location is required');
             return;
         }
+        if (!nameRegex.test(formData.city.trim())) {
+            toast.error('City name can only contain letters');
+            return;
+        }
+
         if (!formData.primaryWorkCategory) {
             toast.error('Primary work category is required');
             return;
         }
+
         if (!formData.experience.trim()) {
             toast.error('Experience is required');
             return;
         }
+
         if (!formData.contactNo.trim()) {
             toast.error('Contact number is required');
             return;
         }
+        if (formData.contactNo.trim().length !== 10) {
+            toast.error('Contact number must be 10 digits');
+            return;
+        }
+
         if (!formData.address.trim()) {
             toast.error('Address is required');
             return;
         }
+
         if (!formData.budgetAmount.trim()) {
             toast.error('Budget amount is required');
+            return;
+        }
+        if (parseFloat(formData.budgetAmount) <= 0) {
+            toast.error('Please enter a valid budget amount');
             return;
         }
 
@@ -448,14 +486,23 @@ const MyProjectForUser = () => {
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Experience <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    name="experience"
-                                    value={formData.experience}
-                                    onChange={handleChange}
-                                    placeholder="Example: 5+ Years"
-                                    className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none"
-                                />
+                                <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x snap-mandatory grayscale-0">
+                                    {experienceOptions.map((exp) => (
+                                        <button
+                                            key={exp}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, experience: exp }))}
+                                            className={`flex-none snap-start px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm border ${
+                                                formData.experience === exp
+                                                    ? 'bg-yellow-400 border-yellow-400 text-gray-900 scale-105'
+                                                    : 'bg-white border-gray-200 text-gray-600 hover:border-yellow-400'
+                                            }`}
+                                        >
+                                            {exp === 'NA' ? 'NA' : exp}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1 italic">Swipe horizontally to see more options</p>
                             </div>
 
                             {/* Rating */}

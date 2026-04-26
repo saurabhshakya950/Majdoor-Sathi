@@ -36,8 +36,12 @@ const CompleteProfile = () => {
                 break;
 
             case 'middleName':
-                if (value && !/^[a-zA-Z\s]+$/.test(value)) {
-                    error = 'Middle name can only contain letters';
+                if (value && value.trim().length > 0) {
+                    if (value.trim().length < 2) {
+                        error = 'Middle name must be at least 2 characters';
+                    } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                        error = 'Middle name can only contain letters';
+                    }
                 }
                 break;
 
@@ -81,25 +85,44 @@ const CompleteProfile = () => {
                 break;
 
             case 'aadharNumber':
-                if (value && !/^\d{12}$/.test(value.replace(/\s/g, ''))) {
-                    error = 'Aadhar number must be exactly 12 digits';
+                if (!value || value.trim().length === 0) {
+                    error = 'Aadhar number is required';
+                } else {
+                    const cleanAadhar = value.replace(/\s/g, '');
+                    if (!/^\d{12}$/.test(cleanAadhar)) {
+                        error = 'Aadhar number must be exactly 12 digits';
+                    } else if (/^[01]/.test(cleanAadhar)) {
+                        error = 'Invalid Aadhar number (should not start with 0 or 1)';
+                    }
                 }
                 break;
 
             case 'city':
-                if (value && !/^[a-zA-Z\s]+$/.test(value)) {
+                if (!value || value.trim().length === 0) {
+                    error = 'City is required';
+                } else if (value.trim().length < 2) {
+                    error = 'City name must be at least 2 characters';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
                     error = 'City name can only contain letters';
                 }
                 break;
 
             case 'state':
-                if (value && !/^[a-zA-Z\s]+$/.test(value)) {
+                if (!value || value.trim().length === 0) {
+                    error = 'State is required';
+                } else if (value.trim().length < 2) {
+                    error = 'State name must be at least 2 characters';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
                     error = 'State name can only contain letters';
                 }
                 break;
 
             case 'address':
-                if (value && value.length > 200) {
+                if (!value || value.trim().length === 0) {
+                    error = 'Address is required';
+                } else if (value.trim().length < 5) {
+                    error = 'Address must be at least 5 characters';
+                } else if (value.length > 200) {
                     error = 'Address cannot exceed 200 characters';
                 }
                 break;
@@ -157,22 +180,14 @@ const CompleteProfile = () => {
         newErrors.lastName = validateField('lastName', formData.lastName);
         newErrors.gender = validateField('gender', formData.gender);
         newErrors.dob = validateField('dob', formData.dob);
+        newErrors.city = validateField('city', formData.city);
+        newErrors.state = validateField('state', formData.state);
+        newErrors.address = validateField('address', formData.address);
+        newErrors.aadharNumber = validateField('aadharNumber', formData.aadharNumber);
 
         // Validate optional fields if they have values
         if (formData.middleName) {
             newErrors.middleName = validateField('middleName', formData.middleName);
-        }
-        if (formData.aadharNumber) {
-            newErrors.aadharNumber = validateField('aadharNumber', formData.aadharNumber);
-        }
-        if (formData.city) {
-            newErrors.city = validateField('city', formData.city);
-        }
-        if (formData.state) {
-            newErrors.state = validateField('state', formData.state);
-        }
-        if (formData.address) {
-            newErrors.address = validateField('address', formData.address);
         }
 
         // Filter out empty errors
@@ -271,7 +286,8 @@ const CompleteProfile = () => {
                             city: formData.city.trim(),
                             state: formData.state.trim(),
                             address: formData.address.trim(),
-                            mobileNumber: mobileNumber
+                            mobileNumber: mobileNumber,
+                            profilePhoto: formData.profileImage
                         })
                     });
 
@@ -309,7 +325,8 @@ const CompleteProfile = () => {
                             lastName: formData.lastName.trim(),
                             gender: formData.gender,
                             city: formData.city.trim(),
-                            state: formData.state.trim()
+                            state: formData.state.trim(),
+                            profilePhoto: formData.profileImage
                         })
                     });
 
@@ -378,7 +395,7 @@ const CompleteProfile = () => {
                         value={formData.firstName}
                         onChange={handleChange}
                         placeholder="Ex: John"
-                        className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`}
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>}
                 </div>
@@ -392,7 +409,7 @@ const CompleteProfile = () => {
                             value={formData.middleName}
                             onChange={handleChange}
                             placeholder="Ex: Kumar"
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.middleName ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.middleName ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.middleName && <p className="text-xs text-red-500 mt-1">{errors.middleName}</p>}
                     </div>
@@ -404,7 +421,7 @@ const CompleteProfile = () => {
                             value={formData.lastName}
                             onChange={handleChange}
                             placeholder="Ex: Doe"
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>}
                     </div>
@@ -417,7 +434,7 @@ const CompleteProfile = () => {
                             name="gender"
                             value={formData.gender}
                             onChange={handleChange}
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-400 outline-none transition-all ${formData.gender ? 'text-gray-700' : 'text-gray-400'} ${errors.gender ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-yellow-400 outline-none transition-all ${formData.gender ? 'text-gray-700' : 'text-gray-400'} ${errors.gender ? 'border-red-500' : 'border-gray-200'}`}
                         >
                             <option value="" disabled hidden>Select Gender</option>
                             <option value="Male" className="text-gray-700">Male</option>
@@ -433,8 +450,8 @@ const CompleteProfile = () => {
                             name="dob"
                             value={formData.dob}
                             onChange={handleChange}
-                            max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-400 outline-none transition-all ${formData.dob ? 'text-gray-700' : 'text-gray-400'} ${errors.dob ? 'border-red-500' : 'border-gray-200'}`}
+                            max={new Date().toISOString().split('T')[0]}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-yellow-400 outline-none transition-all ${formData.dob ? 'text-gray-700' : 'text-gray-400'} ${errors.dob ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.dob && <p className="text-xs text-red-500 mt-1">{errors.dob}</p>}
                     </div>
@@ -443,26 +460,26 @@ const CompleteProfile = () => {
                 {/* City and State */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">City</label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="city"
                             value={formData.city}
                             onChange={handleChange}
                             placeholder="Enter city"
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.city ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.city ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">State</label>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="state"
                             value={formData.state}
                             onChange={handleChange}
                             placeholder="Enter state"
-                            className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.state ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.state ? 'border-red-500' : 'border-gray-200'}`}
                         />
                         {errors.state && <p className="text-xs text-red-500 mt-1">{errors.state}</p>}
                     </div>
@@ -470,7 +487,7 @@ const CompleteProfile = () => {
 
                 {/* Address */}
                 <div className="mb-3">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Address</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Address <span className="text-red-500">*</span></label>
                     <textarea
                         name="address"
                         value={formData.address}
@@ -478,7 +495,7 @@ const CompleteProfile = () => {
                         placeholder="Enter address"
                         rows="2"
                         maxLength="200"
-                        className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all resize-none ${errors.address ? 'border-red-500' : 'border-gray-200'}`}
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all resize-none ${errors.address ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
                     {formData.address && <p className="text-xs text-gray-400 mt-1">{formData.address.length}/200</p>}
@@ -486,7 +503,7 @@ const CompleteProfile = () => {
 
                 {/* Aadhar Card Number */}
                 <div className="mb-3">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Aadhar Card Number</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Aadhar Card Number <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         name="aadharNumber"
@@ -494,7 +511,7 @@ const CompleteProfile = () => {
                         onChange={handleChange}
                         placeholder="Ex: 123456789012"
                         maxLength="12"
-                        className={`w-full bg-white border rounded-lg p-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.aadharNumber ? 'border-red-500' : 'border-gray-200'}`}
+                        className={`w-full bg-white border rounded-lg px-4 py-3 text-sm text-gray-700 focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none transition-all ${errors.aadharNumber ? 'border-red-500' : 'border-gray-200'}`}
                     />
                     {errors.aadharNumber && <p className="text-xs text-red-500 mt-1">{errors.aadharNumber}</p>}
                     {formData.aadharNumber && <p className="text-xs text-gray-400 mt-1">{formData.aadharNumber.length}/12 digits</p>}

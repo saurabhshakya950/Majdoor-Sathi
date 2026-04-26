@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, UserSearch, FileText, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { labourAPI } from '../../../services/api';
 
 const LabourBottomNav = () => {
     const navigate = useNavigate();
@@ -8,28 +9,28 @@ const LabourBottomNav = () => {
     const [requestCount, setRequestCount] = useState(0);
 
     useEffect(() => {
-        // Calculate total requests from localStorage
-        const calculateRequests = () => {
+        const fetchRequestCounts = async () => {
             try {
-                // Get user requests
-                const userRequests = JSON.parse(localStorage.getItem('labour_user_requests') || '[]');
-                // Get contractor requests
-                const contractorRequests = JSON.parse(localStorage.getItem('labour_contractor_requests') || '[]');
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
 
-                const total = userRequests.length + contractorRequests.length;
-                setRequestCount(total);
+                // Fetch all pending hire requests for this labour
+                const response = await labourAPI.getLabourHireRequests({ status: 'pending' });
+                
+                if (response.success && response.data.hireRequests) {
+                    setRequestCount(response.data.hireRequests.length);
+                }
             } catch (error) {
-                console.error('Error calculating requests:', error);
-                setRequestCount(0);
+                console.error('Error fetching labour request counts:', error);
             }
         };
 
-        calculateRequests();
-
-        // Listen for storage changes
-        window.addEventListener('storage', calculateRequests);
-
-        return () => window.removeEventListener('storage', calculateRequests);
+        fetchRequestCounts();
+        
+        // Polling every 30 seconds to keep the badge up-to-date
+        const interval = setInterval(fetchRequestCounts, 30000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     const navItems = [

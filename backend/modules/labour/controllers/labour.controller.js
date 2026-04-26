@@ -30,7 +30,8 @@ export const createLabourProfile = async (req, res) => {
             experience,
             workPhotos,
             previousWorkLocation,
-            aadharNumber
+            aadharNumber,
+            profilePhoto // Add profilePhoto extraction
         } = req.body;
 
         // Get userId from token if available, otherwise from mobileNumber
@@ -71,9 +72,20 @@ export const createLabourProfile = async (req, res) => {
             if (lastName) user.lastName = lastName;
             if (gender) user.gender = gender;
 
-            // Sync city/state as general location info is usually shared
+            // Sync location info
             if (city) user.city = city;
             if (state) user.state = state;
+
+            // Handle profile photo upload during registration
+            if (profilePhoto && profilePhoto.startsWith('data:image')) {
+                try {
+                    const cloudinaryUrl = await uploadToCloudinary(profilePhoto, 'rajghar/profiles');
+                    user.profilePhoto = cloudinaryUrl;
+                    console.log('📸 Profile photo uploaded during labour registration:', cloudinaryUrl);
+                } catch (error) {
+                    console.error('Profile photo upload error during registration:', error);
+                }
+            }
 
             await user.save();
             console.log('✅ User model updated (Name/Type/Location):', {

@@ -27,7 +27,8 @@ export const createContractorProfile = async (req, res, next) => {
             state,
             address,
             mobileNumber,
-            aadharNumber
+            aadharNumber,
+            profilePhoto // Add profilePhoto extraction
         } = req.body;
 
         // Update User model with personal details so push notifications and admin panel work correctly
@@ -45,6 +46,18 @@ export const createContractorProfile = async (req, res, next) => {
             if (state) user.state = state;
             if (address) user.address = address;
             if (!user.userType) user.userType = 'Contractor';
+
+            // Handle profile photo upload during registration
+            if (profilePhoto && profilePhoto.startsWith('data:image')) {
+                try {
+                    const { uploadToCloudinary } = await import('../../../utils/cloudinary.utils.js');
+                    const cloudinaryUrl = await uploadToCloudinary(profilePhoto, 'rajghar/profiles');
+                    user.profilePhoto = cloudinaryUrl;
+                    console.log('📸 Profile photo uploaded during contractor registration:', cloudinaryUrl);
+                } catch (error) {
+                    console.error('Profile photo upload error during registration:', error);
+                }
+            }
 
             await user.save();
             console.log('✅ User details updated (Name/Location/Type):', {

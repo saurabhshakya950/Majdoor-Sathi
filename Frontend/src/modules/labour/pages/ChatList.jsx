@@ -131,7 +131,10 @@ const ChatList = () => {
                             type="text"
                             placeholder="Search contacts..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                if (e.target.value.startsWith(' ')) return;
+                                setSearchQuery(e.target.value);
+                            }}
                             className="w-full pl-10 pr-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                         />
                     </div>

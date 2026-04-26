@@ -8,6 +8,8 @@ import { userAPI } from '../../../services/api';
 const LabourPersonalDetails = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+    const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         profileImage: null,
         firstName: '',
@@ -20,19 +22,71 @@ const LabourPersonalDetails = () => {
         address: ''
     });
 
+    // Helper to format string in Title Case
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+
+    // Helper to format Date for input
+    const formatDateForInput = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            return date.toISOString().split('T')[0];
+        } catch (e) {
+            return '';
+        }
+    };
+
     useEffect(() => {
-        const profile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
-        setFormData({
-            profileImage: profile.photo || null,
-            firstName: profile.firstName || '',
-            middleName: profile.middleName || '',
-            lastName: profile.lastName || '',
-            gender: profile.gender || '',
-            dob: profile.dob || '',
-            state: profile.state || '',
-            city: profile.city || '',
-            address: profile.address || ''
-        });
+        const fetchPersonalDetails = async () => {
+            try {
+                setLoading(true);
+                // Call API to fetch fresh data from Labour collection (uniquely identified by token)
+                const response = await userAPI.getProfile();
+                
+                if (response.success && response.data.user) {
+                    const user = response.data.user;
+                    // Also get role-specific labour details from localStorage if they aren't in the user object
+                    const labourProfile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
+                    
+                    setFormData({
+                        profileImage: user.profilePhoto || labourProfile.photo || null,
+                        firstName: toTitleCase(user.firstName || labourProfile.firstName || ''),
+                        middleName: toTitleCase(user.middleName || labourProfile.middleName || ''),
+                        lastName: toTitleCase(user.lastName || labourProfile.lastName || ''),
+                        gender: user.gender || labourProfile.gender || '',
+                        dob: formatDateForInput(user.dob || labourProfile.dob || ''),
+                        state: toTitleCase(user.state || labourProfile.state || ''),
+                        city: toTitleCase(user.city || labourProfile.city || ''),
+                        address: user.address || labourProfile.address || ''
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                // Fallback to localStorage if API fails
+                const profile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
+                setFormData({
+                    profileImage: profile.photo || null,
+                    firstName: toTitleCase(profile.firstName || ''),
+                    middleName: toTitleCase(profile.middleName || ''),
+                    lastName: toTitleCase(profile.lastName || ''),
+                    gender: profile.gender || '',
+                    dob: formatDateForInput(profile.dob || ''),
+                    state: toTitleCase(profile.state || ''),
+                    city: toTitleCase(profile.city || ''),
+                    address: profile.address || ''
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPersonalDetails();
     }, []);
 
     const handleChange = (e) => {
@@ -68,23 +122,21 @@ const LabourPersonalDetails = () => {
         }
 
         try {
+            setIsSaving(true);
             // Check if user has access token
             const token = localStorage.getItem('access_token');
 
             if (!token) {
                 // No token - save to localStorage (fallback)
-                console.log('No access token found, saving to localStorage');
-                const existingProfile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
                 const updatedProfile = {
-                    ...existingProfile,
                     photo: formData.profileImage,
-                    firstName: formData.firstName,
-                    middleName: formData.middleName,
-                    lastName: formData.lastName,
+                    firstName: toTitleCase(formData.firstName),
+                    middleName: toTitleCase(formData.middleName),
+                    lastName: toTitleCase(formData.lastName),
                     gender: formData.gender,
                     dob: formData.dob,
-                    state: formData.state,
-                    city: formData.city,
+                    state: toTitleCase(formData.state),
+                    city: toTitleCase(formData.city),
                     address: formData.address
                 };
                 localStorage.setItem('labour_profile', JSON.stringify(updatedProfile));
@@ -93,58 +145,65 @@ const LabourPersonalDetails = () => {
                 return;
             }
 
-            // Has token - save to backend with Cloudinary
-            console.log('[INFO] Updating labour profile with backend API...');
+            // Formatting strings before saving (Title Case as per tester requirement)
+            const formattedFirstName = toTitleCase(formData.firstName);
+            const formattedMiddleName = toTitleCase(formData.middleName);
+            const formattedLastName = toTitleCase(formData.lastName);
+            const formattedCity = toTitleCase(formData.city);
+            const formattedState = toTitleCase(formData.state);
 
             const updateData = {
-                firstName: formData.firstName,
-                middleName: formData.middleName,
-                lastName: formData.lastName,
+                firstName: formattedFirstName,
+                middleName: formattedMiddleName,
+                lastName: formattedLastName,
                 gender: formData.gender,
                 dob: formData.dob,
-                state: formData.state,
-                city: formData.city,
+                state: formattedState,
+                city: formattedCity,
                 address: formData.address
             };
 
-            // Add profile photo if it's base64 (new upload)
             if (formData.profileImage && formData.profileImage.startsWith('data:image')) {
-                console.log('[INFO] Profile photo detected (base64), will upload to Cloudinary');
                 updateData.profilePhoto = formData.profileImage;
             }
 
             const response = await userAPI.updateProfile(updateData);
 
-            console.log('[SUCCESS] Profile updated:', response);
-
-            // Update localStorage with response data
             if (response.success) {
                 const existingProfile = JSON.parse(localStorage.getItem('labour_profile') || '{}');
-
-                // Use response.data.roleSpecificName if available, fallback to formData.firstName
-                const updatedFirstName = response.data.roleSpecificName || formData.firstName;
-
+                const updatedPhoto = (response.data.user && response.data.user.profilePhoto) || formData.profileImage;
+                
                 localStorage.setItem('labour_profile', JSON.stringify({
                     ...existingProfile,
-                    photo: (response.data.user && response.data.user.profilePhoto) || formData.profileImage,
-                    firstName: updatedFirstName,
-                    middleName: formData.middleName,
-                    lastName: formData.lastName,
+                    photo: updatedPhoto,
+                    firstName: formattedFirstName,
+                    middleName: formattedMiddleName,
+                    lastName: formattedLastName,
                     gender: formData.gender,
                     dob: formData.dob,
-                    state: formData.state,
-                    city: formData.city,
+                    state: formattedState,
+                    city: formattedCity,
                     address: formData.address
+                }));
+
+                // Update local form state with formatted data
+                setFormData(prev => ({
+                    ...prev,
+                    firstName: formattedFirstName,
+                    middleName: formattedMiddleName,
+                    lastName: formattedLastName,
+                    city: formattedCity,
+                    state: formattedState
                 }));
             }
 
-            // Dispatch event to update header
             window.dispatchEvent(new Event('profileUpdated'));
-
             toast.success('Changes saved successfully!');
         } catch (error) {
             console.error('[ERROR] Error updating profile:', error);
             toast.error(error.response?.data?.message || 'Failed to update profile');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -158,7 +217,14 @@ const LabourPersonalDetails = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 pb-20">
-                {/* Profile Photo */}
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3">
+                        <div className="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-gray-500 animate-pulse">Fetching your details...</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Profile Photo */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                         {formData.profileImage ? (
@@ -309,10 +375,22 @@ const LabourPersonalDetails = () => {
                 {/* Save Button */}
                 <button
                     onClick={handleSaveChanges}
-                    className="w-full py-3.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-base transition-all shadow-md active:scale-[0.98]"
+                    disabled={isSaving || loading}
+                    className={`w-full py-3.5 rounded-full font-bold text-base transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 ${
+                        isSaving || loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
+                    }`}
                 >
-                    Save changes
+                    {isSaving ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                            <span>Saving Changes...</span>
+                        </>
+                    ) : (
+                        'Save changes'
+                    )}
                 </button>
+                    </>
+                )}
             </div>
 
             <LabourBottomNav />

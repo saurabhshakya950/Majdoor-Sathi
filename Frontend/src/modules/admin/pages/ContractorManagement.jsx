@@ -34,6 +34,13 @@ const ContractorManagement = () => {
         fetchContractors();
     }, [pagination.page]);
 
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+
     const fetchContractors = async () => {
         setLoading(true);
         try {
@@ -64,20 +71,20 @@ const ContractorManagement = () => {
         const query = e.target.value;
         setSearchQuery(query);
         
-        if (query.trim() === '') {
+        const trimmedQuery = query.trim().toLowerCase();
+        if (trimmedQuery === '') {
             setFilteredContractors(contractors);
         } else {
             const filtered = contractors.filter(contractor => {
-                const searchLower = query.toLowerCase();
-                const firstName = contractor.user?.firstName || contractor.firstName || '';
-                const lastName = contractor.user?.lastName || contractor.lastName || '';
-                const fullName = `${firstName} ${lastName}`.toLowerCase();
-                const phone = contractor.user?.mobileNumber || contractor.mobileNumber || '';
-                const company = contractor.businessName || '';
+                const firstName = (contractor.user?.firstName || contractor.firstName || '').toLowerCase();
+                const lastName = (contractor.user?.lastName || contractor.lastName || '').toLowerCase();
+                const fullName = `${firstName} ${lastName}`.trim();
+                const phone = (contractor.user?.mobileNumber || contractor.mobileNumber || '').toLowerCase();
+                const company = (contractor.businessName || '').toLowerCase();
                 
-                return fullName.includes(searchLower) ||
-                       phone.includes(searchLower) ||
-                       company.toLowerCase().includes(searchLower);
+                return fullName.includes(trimmedQuery) ||
+                       phone.includes(trimmedQuery) ||
+                       company.includes(trimmedQuery);
             });
             setFilteredContractors(filtered);
         }
@@ -117,15 +124,48 @@ const ContractorManagement = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Validation
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.firstName.trim())) {
+            toast.error('First name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.lastName && !nameRegex.test(formData.lastName.trim())) {
+            toast.error('Last name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.businessName && !nameRegex.test(formData.businessName.trim())) {
+            toast.error('Company name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.city && !nameRegex.test(formData.city.trim())) {
+            toast.error('City can only contain letters');
+            setLoading(false);
+            return;
+        }
+
+        const formattedData = {
+            ...formData,
+            firstName: toTitleCase(formData.firstName),
+            lastName: toTitleCase(formData.lastName),
+            businessName: toTitleCase(formData.businessName),
+            city: toTitleCase(formData.city)
+        };
+
         try {
             if (currentContractor) {
                 // Update contractor
-                await contractorManagementAPI.updateContractor(currentContractor._id, formData);
+                await contractorManagementAPI.updateContractor(currentContractor._id, formattedData);
                 toast.success('Contractor updated successfully');
             } else {
                 // Create contractor
-                await contractorManagementAPI.createContractor(formData);
+                await contractorManagementAPI.createContractor(formattedData);
                 toast.success('Contractor created successfully');
+                // Reset to first page for new contractor
+                setPagination(prev => ({ ...prev, page: 1 }));
             }
             setIsModalOpen(false);
             fetchContractors();
@@ -224,7 +264,11 @@ const ContractorManagement = () => {
                         placeholder="Search contractors..." 
                         className="admin-search-input"
                         value={searchQuery}
-                        onChange={handleSearch}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.startsWith(' ')) return;
+                            handleSearch(e);
+                        }}
                     />
                 </div>
             </div>
@@ -665,6 +709,42 @@ const ContractorManagement = () => {
                     border: 2px solid white;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                     z-index: 10;
+                }
+                .admin-pagination {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 24px;
+                    padding: 10px 0;
+                }
+                .pagi-btn {
+                    padding: 8px 14px;
+                    border: 1px solid #e2e8f0;
+                    background: white;
+                    color: #64748b;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-weight: 600;
+                    min-width: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pagi-btn:hover:not(:disabled) {
+                    border-color: #3b82f6;
+                    color: #3b82f6;
+                    background: #eff6ff;
+                }
+                .pagi-btn.active {
+                    background: #3b82f6;
+                    color: white;
+                    border-color: #3b82f6;
+                }
+                .pagi-btn:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                    background: #f1f5f9;
                 }
             `}</style>
         </div>

@@ -7,7 +7,7 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../../../utils/cloudin
 export const getAllCategories = async (req, res) => {
     try {
         const categories = await LabourCategory.find({ isActive: true })
-            .sort({ name: 1 });
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,

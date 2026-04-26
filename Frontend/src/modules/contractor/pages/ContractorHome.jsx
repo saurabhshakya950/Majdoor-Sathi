@@ -89,7 +89,11 @@ const ContractorHome = () => {
                     <input
                         type="text"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.startsWith(' ')) return;
+                            setSearchQuery(value);
+                        }}
                         placeholder="Find categories"
                         className="flex-1 bg-transparent text-gray-600 outline-none placeholder-gray-400"
                     />

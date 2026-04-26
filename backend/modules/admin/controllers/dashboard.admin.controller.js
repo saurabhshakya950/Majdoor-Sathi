@@ -81,12 +81,10 @@ export const getDashboardAnalytics = async (req, res) => {
             successRate
         });
 
-        // Get verification queue
-        const verificationQueue = await VerificationRequest.find({ 
+        // Get actual verification queue count
+        const verificationQueueCount = await VerificationRequest.countDocuments({ 
             status: 'Pending' 
-        })
-        .limit(5)
-        .sort({ createdAt: -1 });
+        });
 
         // Get disputes (mock data for now)
         const disputes = {
@@ -111,7 +109,7 @@ export const getDashboardAnalytics = async (req, res) => {
                     todayRequests,
                     weekRequests,
                     successRate,
-                    verificationQueue: verificationQueue.length,
+                    verificationQueue: verificationQueueCount,
                     disputes,
                     revenue
                 }

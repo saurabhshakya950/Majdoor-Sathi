@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslate } from '../../../hooks/useTranslate';
 
 const SelectLanguage = () => {
     const navigate = useNavigate();
+    const [currentLang, setCurrentLang] = useState(localStorage.getItem('selected_language') || 'en');
 
     const languages = [
         { code: 'en', name: 'English', nativeName: 'English' },
@@ -26,12 +29,19 @@ const SelectLanguage = () => {
         { code: 'doi', name: 'Dogri', nativeName: 'डोगरी' },
         { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' }
     ];
+    
+    const textsToTranslate = ["Select language", "Choose your preferred language"];
+    const { translations } = useTranslate(textsToTranslate, currentLang);
 
     const handleLanguageSelect = (language) => {
         // Store selected language in localStorage (for future use)
         localStorage.setItem('selected_language', language.code);
-        // Navigate to mobile login page
-        navigate('/mobile-login');
+        setCurrentLang(language.code);
+        
+        // Add a small delay so user can see it's selected (optional)
+        setTimeout(() => {
+            navigate('/mobile-login');
+        }, 300);
     };
 
     return (
@@ -49,8 +59,12 @@ const SelectLanguage = () => {
             {/* Content */}
             <div className="flex-1 px-4 py-2 overflow-y-auto pb-6">
                 <div className="mb-4">
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">Select language</h1>
-                    <p className="text-sm text-gray-500">Choose your preferred language</p>
+                    <h1 className="text-xl font-bold text-gray-900 mb-1">
+                        {translations["Select language"] || "Select language"}
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                        {translations["Choose your preferred language"] || "Choose your preferred language"}
+                    </p>
                 </div>
 
                 {/* Language Grid */}

@@ -253,7 +253,21 @@ export const labourAPI = {
         // Update localStorage
         if (response.data.success && response.data.data.labour) {
             const labour = response.data.data.labour;
+            const user = response.data.data.user || labour.user;
+            
             localStorage.setItem('labour_profile', JSON.stringify({
+                // Personal Details (Synchronized from both models)
+                firstName: labour.firstName || user?.firstName || '',
+                middleName: labour.middleName || user?.middleName || '',
+                lastName: labour.lastName || user?.lastName || '',
+                gender: labour.gender || user?.gender || '',
+                dob: labour.dob || user?.dob || '',
+                city: labour.city || user?.city || '',
+                state: labour.state || user?.state || '',
+                address: labour.address || user?.address || '',
+                photo: labour.labourCardDetails?.photo || user?.profilePhoto || null,
+                
+                // Work Details
                 skillType: labour.skillType,
                 experience: labour.experience,
                 workPhotos: labour.workPhotos,
@@ -553,6 +567,12 @@ export const chatAPI = {
     // Delete chat
     deleteChat: async (chatId) => {
         const response = await api.delete(`/chat/chats/${chatId}`);
+        return response.data;
+    },
+
+    // Clear messages in chat
+    clearChatMessages: async (chatId) => {
+        const response = await api.delete(`/chat/chats/${chatId}/messages`);
         return response.data;
     }
 };

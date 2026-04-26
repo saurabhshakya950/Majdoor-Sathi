@@ -87,6 +87,10 @@ const PostJob = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        
+        // Prevent starting with a space for text inputs
+        if (value.startsWith(' ')) return;
+        
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -96,15 +100,48 @@ const PostJob = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Basic Validation
-        if (!formData.address || !formData.mobileNumber || !formData.jobTitle || !formData.jobDescription || !formData.category || !formData.workDuration) {
-            toast.error('Please fill all required fields');
+        // 1. Mandatory Field Check (with Trim to prevent "only-spaces")
+        const trimmedData = {
+            ...formData,
+            address: formData.address.trim(),
+            jobTitle: formData.jobTitle.trim(),
+            jobDescription: formData.jobDescription.trim()
+        };
+
+        if (!trimmedData.address || !formData.mobileNumber || !trimmedData.jobTitle || !trimmedData.jobDescription || !formData.category || !formData.workDuration) {
+            toast.error('Please fill all required fields correctly');
             return;
         }
 
-        if (formData.budgetType === 'Fixed Amount' && !formData.budgetAmount) {
-            toast.error('Please enter budget amount');
+        // 2. Length Validations
+        if (trimmedData.jobTitle.length < 5) {
+            toast.error('Project title is too short (Min 5 characters)');
             return;
+        }
+
+        if (trimmedData.jobDescription.length < 15) {
+            toast.error('Please provide a more detailed description (Min 15 characters)');
+            return;
+        }
+
+        if (trimmedData.address.length < 10) {
+            toast.error('Please provide a complete address (Min 10 characters)');
+            return;
+        }
+
+        // 3. Mobile Number Validation (Indian standard starts with 6-9)
+        const mobileRegex = /^[6-9][0-9]{9}$/;
+        if (!mobileRegex.test(formData.mobileNumber)) {
+            toast.error('Please enter a valid 10-digit mobile number');
+            return;
+        }
+
+        // 4. Budget Validation
+        if (formData.budgetType === 'Fixed Amount') {
+            if (!formData.budgetAmount || parseFloat(formData.budgetAmount) <= 0) {
+                toast.error('Please enter a valid budget amount greater than zero');
+                return;
+            }
         }
 
         setLoading(true);
@@ -112,8 +149,8 @@ const PostJob = () => {
             const token = localStorage.getItem('access_token');
             
             if (token) {
-                // Save to database
-                const response = await jobAPI.createJob(formData);
+                // Save to database with trimmed values
+                const response = await jobAPI.createJob(trimmedData);
                 if (response.success) {
                     toast.success('Job posted successfully!');
                     navigate('/user/my-projects');

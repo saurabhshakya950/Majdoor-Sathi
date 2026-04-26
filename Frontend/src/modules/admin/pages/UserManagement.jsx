@@ -33,6 +33,13 @@ const UserManagement = () => {
         fetchUsers();
     }, [pagination.page]);
 
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -69,20 +76,23 @@ const UserManagement = () => {
     // Search functionality
     const handleSearch = (e) => {
         const query = e.target.value;
+        if (query.startsWith(' ')) return;
         setSearchQuery(query);
         
-        if (query.trim() === '') {
+        const trimmedQuery = query.trim().toLowerCase();
+        if (trimmedQuery === '') {
             setFilteredUsers(users);
         } else {
             const filtered = users.filter(user => {
-                const searchLower = query.toLowerCase();
-                const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
-                const phone = user.mobileNumber || '';
-                const email = user.email || '';
+                const firstName = (user.firstName || '').toLowerCase();
+                const lastName = (user.lastName || '').toLowerCase();
+                const fullName = `${firstName} ${lastName}`.trim();
+                const phone = (user.mobileNumber || '').toLowerCase();
+                const email = (user.email || '').toLowerCase();
                 
-                return fullName.includes(searchLower) ||
-                       phone.includes(searchLower) ||
-                       email.toLowerCase().includes(searchLower);
+                return fullName.includes(trimmedQuery) ||
+                       phone.includes(trimmedQuery) ||
+                       email.includes(trimmedQuery);
             });
             setFilteredUsers(filtered);
         }
@@ -118,15 +128,42 @@ const UserManagement = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Validation
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.firstName.trim())) {
+            toast.error('First name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.lastName && !nameRegex.test(formData.lastName.trim())) {
+            toast.error('Last name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.city && !nameRegex.test(formData.city.trim())) {
+            toast.error('City can only contain letters');
+            setLoading(false);
+            return;
+        }
+
+        const formattedData = {
+            ...formData,
+            firstName: toTitleCase(formData.firstName),
+            lastName: toTitleCase(formData.lastName),
+            city: toTitleCase(formData.city)
+        };
+
         try {
             if (currentUser) {
                 // Update user
-                await userManagementAPI.updateUser(currentUser._id, formData);
+                await userManagementAPI.updateUser(currentUser._id, formattedData);
                 toast.success('User updated successfully');
             } else {
                 // Create user
-                await userManagementAPI.createUser(formData);
+                await userManagementAPI.createUser(formattedData);
                 toast.success('User created successfully');
+                // Reset to page 1 for new user
+                setPagination(prev => ({ ...prev, page: 1 }));
             }
             setIsModalOpen(false);
             fetchUsers();
@@ -707,6 +744,42 @@ const UserManagement = () => {
                     border: 2px solid white;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                     z-index: 10;
+                }
+                .admin-pagination {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 24px;
+                    padding: 10px 0;
+                }
+                .pagi-btn {
+                    padding: 8px 14px;
+                    border: 1px solid #e2e8f0;
+                    background: white;
+                    color: #64748b;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-weight: 600;
+                    min-width: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pagi-btn:hover:not(:disabled) {
+                    border-color: #3b82f6;
+                    color: #3b82f6;
+                    background: #eff6ff;
+                }
+                .pagi-btn.active {
+                    background: #3b82f6;
+                    color: white;
+                    border-color: #3b82f6;
+                }
+                .pagi-btn:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                    background: #f1f5f9;
                 }
             `}</style>
         </div>

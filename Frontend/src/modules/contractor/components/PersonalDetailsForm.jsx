@@ -50,6 +50,34 @@ const PersonalDetailsForm = ({ onSave }) => {
                 return;
             }
 
+            // Validate formats (alphabet only)
+            const nameRegex = /^[a-zA-Z\s]+$/;
+            
+            if (!nameRegex.test(formData.firstName.trim())) {
+                toast.error('First name can only contain letters');
+                return;
+            }
+
+            if (formData.middleName && !nameRegex.test(formData.middleName.trim())) {
+                toast.error('Middle name can only contain letters');
+                return;
+            }
+
+            if (formData.lastName && !nameRegex.test(formData.lastName.trim())) {
+                toast.error('Last name can only contain letters');
+                return;
+            }
+
+            if (formData.state && !nameRegex.test(formData.state.trim())) {
+                toast.error('State name can only contain letters');
+                return;
+            }
+
+            if (formData.city && !nameRegex.test(formData.city.trim())) {
+                toast.error('City name can only contain letters');
+                return;
+            }
+
             // Check if user has access token
             const token = localStorage.getItem('access_token');
 

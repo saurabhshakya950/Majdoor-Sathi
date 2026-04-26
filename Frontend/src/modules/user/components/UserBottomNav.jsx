@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Search, FileText, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { jobAPI } from '../../../services/api';
 
 const UserBottomNav = () => {
     const navigate = useNavigate();
@@ -8,28 +9,42 @@ const UserBottomNav = () => {
     const [requestCount, setRequestCount] = useState(0);
 
     useEffect(() => {
-        // Calculate total requests from localStorage
-        const calculateRequests = () => {
+        const fetchRequestCounts = async () => {
             try {
-                // Get contractor requests
-                const contractorRequests = JSON.parse(localStorage.getItem('user_contractor_requests') || '[]');
-                // Get worker requests  
-                const workerRequests = JSON.parse(localStorage.getItem('user_worker_requests') || '[]');
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
 
-                const total = contractorRequests.length + workerRequests.length;
-                setRequestCount(total);
+                // 1. Fetch Contractor Applications
+                const contractorRes = await jobAPI.getContractorApplications();
+                const pendingContractors = contractorRes.success 
+                    ? contractorRes.data.applications.filter(a => a.status === 'Pending').length 
+                    : 0;
+
+                // 2. Fetch Worker Applications from all User Jobs
+                const jobsRes = await jobAPI.getUserJobs();
+                let pendingWorkers = 0;
+                if (jobsRes.success && jobsRes.data.jobs) {
+                    jobsRes.data.jobs.forEach(job => {
+                        if (job.applications) {
+                            pendingWorkers += job.applications.filter(a => 
+                                a.status === 'Pending' && a.applicantType === 'Labour'
+                            ).length;
+                        }
+                    });
+                }
+
+                setRequestCount(pendingContractors + pendingWorkers);
             } catch (error) {
-                console.error('Error calculating requests:', error);
-                setRequestCount(0);
+                console.error('Error fetching request counts:', error);
             }
         };
 
-        calculateRequests();
+        fetchRequestCounts();
 
-        // Listen for storage changes
-        window.addEventListener('storage', calculateRequests);
+        // Refresh every 30 seconds (Standard polling)
+        const interval = setInterval(fetchRequestCounts, 30000);
 
-        return () => window.removeEventListener('storage', calculateRequests);
+        return () => clearInterval(interval);
     }, []);
 
     const navItems = [
@@ -50,7 +65,13 @@ const UserBottomNav = () => {
                     return (
                         <button
                             key={item.path}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => {
+                                if (isActive) {
+                                    window.location.reload();
+                                } else {
+                                    navigate(item.path);
+                                }
+                            }}
                             className={`flex flex-col items-center justify-center flex-1 h-full transition-colors relative ${isActive ? 'text-yellow-400' : 'text-white'
                                 }`}
                         >

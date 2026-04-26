@@ -215,12 +215,12 @@ const BannerSection = () => {
                                             name="badgeText"
                                             value={formData.badgeText}
                                             onChange={handleInputChange}
-                                            placeholder="e.g., \uD83D\uDD25 Limited Time Offer"
+                                            placeholder="e.g., 🔥 Limited Time Offer"
                                             required
                                         />
                                     </div>
                                     <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-                                        Example: "\uD83D\uDD25 Limited Time Offer", "\u26A1 Best Quality"
+                                        Example: "🔥 Limited Time Offer", "⚡ Best Quality"
                                     </small>
                                 </div>
 
@@ -332,7 +332,7 @@ const BannerSection = () => {
                                             name="price"
                                             value={formData.price}
                                             onChange={handleInputChange}
-                                            placeholder="e.g., \u20B9350"
+                                            placeholder="e.g., ₹350"
                                             required
                                         />
                                     </div>

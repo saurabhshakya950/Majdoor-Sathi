@@ -76,9 +76,13 @@ const PostJob = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!formData.city || !formData.address || !formData.businessType || !formData.labourSkill || !formData.experience) {
             alert('Please fill all required fields');
+            return;
+        }
+
+        if (!/^[a-zA-Z\s]+$/.test(formData.city.trim())) {
+            alert('City name can only contain letters');
             return;
         }
 

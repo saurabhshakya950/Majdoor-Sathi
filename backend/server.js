@@ -33,6 +33,7 @@ import labourRoutes from './modules/labour/routes/labour.routes.js';
 import contractorRoutes from './modules/contractor/routes/contractor.routes.js';
 import adminRoutes from './modules/admin/routes/admin.routes.js';
 import bannerRoutes from './modules/admin/routes/banner.admin.routes.js';
+import translateRoutes from './routes/translateRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -191,6 +192,7 @@ app.use('/api/labour', labourRoutes);
 app.use('/api/contractor', contractorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/banners', bannerRoutes); // Public banners route
+app.use('/api/translate', translateRoutes);
 
 // Health check & VPS test route
 app.get('/api/health', (req, res) => {

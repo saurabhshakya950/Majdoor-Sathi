@@ -714,3 +714,71 @@ export const deleteChat = async (req, res) => {
         });
     }
 };
+
+// @desc    Clear all messages in a chat (Permanent Delete)
+// @route   DELETE /api/chat/chats/:chatId/messages
+// @access  Private
+export const clearMessages = async (req, res) => {
+    try {
+        const { chatId } = req.params;
+        const userId = req.user._id;
+
+        console.log('\n🗑️  ===== CLEAR MESSAGES =====');
+        console.log('Chat ID:', chatId);
+        console.log('User ID:', userId);
+
+        const chat = await Chat.findById(chatId);
+
+        if (!chat) {
+            return res.status(404).json({
+                success: false,
+                message: 'Chat not found'
+            });
+        }
+
+        const isParticipant = chat.participants.some(
+            p => p.userId.toString() === userId.toString()
+        );
+
+        if (!isParticipant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to clear this chat'
+            });
+        }
+
+        // 1. Delete all messages for this chat
+        const result = await Message.deleteMany({ chatId });
+        console.log(`✅ Deleted ${result.deletedCount} messages`);
+
+        // 2. Reset chat metadata
+        chat.lastMessage = {
+            text: '',
+            senderId: null,
+            timestamp: null
+        };
+        
+        // Reset unread counts
+        chat.participants.forEach(p => {
+            chat.unreadCount.set(p.userId.toString(), 0);
+        });
+
+        await chat.save();
+
+        console.log('✅ Chat metadata reset');
+        console.log('===========================\n');
+
+        res.status(200).json({
+            success: true,
+            message: 'Chat cleared successfully',
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('❌ CLEAR MESSAGES ERROR:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to clear chat messages',
+            error: error.message
+        });
+    }
+};

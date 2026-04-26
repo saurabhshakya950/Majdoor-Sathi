@@ -34,6 +34,13 @@ const LabourManagement = () => {
         fetchLabours();
     }, [pagination.page]);
 
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+
     const fetchLabours = async () => {
         setLoading(true);
         try {
@@ -72,18 +79,20 @@ const LabourManagement = () => {
         const query = e.target.value;
         setSearchQuery(query);
         
-        if (query.trim() === '') {
+        const trimmedQuery = query.trim().toLowerCase();
+        if (trimmedQuery === '') {
             setFilteredLabours(labours);
         } else {
             const filtered = labours.filter(labour => {
-                const searchLower = query.toLowerCase();
-                const fullName = `${labour.firstName || ''} ${labour.lastName || ''}`.toLowerCase();
-                const phone = labour.mobileNumber || '';
-                const trade = labour.trade || '';
+                const firstName = (labour.firstName || '').toLowerCase();
+                const lastName = (labour.lastName || '').toLowerCase();
+                const fullName = `${firstName} ${lastName}`.trim();
+                const phone = (labour.mobileNumber || '').toLowerCase();
+                const trade = (labour.trade || '').toLowerCase();
                 
-                return fullName.includes(searchLower) ||
-                       phone.includes(searchLower) ||
-                       trade.toLowerCase().includes(searchLower);
+                return fullName.includes(trimmedQuery) ||
+                       phone.includes(trimmedQuery) ||
+                       trade.includes(trimmedQuery);
             });
             setFilteredLabours(filtered);
         }
@@ -121,15 +130,48 @@ const LabourManagement = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Validation
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.firstName.trim())) {
+            toast.error('First name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.lastName && !nameRegex.test(formData.lastName.trim())) {
+            toast.error('Last name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (!nameRegex.test(formData.trade.trim())) {
+            toast.error('Trade name can only contain letters');
+            setLoading(false);
+            return;
+        }
+        if (formData.city && !nameRegex.test(formData.city.trim())) {
+            toast.error('City can only contain letters');
+            setLoading(false);
+            return;
+        }
+
+        const formattedData = {
+            ...formData,
+            firstName: toTitleCase(formData.firstName),
+            lastName: toTitleCase(formData.lastName),
+            trade: toTitleCase(formData.trade),
+            city: toTitleCase(formData.city)
+        };
+
         try {
             if (currentLabour) {
                 // Update labour
-                await labourManagementAPI.updateLabour(currentLabour._id, formData);
+                await labourManagementAPI.updateLabour(currentLabour._id, formattedData);
                 toast.success('Labour updated successfully');
             } else {
                 // Create labour
-                await labourManagementAPI.createLabour(formData);
+                await labourManagementAPI.createLabour(formattedData);
                 toast.success('Labour created successfully');
+                // Reset to page 1 for new entry
+                setPagination(prev => ({ ...prev, page: 1 }));
             }
             setIsModalOpen(false);
             fetchLabours();
@@ -228,7 +270,11 @@ const LabourManagement = () => {
                         placeholder="Search labours..." 
                         className="admin-search-input"
                         value={searchQuery}
-                        onChange={handleSearch}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.startsWith(' ')) return;
+                            handleSearch(e);
+                        }}
                     />
                 </div>
             </div>
@@ -670,6 +716,42 @@ const LabourManagement = () => {
                     border: 2px solid white;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                     z-index: 10;
+                }
+                .admin-pagination {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 24px;
+                    padding: 10px 0;
+                }
+                .pagi-btn {
+                    padding: 8px 14px;
+                    border: 1px solid #e2e8f0;
+                    background: white;
+                    color: #64748b;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-weight: 600;
+                    min-width: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pagi-btn:hover:not(:disabled) {
+                    border-color: #3b82f6;
+                    color: #3b82f6;
+                    background: #eff6ff;
+                }
+                .pagi-btn.active {
+                    background: #3b82f6;
+                    color: white;
+                    border-color: #3b82f6;
+                }
+                .pagi-btn:disabled {
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                    background: #f1f5f9;
                 }
             `}</style>
         </div>

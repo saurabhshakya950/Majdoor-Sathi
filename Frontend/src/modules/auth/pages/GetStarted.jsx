@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Users, Briefcase, MapPin } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useTranslate } from '../../../hooks/useTranslate';
 
 const GetStarted = () => {
     const navigate = useNavigate();
@@ -34,6 +35,32 @@ const GetStarted = () => {
             text: "Quality Construction"
         }
     ]);
+
+    const currentLang = localStorage.getItem('selected_language') || 'en';
+    
+    // Extract static texts for initial translation
+    const staticTexts = [
+        "Your All-in-One Hiring Solution", 
+        "Get Started",
+        ...backgroundImages.map(img => img.text)
+    ];
+    
+    const { translations } = useTranslate(staticTexts, currentLang);
+
+    // Auto-redirect if already logged in
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        const userType = localStorage.getItem('user_type');
+        
+        if (token && userType) {
+            const routes = {
+                'User': '/user/home',
+                'Contractor': '/contractor/home',
+                'Labour': '/labour/find-user'
+            };
+            navigate(routes[userType] || '/user/home', { replace: true });
+        }
+    }, [navigate]);
 
     // Fetch dynamic slides
     useEffect(() => {
@@ -113,7 +140,7 @@ const GetStarted = () => {
                             textShadow: '2px 2px 8px rgba(0,0,0,0.8)'
                         }}
                     >
-                        {displayText}
+                        {translations[displayText] || displayText}
                         <span className={`${isTyping ? 'animate-pulse' : 'opacity-0'}`}>|</span>
                     </h2>
                 </div>
@@ -127,7 +154,7 @@ const GetStarted = () => {
                 <div className="flex flex-col items-center text-center">
                     {/* Slogan */}
                     <h1 className="text-xl md:text-2xl font-bold text-white mb-6 leading-tight">
-                        Your All-in-One Hiring Solution
+                        {translations["Your All-in-One Hiring Solution"] || "Your All-in-One Hiring Solution"}
                     </h1>
 
                     {/* CTA Button */}
@@ -151,7 +178,7 @@ const GetStarted = () => {
                         }}
                         className="w-full max-w-md bg-white text-gray-900 font-bold py-4 px-6 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 group"
                     >
-                        <span className="text-lg">Get Started</span>
+                        <span className="text-lg">{translations["Get Started"] || "Get Started"}</span>
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                     </button>
 

@@ -21,6 +21,17 @@ const LabourCategoryManagement = () => {
     // Edit Category Form State
     const [editingItem, setEditingItem] = useState(null);
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -54,8 +65,10 @@ const LabourCategoryManagement = () => {
             });
 
             const categoryData = {
-                name: newCategoryName.trim(),
-                subCategories: newSubCategories.filter(s => s.name.trim() !== '')
+                name: toTitleCase(newCategoryName),
+                subCategories: newSubCategories
+                    .filter(s => s.name.trim() !== '')
+                    .map(sub => ({ ...sub, name: toTitleCase(sub.name) }))
             };
 
             console.log('[INFO] Sending request to backend...');
@@ -144,7 +157,7 @@ const LabourCategoryManagement = () => {
         try {
             setUploading(true);
             const data = {
-                name: editingItem.name.trim(),
+                name: toTitleCase(editingItem.name),
                 image: editingItem.image
             };
 
@@ -220,10 +233,21 @@ const LabourCategoryManagement = () => {
     });
 
     const filteredItems = displayItems.filter(item => {
-        const query = searchQuery.toLowerCase();
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return true;
         return item.name.toLowerCase().includes(query) ||
             item.parentName.toLowerCase().includes(query);
     });
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     return (
         <div className="p-6">
@@ -238,7 +262,11 @@ const LabourCategoryManagement = () => {
                             type="text"
                             placeholder="Search categories..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val.startsWith(' ')) return;
+                                setSearchQuery(val);
+                            }}
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none w-64"
                         />
                         <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
@@ -265,7 +293,7 @@ const LabourCategoryManagement = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {filteredItems.map((item) => (
+                    {currentItems.map((item) => (
                         <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col hover:shadow-md transition-shadow relative group">
                             <div className="flex flex-col items-center mb-4">
                                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3 overflow-hidden border">
@@ -309,6 +337,37 @@ const LabourCategoryManagement = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="admin-pagination">
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="pagi-btn"
+                    >
+                        &laquo;
+                    </button>
+                    
+                    {[...Array(totalPages)].map((_, i) => (
+                        <button
+                            key={i + 1}
+                            className={`pagi-btn ${currentPage === i + 1 ? 'active' : ''}`}
+                            onClick={() => setCurrentPage(i + 1)}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="pagi-btn"
+                    >
+                        &raquo;
+                    </button>
                 </div>
             )}
 
@@ -512,3 +571,61 @@ const LabourCategoryManagement = () => {
 };
 
 export default LabourCategoryManagement;
+
+// Add Pagination & Scrollbar Styles
+const style = document.createElement('style');
+style.textContent = `
+    .admin-pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 32px;
+        padding-bottom: 20px;
+    }
+    .pagi-btn {
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 600;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .pagi-btn:hover:not(:disabled) {
+        border-color: #f97316;
+        color: #f97316;
+        background: #fff7ed;
+        transform: translateY(-1px);
+    }
+    .pagi-btn.active {
+        background: #f97316;
+        color: white;
+        border-color: #f97316;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    }
+    .pagi-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+`;
+document.head.appendChild(style);

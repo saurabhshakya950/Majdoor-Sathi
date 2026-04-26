@@ -471,8 +471,9 @@
 .input-with-icon input {
     flex: 1;
     padding: 12px 0;
-    border: none;
-    background: transparent;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
     outline: none;
     font-size: 0.95rem;
     color: var(--admin-text-main);
